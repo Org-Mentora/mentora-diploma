@@ -1,0 +1,7 @@
+{
+  "extends": "@mentora/tsconfig/node.json",
+  "compilerOptions": {
+    "rootDir": "."
+  },
+  "include": ["src", "test", "tsup.config.ts", "vitest.config.ts"]
+}
