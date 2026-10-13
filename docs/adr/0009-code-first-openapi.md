@@ -1,6 +1,6 @@
 # ADR-0009: Code-first OpenAPI with zod and Swagger UI
 
-- **Status:** Accepted
+- **Status:** Accepted — output version amended by [ADR-0023](0023-openapi-3-1-nullable-refs.md)
 - **Date:** 2026-10-13
 - **Deciders:** Mentora team
 - **Tags:** api

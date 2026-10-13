@@ -51,14 +51,21 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | Tooling | [0013](docs/adr/0013-biome-architecture-linting.md) | Biome 2: per-layer `noRestrictedImports` overrides, GritQL plugins, Lefthook | Accepted |
 | Backend | [0004](docs/adr/0004-backend-mvp-passive-view.md) | MVP Passive View per module: model / presenter / view / contracts / infrastructure | Accepted |
 | Backend | [0005](docs/adr/0005-backend-oop-conventions.md) | Classes, abstract classes owned by the Model, constructor injection, `ApplicationError` | Accepted |
+| Backend | [0018](docs/adr/0018-authentication-session-cookie.md) | JWT (jose) in httpOnly cookie `mentora_session`; scrypt; `AuthGuard` 401/403 `SUBSCRIPTION_INACTIVE` | Accepted |
+| Backend | [0019](docs/adr/0019-per-professional-data-ownership.md) | Every aggregate scoped by `professionalId`; foreign data → 404; DNI unique per professional | Accepted |
+| Backend | [0020](docs/adr/0020-clinical-record-aggregate.md) | `ClinicalRecord` aggregate embeds append-only consultations (diagnosis/medication as VOs) | Accepted |
+| Backend | [0022](docs/adr/0022-cross-module-collaboration.md) | Modules talk via query services in `index.ts` + consumer-owned abstractions + adapters | Accepted |
 | Backend | [0008](docs/adr/0008-mongodb-mongoose.md) | MongoDB 8 + Mongoose only in infrastructure; UUID string `_id`; DataMapper | Accepted |
 | Patterns | [0006](docs/adr/0006-singleton-pattern.md) | Singleton: AppConfig, Logger, MongoConnection, OpenApiRegistry, AppStore | Accepted |
 | Patterns | [0007](docs/adr/0007-adapter-pattern.md) | Adapter at every technology boundary (Mongoose, pino, Express, zod-to-openapi, DTO→UI) | Accepted |
-| API | [0009](docs/adr/0009-code-first-openapi.md) | zod contracts with `.meta({id})` → OpenAPI 3.0 → Swagger UI at `/api/docs` | Accepted |
+| API | [0009](docs/adr/0009-code-first-openapi.md) | zod contracts with `.meta({id})` → OpenAPI → Swagger UI at `/api/docs` (~~OpenAPI 3.0.3~~ → 0023) | Amended |
+| API | [0023](docs/adr/0023-openapi-3-1-nullable-refs.md) | OpenAPI **3.1** output; nullable DTO refs via `nullableRef(Schema)`, never `.nullable()` | Accepted |
 | API/Web | [0010](docs/adr/0010-frontend-codegen.md) | `pnpm codegen` → `@mentora/contracts` DTOs + RTK Query hooks; committed and CI-checked | Accepted |
 | Frontend | [0011](docs/adr/0011-frontend-mvvm.md) | MVVM: View → `useXxxViewModel` → model (generated API + adapters) | Accepted |
+| Frontend | [0021](docs/adr/0021-forms-in-viewmodels.md) | Forms: react-hook-form + zod schemas in `model/domain`, `useForm` owned by the ViewModel | Accepted |
 | Frontend | [0012](docs/adr/0012-tailwind-shadcn.md) | Tailwind v4 CSS-first + shadcn/ui in `src/shared/ui` | Accepted |
 | Ops | [0014](docs/adr/0014-containerization.md) | Multi-stage Dockerfiles (dev/build/runtime), Compose + dev watch overlay | Accepted |
 | Quality | [0015](docs/adr/0015-testing-strategy.md) | Vitest everywhere: SpyView presenters, supertest, in-memory Mongo, mocked ViewModels | Accepted |
 
+Product scope (which CUs exist): `docs/product/mvp-scope.md`. Domain names ES→EN: `docs/architecture/glossary.md`.
 More: `docs/README.md` (architecture overviews, guides, API reference).

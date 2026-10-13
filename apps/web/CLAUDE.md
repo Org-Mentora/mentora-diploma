@@ -25,6 +25,12 @@ src/shared/ui | lib         shadcn components, cn()
 - **shared:** generic only. It must not import features, model or app.
 - **Cross-feature:** only `@/features/<name>` (index).
 
+## Forms and session
+
+- Forms (ADR-0021): zod schema + mapper in `model/domain/<f>/*.form.ts`; the ViewModel owns `useForm`
+  and maps API `error.field` to `form.setError`. Re-export form types from the ViewModel for sub-views.
+- Session: `features/session` (`RequireSession`, `PublicOnly`, `AppShell`). Logout resets the RTK cache.
+
 ## Workflow
 
 1. API changed? Run `pnpm codegen` at the root.

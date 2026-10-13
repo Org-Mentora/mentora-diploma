@@ -24,6 +24,11 @@ instance injected.
 | `ContractRegistry` | `OpenApiRegistry` | zod-to-openapi |
 | `HealthIndicator` | `MongoHealthIndicator` | `MongoConnection` |
 | `UptimeSource` | `ProcessUptimeSource` | `process.uptime()` |
+| `PasswordHasher` | `ScryptPasswordHasher` | `node:crypto` scrypt |
+| `TokenService` | `JoseTokenService` | `jose` (JWT HS256) |
+| `PatientLookup` / `PatientNames` | `PatientDirectoryLookup` / `PatientDirectoryNames` | patients module query service |
+| `DiagnosisResolver` | `CatalogDiagnosisResolver` | DSM-5 catalog module |
+| `AppointmentNotifier` | `LoggingAppointmentNotifier` | logger (WhatsApp in CU-14) |
 | UI model | `HealthAdapter` | generated `HealthDto` |
 | `UiError` | `ApiErrorAdapter` | RTK Query error union |
 

@@ -25,6 +25,8 @@ pnpm codegen:check   # regenerate + fail if git sees a diff (CI)
 ## Rules
 
 - Commit generated files; never edit them (Biome ignores them).
+- A nullable reference to a named DTO is `nullableRef(SomeDtoSchema)`, never `SomeDtoSchema.nullable()`
+  ([ADR-0023](../adr/0023-openapi-3-1-nullable-refs.md)).
 - Change the API contract → run `pnpm codegen` in the same commit.
 - To customise caching (for example, invalidate tags after a mutation), use
   `mentoraApi.enhanceEndpoints({...})` in `src/model/api/`. Never edit the generated file.

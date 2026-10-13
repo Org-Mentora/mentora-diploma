@@ -29,6 +29,13 @@ test/                unit/ integration/ support/ (fakes: SpyView, FixedClock, ..
 - **contracts:** zod schemas with `.meta({ id: 'XxxDto' })` + `registerXxxContracts(registry)`.
 - **Cross-module:** only `#modules/<name>` (the index). `../../` is forbidden.
 - Only `AppConfig` reads `process.env`. Only composition roots call `getInstance()`.
+- **Auth (ADR-0018):** routers call `router.use(guard.requireActiveSubscription)`; views get the actor
+  with `ActorReader.from(res)` and pass `{ actor, ... }` to presenters. Every query is scoped by
+  `actor.professionalId` (ADR-0019); foreign data → `NotFoundError`.
+- **Generic view:** `new JsonHttpView<Dto>(new ExpressResponderAdapter(res), 201)` for simple JSON.
+- **Cross-module (ADR-0022):** owner exposes a query service in `index.ts`; the consumer Model declares
+  its own abstract class and an adapter in its `infrastructure/` implements it. Wire in `src/app/modules.ts`.
+- **Contracts:** nullable DTO refs use `nullableRef(Schema)` (ADR-0023).
 
 ## After changing contracts
 
