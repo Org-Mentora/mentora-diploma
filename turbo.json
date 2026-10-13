@@ -1,0 +1,32 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "ui": "stream",
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "openapi:generate": {
+      "cache": false
+    },
+    "generate": {
+      "dependsOn": ["@mentora/api#openapi:generate"],
+      "cache": false
+    },
+    "codegen": {
+      "dependsOn": ["@mentora/contracts#generate"],
+      "cache": false
+    }
+  }
+}
