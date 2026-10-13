@@ -9,4 +9,6 @@ export interface AppModule {
   readonly basePath: string;
   registerContracts(registry: ContractRegistry): void;
   createRouter(): Router;
+  /** Optional one-off work after the database connects (e.g. seeding reference data). */
+  onBootstrap?(): Promise<void>;
 }

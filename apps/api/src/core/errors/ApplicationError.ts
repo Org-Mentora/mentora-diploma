@@ -52,7 +52,14 @@ export class UnauthorizedError extends ApplicationError {
 export class ForbiddenError extends ApplicationError {
   readonly kind = 'forbidden';
 
-  constructor(message = 'You are not allowed to perform this action') {
-    super(message, 'FORBIDDEN');
+  constructor(message = 'You are not allowed to perform this action', code = 'FORBIDDEN') {
+    super(message, code);
+  }
+}
+
+/** The professional's trial or subscription no longer grants access (CU-01 step 7). */
+export class SubscriptionInactiveError extends ForbiddenError {
+  constructor() {
+    super('Your subscription is not active. Choose a plan to continue.', 'SUBSCRIPTION_INACTIVE');
   }
 }

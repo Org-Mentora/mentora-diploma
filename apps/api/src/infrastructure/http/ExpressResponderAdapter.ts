@@ -1,5 +1,5 @@
 import type { Response } from 'express';
-import type { HttpResponder } from '#core/view/HttpResponder';
+import type { CookieOptions, HttpResponder } from '#core/view/HttpResponder';
 
 /** Adapter (ADR-0007): lets passive views write to an Express `Response`. */
 export class ExpressResponderAdapter implements HttpResponder {
@@ -11,5 +11,19 @@ export class ExpressResponderAdapter implements HttpResponder {
 
   noContent(): void {
     this.response.status(204).end();
+  }
+
+  setCookie(name: string, value: string, options: CookieOptions): void {
+    this.response.cookie(name, value, {
+      maxAge: options.maxAgeSeconds * 1000,
+      httpOnly: options.httpOnly,
+      secure: options.secure,
+      sameSite: options.sameSite,
+      path: '/',
+    });
+  }
+
+  clearCookie(name: string): void {
+    this.response.clearCookie(name, { path: '/' });
   }
 }

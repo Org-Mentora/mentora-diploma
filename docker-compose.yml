@@ -30,6 +30,9 @@ services:
       MONGO_URI: mongodb://mongo:27017/mentora
       LOG_LEVEL: info
       CORS_ORIGIN: http://localhost:8080
+      # Local default only: set JWT_SECRET in .env for any shared deployment (ADR-0018).
+      JWT_SECRET: ${JWT_SECRET:-compose-local-jwt-secret-change-me-0123456789}
+      TRIAL_DAYS: ${TRIAL_DAYS:-14}
     ports:
       - "3000:3000"
     depends_on:

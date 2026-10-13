@@ -18,6 +18,8 @@ export interface RouteContract {
   operationId: string;
   summary: string;
   tags: string[];
+  /** Requires the session cookie. Adds the security requirement and the 401/403 responses. */
+  auth?: boolean;
   request?: {
     params?: ZodObject;
     query?: ZodObject;

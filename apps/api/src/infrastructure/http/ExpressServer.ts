@@ -1,4 +1,5 @@
 import type { Server } from 'node:http';
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express } from 'express';
 import helmet from 'helmet';
@@ -40,6 +41,7 @@ export class ExpressServer {
     app.use(helmet({ contentSecurityPolicy: false }));
     app.use(cors({ origin: corsOrigin.split(','), credentials: true }));
     app.use(express.json({ limit: '1mb' }));
+    app.use(cookieParser());
     if (!quiet) {
       app.use(pinoHttp({ logger: logger.native }));
     }
