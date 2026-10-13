@@ -1,0 +1,13 @@
+# Git hooks (ADR-0013). Installed automatically by `pnpm install`.
+pre-commit:
+  parallel: true
+  commands:
+    biome:
+      glob: "*.{js,mjs,ts,tsx,json,jsonc,css,grit}"
+      run: pnpm exec biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  commands:
+    conventional-commits:
+      run: node tools/git/commit-msg.mjs {1}

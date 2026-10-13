@@ -1,0 +1,14 @@
+// ADR-0006: a class declaring `static getInstance()` is a Singleton and must not be
+// constructible from outside, so it must declare a private constructor.
+language js
+
+JsClassDeclaration() as $class where {
+  $class <: contains JsMethodClassMember(name=$name, modifiers=$methodModifiers) where {
+    $name <: `getInstance`,
+    $methodModifiers <: contains `static`
+  },
+  $class <: not contains JsConstructorClassMember(modifiers=$modifiers) where {
+    $modifiers <: contains `private`
+  },
+  register_diagnostic(span=$class, message="[arch] Singleton classes (with static getInstance) must declare a private constructor (ADR-0006).", severity="error")
+}

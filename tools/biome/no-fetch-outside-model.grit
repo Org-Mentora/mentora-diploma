@@ -1,0 +1,7 @@
+// ADR-0010 / ADR-0011: HTTP calls go through the generated RTK Query API in src/model.
+// Views, ViewModels and shared UI must never call fetch() directly.
+language js
+
+`fetch($args)` as $call where {
+  register_diagnostic(span=$call, message="[arch][MVVM] Do not call fetch() directly; use the generated RTK Query hooks (ADR-0010).", severity="error")
+}
