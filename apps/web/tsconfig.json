@@ -1,0 +1,10 @@
+{
+  "extends": "@mentora/tsconfig/react.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node", "@testing-library/jest-dom/vitest"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "scripts", "vite.config.ts"]
+}
