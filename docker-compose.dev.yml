@@ -1,0 +1,40 @@
+# Containerised development with hot reload (ADR-0014):
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml watch
+#   web (Vite) http://localhost:5173 · api http://localhost:3000
+services:
+  api:
+    build:
+      target: dev
+    environment:
+      NODE_ENV: development
+      CORS_ORIGIN: http://localhost:5173
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health > /dev/null || exit 1"]
+      interval: 10s
+      retries: 10
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/api/src
+          target: /repo/apps/api/src
+        - action: rebuild
+          path: ./apps/api/package.json
+
+  web:
+    build:
+      target: dev
+    environment:
+      VITE_API_PROXY: http://api:3000
+    ports: !override
+      - "5173:5173"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5173/ > /dev/null || exit 1"]
+      interval: 10s
+      retries: 10
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/web/src
+          target: /repo/apps/web/src
+        - action: rebuild
+          path: ./apps/web/package.json
