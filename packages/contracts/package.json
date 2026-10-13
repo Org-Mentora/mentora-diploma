@@ -1,0 +1,18 @@
+{
+  "name": "@mentora/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Generated API contract: OpenAPI document and DTO types. Do not edit by hand.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./openapi.json": "./openapi.json"
+  },
+  "scripts": {
+    "generate": "openapi-typescript openapi.json --output src/dtos.generated.ts --root-types --root-types-no-schema-prefix"
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0",
+    "typescript": "6.0.3"
+  }
+}
