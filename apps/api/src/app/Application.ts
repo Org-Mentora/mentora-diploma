@@ -23,6 +23,13 @@ export class Application {
     return this.#openApiDocument;
   }
 
+  /** Runs each module's one-off startup work (e.g. seeding the DSM-5 catalog). */
+  async bootstrapModules(): Promise<void> {
+    for (const module of this.modules) {
+      await module.onBootstrap?.();
+    }
+  }
+
   createServer(options: { quiet?: boolean } = {}): ExpressServer {
     return new ExpressServer({
       modules: this.modules,

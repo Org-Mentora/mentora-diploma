@@ -11,7 +11,9 @@ async function bootstrap(): Promise<void> {
   await database.connect(env.MONGO_URI);
   logger.info('Connected to MongoDB');
 
-  const server = await new Application().createServer().listen(env.PORT);
+  const application = new Application();
+  await application.bootstrapModules();
+  const server = await application.createServer().listen(env.PORT);
   logger.info(`API listening on http://localhost:${env.PORT} (docs at /api/docs)`);
 
   const shutdown = async (signal: string): Promise<void> => {
