@@ -21,6 +21,265 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CU-03 Register a professional and start the free trial (sets the session cookie) */
+        post: operations["registerProfessional"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CU-01 Log in with email and password (sets the session cookie) */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Close the session (clears the session cookie) */
+        post: operations["logout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current session (works with an expired subscription) */
+        get: operations["getCurrentProfessional"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-05 Search patients by name, surname or DNI (all when q is empty) */
+        get: operations["searchPatients"];
+        put?: never;
+        /** CU-04 Register a patient */
+        post: operations["createPatient"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patients/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Patient profile */
+        get: operations["getPatient"];
+        /** CU-06 Update patient data */
+        put: operations["updatePatient"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patients/{id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** CU-07 Discharge or reactivate a patient */
+        patch: operations["changePatientStatus"];
+        trace?: never;
+    };
+    "/diagnoses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-11 Search the read-only DSM-5 catalog (max 50 results) */
+        get: operations["searchDiagnoses"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patients/{patientId}/clinical-record": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-08 Clinical record of a patient (consultations newest first) */
+        get: operations["getClinicalRecord"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patients/{patientId}/clinical-record/consultations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CU-09 Register a consultation with evolution, diagnosis (CU-11) and medication (CU-12) */
+        post: operations["registerConsultation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patients/{patientId}/clinical-record/consultations/{consultationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-08 Detail of one consultation */
+        get: operations["getConsultation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/patients/{patientId}/clinical-record/diagnoses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-11 Diagnosis history of a patient (newest first) */
+        get: operations["getDiagnosisHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-10 Agenda: appointments starting in a range (month or day) */
+        get: operations["listAppointments"];
+        put?: never;
+        /** CU-10 Schedule an appointment */
+        post: operations["scheduleAppointment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-10 Appointment detail */
+        get: operations["getAppointment"];
+        /** CU-10 Modify an appointment (time, duration, type, modality, notes) */
+        put: operations["rescheduleAppointment"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CU-10 Cancel an appointment */
+        post: operations["cancelAppointment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -53,6 +312,241 @@ export interface components {
                 details?: unknown;
             };
         };
+        /** @description The authenticated professional and their access */
+        SessionDto: {
+            professional: components["schemas"]["ProfessionalDto"];
+            subscription: components["schemas"]["SubscriptionDto"];
+        };
+        ProfessionalDto: {
+            /** Format: uuid */
+            id: string;
+            firstName: string;
+            lastName: string;
+            fullName: string;
+            /** Format: email */
+            email: string;
+            phone: string;
+            specialty: string;
+            licenseNumber: string;
+        };
+        SubscriptionDto: {
+            /** @enum {string} */
+            status: "trial" | "active" | "expired";
+            /** Format: date-time */
+            accessEndsAt: string | null;
+            daysLeft: number | null;
+        };
+        RegisterProfessionalRequestDto: {
+            firstName: string;
+            lastName: string;
+            /** Format: email */
+            email: string;
+            phone: string;
+            specialty: string;
+            licenseNumber: string;
+            password: string;
+        };
+        LoginRequestDto: {
+            /** Format: email */
+            email: string;
+            password: string;
+        };
+        PatientDto: {
+            /** Format: uuid */
+            id: string;
+            firstName: string;
+            lastName: string;
+            fullName: string;
+            dni: string;
+            /** Format: date */
+            birthDate: string | null;
+            age: number | null;
+            gender: string | null;
+            phone: string | null;
+            email: string | null;
+            address: string | null;
+            healthInsurance: string | null;
+            memberNumber: string | null;
+            familyContact: components["schemas"]["FamilyContactDto"] | null;
+            debt: number;
+            allergies: string[];
+            observations: string | null;
+            /** @enum {string} */
+            status: "active" | "discharged" | "inactive";
+            /** Format: date-time */
+            statusChangedAt: string;
+            /** @enum {string} */
+            statusOrigin: "manual" | "automatic";
+            /** Format: date-time */
+            registeredAt: string;
+        };
+        FamilyContactDto: {
+            name: string;
+            phone: string;
+        };
+        PatientInputDto: {
+            firstName: string;
+            lastName: string;
+            /** @example 30123456 */
+            dni: string;
+            /** Format: date */
+            birthDate?: string | null;
+            gender?: string | null;
+            phone?: string | null;
+            /** Format: email */
+            email?: string | null;
+            address?: string | null;
+            healthInsurance?: string | null;
+            memberNumber?: string | null;
+            familyContact?: components["schemas"]["FamilyContactDto"] | null;
+            debt?: number;
+            allergies?: string[];
+            observations?: string | null;
+        };
+        PatientSummaryDto: {
+            /** Format: uuid */
+            id: string;
+            fullName: string;
+            dni: string;
+            age: number | null;
+            phone: string | null;
+            healthInsurance: string | null;
+            /** @enum {string} */
+            status: "active" | "discharged" | "inactive";
+        };
+        ChangePatientStatusRequestDto: {
+            /** @enum {string} */
+            status: "active" | "discharged";
+        };
+        DiagnosisCatalogEntryDto: {
+            /** @example F41.1 */
+            code: string;
+            /** @example Generalized anxiety disorder */
+            name: string;
+            /** @example Anxiety disorders */
+            category: string;
+        };
+        /** @description Consultations newest first (CU-08) */
+        ClinicalRecordDto: {
+            /** Format: uuid */
+            patientId: string;
+            /** Format: date-time */
+            openedAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            consultations: components["schemas"]["ConsultationSummaryDto"][];
+        };
+        ConsultationSummaryDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            date: string;
+            /** @enum {string} */
+            type: "in_person" | "virtual";
+            reason: string;
+            diagnosis: components["schemas"]["AssignedDiagnosisDto"] | null;
+            medicationCount: number;
+        };
+        AssignedDiagnosisDto: {
+            /** @example F41.1 */
+            code: string;
+            name: string;
+            /** Format: date-time */
+            assignedAt: string;
+        };
+        /** @description Full detail of a consultation (CU-08 step 6) */
+        ConsultationDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            date: string;
+            /** @enum {string} */
+            type: "in_person" | "virtual";
+            reason: string;
+            observations: string | null;
+            evolution: string | null;
+            diagnosis: components["schemas"]["AssignedDiagnosisDto"] | null;
+            medications: components["schemas"]["MedicationDto"][];
+            /** Format: date-time */
+            recordedAt: string;
+        };
+        MedicationDto: {
+            name: string;
+            dose: string;
+            frequency: string;
+            duration: string;
+            indications: string | null;
+            /** Format: date-time */
+            prescribedAt: string;
+        };
+        RegisterConsultationRequestDto: {
+            /** Format: date-time */
+            date: string;
+            /** @enum {string} */
+            type: "in_person" | "virtual";
+            reason: string;
+            observations?: string | null;
+            evolution?: string | null;
+            diagnosisCode?: string | null;
+            medications?: components["schemas"]["MedicationInputDto"][];
+        };
+        MedicationInputDto: {
+            name: string;
+            dose: string;
+            frequency: string;
+            duration: string;
+            indications?: string | null;
+        };
+        DiagnosisHistoryEntryDto: {
+            /** Format: uuid */
+            consultationId: string;
+            /** Format: date-time */
+            consultationDate: string;
+            diagnosis: components["schemas"]["AssignedDiagnosisDto"];
+        };
+        AppointmentDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            patientId: string;
+            patientName: string;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            durationMinutes: number;
+            /** @enum {string} */
+            type: "first_visit" | "control" | "follow_up" | "medication" | "other";
+            /** @enum {string} */
+            modality: "in_person" | "virtual";
+            /** @enum {string} */
+            status: "scheduled" | "cancelled";
+            notes: string | null;
+            /** Format: date-time */
+            cancelledAt: string | null;
+        };
+        ScheduleAppointmentRequestDto: {
+            /** Format: uuid */
+            patientId: string;
+            /** Format: date-time */
+            startsAt: string;
+            durationMinutes: number;
+            /** @enum {string} */
+            type: "first_visit" | "control" | "follow_up" | "medication" | "other";
+            /** @enum {string} */
+            modality: "in_person" | "virtual";
+            notes?: string | null;
+        };
+        RescheduleAppointmentRequestDto: {
+            /** Format: date-time */
+            startsAt: string;
+            durationMinutes: number;
+            /** @enum {string} */
+            type: "first_visit" | "control" | "follow_up" | "medication" | "other";
+            /** @enum {string} */
+            modality: "in_person" | "virtual";
+            notes?: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -63,6 +557,28 @@ export interface components {
 export type HealthDto = components['schemas']['HealthDto'];
 export type ComponentHealthDto = components['schemas']['ComponentHealthDto'];
 export type ErrorResponseDto = components['schemas']['ErrorResponseDto'];
+export type SessionDto = components['schemas']['SessionDto'];
+export type ProfessionalDto = components['schemas']['ProfessionalDto'];
+export type SubscriptionDto = components['schemas']['SubscriptionDto'];
+export type RegisterProfessionalRequestDto = components['schemas']['RegisterProfessionalRequestDto'];
+export type LoginRequestDto = components['schemas']['LoginRequestDto'];
+export type PatientDto = components['schemas']['PatientDto'];
+export type FamilyContactDto = components['schemas']['FamilyContactDto'];
+export type PatientInputDto = components['schemas']['PatientInputDto'];
+export type PatientSummaryDto = components['schemas']['PatientSummaryDto'];
+export type ChangePatientStatusRequestDto = components['schemas']['ChangePatientStatusRequestDto'];
+export type DiagnosisCatalogEntryDto = components['schemas']['DiagnosisCatalogEntryDto'];
+export type ClinicalRecordDto = components['schemas']['ClinicalRecordDto'];
+export type ConsultationSummaryDto = components['schemas']['ConsultationSummaryDto'];
+export type AssignedDiagnosisDto = components['schemas']['AssignedDiagnosisDto'];
+export type ConsultationDto = components['schemas']['ConsultationDto'];
+export type MedicationDto = components['schemas']['MedicationDto'];
+export type RegisterConsultationRequestDto = components['schemas']['RegisterConsultationRequestDto'];
+export type MedicationInputDto = components['schemas']['MedicationInputDto'];
+export type DiagnosisHistoryEntryDto = components['schemas']['DiagnosisHistoryEntryDto'];
+export type AppointmentDto = components['schemas']['AppointmentDto'];
+export type ScheduleAppointmentRequestDto = components['schemas']['ScheduleAppointmentRequestDto'];
+export type RescheduleAppointmentRequestDto = components['schemas']['RescheduleAppointmentRequestDto'];
 export type $defs = Record<string, never>;
 export interface operations {
     getHealth: {
@@ -85,6 +601,980 @@ export interface operations {
             };
             /** @description Unexpected error */
             500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    registerProfessional: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RegisterProfessionalRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Account created and logged in */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDto"];
+                };
+            };
+            /** @description Invalid data or weak password */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Email or license number already registered */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["LoginRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Logged in */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDto"];
+                };
+            };
+            /** @description Missing fields */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Invalid email or password */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    logout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Logged out */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getCurrentProfessional: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current session */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    searchPatients: {
+        parameters: {
+            query?: {
+                /** @description Name, surname or DNI */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matching patients */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientSummaryDto"][];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    createPatient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatientInputDto"];
+            };
+        };
+        responses: {
+            /** @description Patient registered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description DNI already registered */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getPatient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Patient */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Patient not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    updatePatient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatientInputDto"];
+            };
+        };
+        responses: {
+            /** @description Patient updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Patient not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description DNI already registered */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    changePatientStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ChangePatientStatusRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Status changed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PatientDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Patient not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    searchDiagnoses: {
+        parameters: {
+            query?: {
+                /** @description Name or code fragment */
+                q?: string;
+                category?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Matching diagnoses */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiagnosisCatalogEntryDto"][];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getClinicalRecord: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Clinical record */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClinicalRecordDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Patient or consultation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    registerConsultation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RegisterConsultationRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Consultation registered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsultationDto"];
+                };
+            };
+            /** @description Invalid data or unknown diagnosis code */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Patient or consultation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getConsultation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: string;
+                consultationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Consultation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsultationDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Patient or consultation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getDiagnosisHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Diagnosis history */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiagnosisHistoryEntryDto"][];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Patient or consultation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    listAppointments: {
+        parameters: {
+            query: {
+                /** @description Inclusive start of the range */
+                from: string;
+                /** @description Exclusive end of the range (max 62 days) */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Appointments ordered by start */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentDto"][];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    scheduleAppointment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ScheduleAppointmentRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Appointment scheduled */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Appointment or patient not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Time slot already taken, or appointment cancelled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getAppointment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Appointment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Appointment or patient not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    rescheduleAppointment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RescheduleAppointmentRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Appointment updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Appointment or patient not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Time slot already taken, or appointment cancelled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    cancelAppointment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Appointment cancelled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppointmentDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Appointment or patient not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Time slot already taken, or appointment cancelled */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
