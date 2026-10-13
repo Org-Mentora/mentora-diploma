@@ -6,6 +6,10 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
  */
 export const baseApi = createApi({
   reducerPath: 'api',
-  baseQuery: fetchBaseQuery({ baseUrl: import.meta.env.VITE_API_URL ?? '/api' }),
+  // `include` sends the httpOnly session cookie (ADR-0018).
+  baseQuery: fetchBaseQuery({
+    baseUrl: import.meta.env.VITE_API_URL ?? '/api',
+    credentials: 'include',
+  }),
   endpoints: () => ({}),
 });
