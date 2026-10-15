@@ -15,6 +15,7 @@ import {
 import { CatalogDiagnosisResolver } from './infrastructure/CatalogDiagnosisResolver';
 import { MongooseClinicalRecordRepository } from './infrastructure/MongooseClinicalRecordRepository';
 import { PatientDirectoryLookup } from './infrastructure/PatientDirectoryLookup';
+import type { ClinicalRecordRepository } from './model/ClinicalRecordRepository';
 import { ClinicalRecordService } from './model/ClinicalRecordService';
 import type { ClinicalRecordPresenterFactory } from './presenter/ClinicalRecordPresenterFactory';
 import { GetClinicalRecordPresenter } from './presenter/GetClinicalRecordPresenter';
@@ -28,6 +29,8 @@ export interface ClinicalRecordsModuleDependencies {
   clock: Clock;
   patients: PatientDirectory;
   catalog: DiagnosisCatalog;
+  /** Defaults to MongoDB; tests may pass an in-memory implementation. */
+  repository?: ClinicalRecordRepository;
 }
 
 /** Composition root of the clinical record module (CU-08, CU-09, CU-11, CU-12). */
@@ -37,7 +40,7 @@ export class ClinicalRecordsModule implements AppModule, ClinicalRecordPresenter
 
   constructor(private readonly deps: ClinicalRecordsModuleDependencies) {
     this.#service = new ClinicalRecordService(
-      new MongooseClinicalRecordRepository(),
+      deps.repository ?? new MongooseClinicalRecordRepository(),
       new PatientDirectoryLookup(deps.patients),
       new CatalogDiagnosisResolver(deps.catalog),
       deps.clock,
