@@ -13,6 +13,8 @@ import {
 import { LoggingAppointmentNotifier } from './infrastructure/LoggingAppointmentNotifier';
 import { MongooseAppointmentRepository } from './infrastructure/MongooseAppointmentRepository';
 import { PatientDirectoryNames } from './infrastructure/PatientDirectoryNames';
+import type { AppointmentNotifier } from './model/AppointmentNotifier';
+import type { AppointmentRepository } from './model/AppointmentRepository';
 import { AppointmentService } from './model/AppointmentService';
 import type { AppointmentPresenterFactory } from './presenter/AppointmentPresenterFactory';
 import { CancelAppointmentPresenter } from './presenter/CancelAppointmentPresenter';
@@ -27,6 +29,10 @@ export interface AppointmentsModuleDependencies {
   clock: Clock;
   patients: PatientDirectory;
   logger: AppLogger;
+  /** Defaults to MongoDB; tests may pass an in-memory implementation. */
+  repository?: AppointmentRepository;
+  /** Defaults to logging the notification until the WhatsApp adapter exists (CU-14). */
+  notifier?: AppointmentNotifier;
 }
 
 /** Composition root of the agenda module (CU-10). */
@@ -36,9 +42,10 @@ export class AppointmentsModule implements AppModule, AppointmentPresenterFactor
 
   constructor(private readonly deps: AppointmentsModuleDependencies) {
     this.#service = new AppointmentService(
-      new MongooseAppointmentRepository(),
+      deps.repository ?? new MongooseAppointmentRepository(),
       new PatientDirectoryNames(deps.patients),
-      new LoggingAppointmentNotifier(deps.logger.child({ module: 'appointments' })),
+      deps.notifier ??
+        new LoggingAppointmentNotifier(deps.logger.child({ module: 'appointments' })),
       deps.clock,
     );
   }
