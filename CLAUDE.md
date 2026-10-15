@@ -51,6 +51,7 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | Tooling | [0013](docs/adr/0013-biome-architecture-linting.md) | Biome 2: per-layer `noRestrictedImports` overrides, GritQL plugins, Lefthook | Accepted |
 | Backend | [0004](docs/adr/0004-backend-mvp-passive-view.md) | MVP Passive View per module: model / presenter / view / contracts / infrastructure | Accepted |
 | Backend | [0005](docs/adr/0005-backend-oop-conventions.md) | Classes, abstract classes owned by the Model, constructor injection, `ApplicationError` | Accepted |
+| Backend | [0024](docs/adr/0024-injectable-module-adapters.md) | `<Name>ModuleDependencies`: Model ports optional (`deps.x ?? new MongooseX()`); Singletons/clock from `modules.ts` | Accepted |
 | Backend | [0018](docs/adr/0018-authentication-session-cookie.md) | JWT (jose) in httpOnly cookie `mentora_session`; scrypt; `AuthGuard` 401/403 `SUBSCRIPTION_INACTIVE` | Accepted |
 | Backend | [0019](docs/adr/0019-per-professional-data-ownership.md) | Every aggregate scoped by `professionalId`; foreign data → 404; DNI unique per professional | Accepted |
 | Backend | [0020](docs/adr/0020-clinical-record-aggregate.md) | `ClinicalRecord` aggregate embeds append-only consultations (diagnosis/medication as VOs) | Accepted |

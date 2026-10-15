@@ -36,3 +36,4 @@ We record every architecturally significant decision as an ADR using the
 | [0021](0021-forms-in-viewmodels.md) | Forms live in ViewModels (react-hook-form + zod) | Accepted | frontend |
 | [0022](0022-cross-module-collaboration.md) | Cross-module collaboration through Model-owned abstractions | Accepted | backend |
 | [0023](0023-openapi-3-1-nullable-refs.md) | Emit OpenAPI 3.1 and declare nullable references explicitly | Accepted | api |
+| [0024](0024-injectable-module-adapters.md) | Injectable module adapters with production defaults | Accepted | backend |
