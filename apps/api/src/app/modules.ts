@@ -1,6 +1,7 @@
 import { type Clock, SystemClock } from '#core/model/Clock';
 import type { AppModule } from '#core/module/AppModule';
 import { AppConfig } from '#infrastructure/config/AppConfig';
+import { MongoConnection } from '#infrastructure/database/MongoConnection';
 import { AuthGuard } from '#infrastructure/http/AuthGuard';
 import { SessionCookie } from '#infrastructure/http/SessionCookie';
 import { Logger } from '#infrastructure/logger/Logger';
@@ -10,7 +11,7 @@ import { AppointmentsModule } from '#modules/appointments';
 import { AuthModule } from '#modules/auth';
 import { ClinicalRecordsModule } from '#modules/clinical-records';
 import { DiagnosisCatalogModule } from '#modules/diagnosis-catalog';
-import { HealthModule } from '#modules/health';
+import { HealthModule, MongoHealthIndicator } from '#modules/health';
 import { PatientsModule } from '#modules/patients';
 
 export interface ModuleOptions {
@@ -33,7 +34,10 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
   const diagnoses = new DiagnosisCatalogModule(guard);
 
   return [
-    new HealthModule(),
+    new HealthModule({
+      indicators: [new MongoHealthIndicator(MongoConnection.getInstance())],
+      clock,
+    }),
     new AuthModule({
       guard,
       cookie: new SessionCookie(config.isProduction, env.SESSION_TTL_SECONDS),

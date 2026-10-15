@@ -3,7 +3,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { OpenApiRegistry } from '#infrastructure/openapi/OpenApiRegistry';
 import { Application } from '../../src/app/Application';
 import { HealthModule } from '../../src/modules/health/HealthModule';
-import { HealthService } from '../../src/modules/health/model/HealthService';
 import { FixedClock, FixedUptime, StubIndicator } from '../support/fakes';
 
 describe('HTTP API', () => {
@@ -11,13 +10,11 @@ describe('HTTP API', () => {
 
   beforeAll(() => {
     OpenApiRegistry.resetInstance();
-    const health = new HealthModule(
-      new HealthService(
-        [new StubIndicator('mongodb', 'up'), new StubIndicator('cache', 'down')],
-        new FixedClock(new Date('2026-01-01T00:00:00.000Z')),
-        new FixedUptime(3),
-      ),
-    );
+    const health = new HealthModule({
+      indicators: [new StubIndicator('mongodb', 'up'), new StubIndicator('cache', 'down')],
+      clock: new FixedClock(new Date('2026-01-01T00:00:00.000Z')),
+      uptime: new FixedUptime(3),
+    });
     app = new Application([health]).createServer({ quiet: true }).app;
   });
 
