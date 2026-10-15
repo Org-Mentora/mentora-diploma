@@ -57,15 +57,19 @@ export function registerMentorContracts(registry: ContractRegistry): void {
 
 ## 6. Composition root and registration
 
-- `MentorModule implements AppModule, MentorPresenterFactory` wires
-  `new MentorService(new MongooseMentorRepository(), ...)`.
-- `index.ts` exports `MentorModule` and the DTO types.
-- Add `new MentorModule()` to `apps/api/src/app/modules.ts`.
+- `MentorModule implements AppModule, MentorPresenterFactory` takes one
+  `MentorModuleDependencies` object ([ADR-0024](../adr/0024-injectable-module-adapters.md)):
+  shared collaborators (`guard`, `clock`) are required, Model ports are optional
+  (`repository?: MentorRepository`), and it wires
+  `new MentorService(deps.repository ?? new MongooseMentorRepository(), deps.clock)`.
+- `index.ts` exports `MentorModule`, `MentorModuleDependencies` and the DTO types.
+- Add `new MentorModule({ guard, clock })` to `apps/api/src/app/modules.ts`.
 
 ## 7. Tests, codegen and docs
 
 - `test/unit/<module>-presenter.test.ts` (SpyView), `test/integration/<module>.http.test.ts`
-  (supertest), and repository tests with mongodb-memory-server.
+  (supertest), and repository tests with mongodb-memory-server. Add an in-memory repository to
+  `test/support/inMemory.ts` and wire it in `test/integration/in-memory.http.test.ts`.
 - `pnpm codegen`, then commit `openapi.json`, `dtos.generated.ts` and `mentoraApi.ts`.
 - Add the endpoints to `docs/api/README.md`. Add an ADR if you introduced a new decision.
 - `pnpm lint && pnpm typecheck && pnpm test`.

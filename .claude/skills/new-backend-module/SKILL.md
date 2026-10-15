@@ -35,9 +35,12 @@ Read first: `apps/api/CLAUDE.md`, `docs/guides/add-backend-module.md`. Copy patt
    - `<M>Routes`: per route, `new XHttpView(new ExpressResponderAdapter(res))`, then
      `InputParser.parse(Schema, req.body|params|query)`, then `factory.useCase(view).present(input)`.
 7. **Composition root** `<M>Module implements AppModule, <M>PresenterFactory`, plus `index.ts`
-   exporting the module and DTO types. Register it in `src/app/modules.ts`.
+   exporting the module, its `<M>ModuleDependencies` and DTO types. Model ports are optional
+   dependencies defaulting to the Mongoose adapter (`deps.repository ?? new Mongoose<X>Repository()`);
+   Singletons and the clock come from `src/app/modules.ts` (ADR-0024). Register it there.
 8. **Tests**: presenter unit test with `SpyView` (`test/support/fakes.ts`), HTTP test with
-   supertest, and repository test with `mongodb-memory-server`.
+   supertest, repository test with `mongodb-memory-server`, and an in-memory repository in
+   `test/support/inMemory.ts` wired into `test/integration/in-memory.http.test.ts`.
 9. Run `pnpm codegen` (root) and commit the regenerated contract files.
    Update the endpoint table in `docs/api/README.md`.
 10. Run `pnpm lint && pnpm typecheck && pnpm test`. If Biome reports `[arch]`, move the code to

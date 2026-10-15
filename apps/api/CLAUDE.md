@@ -36,6 +36,9 @@ test/                unit/ integration/ support/ (fakes: SpyView, FixedClock, ..
 - **Cross-module (ADR-0022):** owner exposes a query service in `index.ts`; the consumer Model declares
   its own abstract class and an adapter in its `infrastructure/` implements it. Wire in `src/app/modules.ts`.
 - **Contracts:** nullable DTO refs use `nullableRef(Schema)` (ADR-0023).
+- **Module dependencies (ADR-0024):** one `<Name>ModuleDependencies` object. Model ports are
+  optional and default to the Mongoose adapter (`deps.repository ?? new MongooseXRepository()`);
+  the clock, guard, logger and Singleton-backed adapters come from `src/app/modules.ts`.
 
 ## After changing contracts
 
@@ -44,4 +47,5 @@ test/                unit/ integration/ support/ (fakes: SpyView, FixedClock, ..
 ## Tests
 
 Presenter: `SpyView` + fakes. HTTP: supertest on `new Application([module]).createServer({ quiet: true }).app`.
-Repositories: `mongodb-memory-server`.
+Repositories: `mongodb-memory-server`. Whole API without Mongo: in-memory adapters in
+`test/support/inMemory.ts`, wired in `test/integration/in-memory.http.test.ts`.
