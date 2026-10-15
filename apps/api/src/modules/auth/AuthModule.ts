@@ -10,6 +10,7 @@ import type { SessionCookie } from '#infrastructure/http/SessionCookie';
 import { registerAuthContracts, type SessionDto } from './contracts/auth.contracts';
 import { MongooseProfessionalRepository } from './infrastructure/MongooseProfessionalRepository';
 import { AuthService } from './model/AuthService';
+import type { ProfessionalRepository } from './model/ProfessionalRepository';
 import type { AuthPresenterFactory } from './presenter/AuthPresenterFactory';
 import { GetCurrentProfessionalPresenter } from './presenter/GetCurrentProfessionalPresenter';
 import { LoginPresenter } from './presenter/LoginPresenter';
@@ -24,6 +25,8 @@ export interface AuthModuleDependencies {
   tokens: TokenService;
   clock: Clock;
   trialDays: number;
+  /** Defaults to MongoDB; tests may pass an in-memory implementation. */
+  repository?: ProfessionalRepository;
 }
 
 /** Composition root of the auth module (CU-01, CU-03). */
@@ -33,7 +36,7 @@ export class AuthModule implements AppModule, AuthPresenterFactory {
 
   constructor(private readonly deps: AuthModuleDependencies) {
     this.#service = new AuthService(
-      new MongooseProfessionalRepository(),
+      deps.repository ?? new MongooseProfessionalRepository(),
       deps.hasher,
       deps.tokens,
       deps.clock,
