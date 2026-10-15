@@ -30,7 +30,7 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
   const tokens = new JoseTokenService(env.JWT_SECRET, env.SESSION_TTL_SECONDS);
   const guard = new AuthGuard(tokens, clock);
 
-  const patients = new PatientsModule(guard, clock);
+  const patients = new PatientsModule({ guard, clock });
   const diagnoses = new DiagnosisCatalogModule(guard);
 
   return [

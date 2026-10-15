@@ -11,6 +11,7 @@ import {
 } from './contracts/patients.contracts';
 import { MongoosePatientRepository } from './infrastructure/MongoosePatientRepository';
 import { PatientDirectory } from './model/PatientDirectory';
+import type { PatientRepository } from './model/PatientRepository';
 import { PatientService } from './model/PatientService';
 import { ChangePatientStatusPresenter } from './presenter/ChangePatientStatusPresenter';
 import { CreatePatientPresenter } from './presenter/CreatePatientPresenter';
@@ -20,6 +21,13 @@ import { SearchPatientsPresenter } from './presenter/SearchPatientsPresenter';
 import { UpdatePatientPresenter } from './presenter/UpdatePatientPresenter';
 import { PatientRoutes } from './view/PatientRoutes';
 
+export interface PatientsModuleDependencies {
+  guard: AuthGuard;
+  clock: Clock;
+  /** Defaults to MongoDB; tests may pass an in-memory implementation. */
+  repository?: PatientRepository;
+}
+
 /** Composition root of the patients module (CU-04..CU-07). */
 export class PatientsModule implements AppModule, PatientPresenterFactory {
   readonly basePath = '/patients';
@@ -27,12 +35,9 @@ export class PatientsModule implements AppModule, PatientPresenterFactory {
   readonly directory: PatientDirectory;
   readonly #service: PatientService;
 
-  constructor(
-    private readonly guard: AuthGuard,
-    clock: Clock,
-  ) {
-    const repository = new MongoosePatientRepository();
-    this.#service = new PatientService(repository, clock);
+  constructor(private readonly deps: PatientsModuleDependencies) {
+    const repository = deps.repository ?? new MongoosePatientRepository();
+    this.#service = new PatientService(repository, deps.clock);
     this.directory = new PatientDirectory(repository);
   }
 
@@ -41,7 +46,7 @@ export class PatientsModule implements AppModule, PatientPresenterFactory {
   }
 
   createRouter(): Router {
-    return new PatientRoutes(this, this.guard).build();
+    return new PatientRoutes(this, this.deps.guard).build();
   }
 
   createPatient(view: View<PatientDto>): CreatePatientPresenter {
