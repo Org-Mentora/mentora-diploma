@@ -31,7 +31,7 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
   const guard = new AuthGuard(tokens, clock);
 
   const patients = new PatientsModule({ guard, clock });
-  const diagnoses = new DiagnosisCatalogModule(guard);
+  const diagnoses = new DiagnosisCatalogModule({ guard });
 
   return [
     new HealthModule({
