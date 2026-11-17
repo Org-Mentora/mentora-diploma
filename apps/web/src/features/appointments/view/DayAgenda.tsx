@@ -12,7 +12,6 @@ interface DayAgendaProps {
   onCreate: () => void;
 }
 
-/** CU-10 step 5: the selected day's appointments in chronological order. */
 export function DayAgenda({ title, items, onOpen, onCreate }: DayAgendaProps) {
   return (
     <div className="grid content-start gap-3">

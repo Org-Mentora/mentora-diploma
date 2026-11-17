@@ -1,3 +1,4 @@
+import { VirtualMeetingButton } from '@/features/virtual-consultations';
 import { Button } from '@/shared/ui/button';
 import {
   Dialog,
@@ -19,7 +20,6 @@ interface AppointmentDialogProps {
   onClose: () => void;
 }
 
-/** CU-10: create (step 7), modify (step 9) or cancel (step 10) an appointment. */
 export function AppointmentDialog({ appointmentId, day, onClose }: AppointmentDialogProps) {
   const vm = useAppointmentFormViewModel({ appointmentId, day, onDone: onClose });
   const { errors } = vm.form.formState;
@@ -113,6 +113,16 @@ export function AppointmentDialog({ appointmentId, day, onClose }: AppointmentDi
             <Textarea id="notes" disabled={readOnly} {...vm.form.register('notes')} />
           </FormField>
         </form>
+
+        {vm.virtualMeeting && (
+          <div className="flex flex-wrap items-center gap-3 rounded-md border bg-muted/40 p-3 text-sm">
+            <span className="text-muted-foreground">Virtual appointment (CU-15):</span>
+            <VirtualMeetingButton
+              patientId={vm.virtualMeeting.patientId}
+              appointmentId={vm.virtualMeeting.appointmentId}
+            />
+          </div>
+        )}
 
         {vm.error && (
           <p role="alert" className="text-destructive text-sm">

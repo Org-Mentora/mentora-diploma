@@ -33,7 +33,7 @@ export interface AgendaViewModel {
   closeDialog: () => void;
 }
 
-/** CU-10 Manage appointments and agenda: month calendar + agenda of the selected day. */
+// ViewModel
 export function useAgendaViewModel(today: Date = new Date()): AgendaViewModel {
   const [month, setMonth] = useState(() => startOfMonth(today));
   const [selectedDay, setSelectedDay] = useState(() => startOfDay(today));

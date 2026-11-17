@@ -6,7 +6,6 @@ import { AppointmentDialog } from './AppointmentDialog';
 import { DayAgenda } from './DayAgenda';
 import { MonthCalendar } from './MonthCalendar';
 
-/** CU-10 Manage appointments and agenda. */
 export function AgendaPage() {
   const vm = useAgendaViewModel();
 
