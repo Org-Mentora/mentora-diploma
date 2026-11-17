@@ -1,7 +1,6 @@
 import type { ComponentProps } from 'react';
 import { cn } from '@/shared/lib/utils';
 
-/** Native select styled like the shadcn inputs (accessible and form-friendly). */
 function NativeSelect({ className, ...props }: ComponentProps<'select'>) {
   return (
     <select
