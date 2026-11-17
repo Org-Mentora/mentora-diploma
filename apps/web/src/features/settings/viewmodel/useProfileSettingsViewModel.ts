@@ -99,8 +99,13 @@ export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
       }
     },
     removeLogo: async () => {
-      await remove().unwrap();
-      toast.success('Logo removed. Prescriptions will use the default logo.');
+      setLogoError(null);
+      try {
+        await remove().unwrap();
+        toast.success('Logo removed. Prescriptions will use the default logo.');
+      } catch (caught) {
+        setLogoError(ApiErrorAdapter.toUiError(caught)?.message ?? 'The logo could not be removed');
+      }
     },
   };
 }
