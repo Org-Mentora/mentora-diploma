@@ -8,9 +8,12 @@ export interface ProfessionalDocument extends MongoDocument {
   phone: string;
   specialty: string;
   licenseNumber: string;
+  offices?: string[];
   passwordHash: string;
-  subscription: { plan: 'trial' | 'paid'; endsAt: Date | null };
+  passwordChangedAt?: Date | null;
+  logoUpdatedAt?: Date | null;
   registeredAt: Date;
+  updatedAt?: Date;
 }
 
 const schema = new Schema<ProfessionalDocument>(
@@ -22,12 +25,12 @@ const schema = new Schema<ProfessionalDocument>(
     phone: { type: String, required: true },
     specialty: { type: String, required: true },
     licenseNumber: { type: String, required: true, unique: true },
+    offices: { type: [String], default: [] },
     passwordHash: { type: String, required: true },
-    subscription: {
-      plan: { type: String, enum: ['trial', 'paid'], required: true },
-      endsAt: { type: Date, default: null },
-    },
+    passwordChangedAt: { type: Date, default: null },
+    logoUpdatedAt: { type: Date, default: null },
     registeredAt: { type: Date, required: true },
+    updatedAt: { type: Date },
   },
   { versionKey: false },
 );

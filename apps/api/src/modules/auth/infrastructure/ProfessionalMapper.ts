@@ -1,8 +1,8 @@
 import type { DataMapper } from '#core/model/DataMapper';
 import { Professional } from '../model/Professional';
-import { Subscription } from '../model/Subscription';
 import type { ProfessionalDocument } from './ProfessionalSchema';
 
+// Data Mapper
 export class ProfessionalMapper implements DataMapper<Professional, ProfessionalDocument> {
   toDomain(record: ProfessionalDocument): Professional {
     return Professional.restore(record._id, {
@@ -12,9 +12,12 @@ export class ProfessionalMapper implements DataMapper<Professional, Professional
       phone: record.phone,
       specialty: record.specialty,
       licenseNumber: record.licenseNumber,
+      offices: [...(record.offices ?? [])],
       passwordHash: record.passwordHash,
-      subscription: Subscription.restore(record.subscription.plan, record.subscription.endsAt),
+      passwordChangedAt: record.passwordChangedAt ?? null,
+      logoUpdatedAt: record.logoUpdatedAt ?? null,
       registeredAt: record.registeredAt,
+      updatedAt: record.updatedAt ?? record.registeredAt,
       dni: null,
       birthDate: null,
       gender: null,
@@ -28,15 +31,15 @@ export class ProfessionalMapper implements DataMapper<Professional, Professional
       firstName: entity.firstName,
       lastName: entity.lastName,
       email: entity.email,
-      phone: entity.phone ?? '',
+      phone: entity.phone,
       specialty: entity.specialty,
       licenseNumber: entity.licenseNumber,
+      offices: [...entity.offices],
       passwordHash: entity.passwordHash,
-      subscription: {
-        plan: entity.subscription.plan,
-        endsAt: entity.subscription.accessEndsAt,
-      },
+      passwordChangedAt: entity.passwordChangedAt,
+      logoUpdatedAt: entity.logoUpdatedAt,
       registeredAt: entity.registeredAt,
+      updatedAt: entity.updatedAt,
     };
   }
 }

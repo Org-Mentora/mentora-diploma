@@ -1,10 +1,8 @@
 import { ValidationError } from '#core/errors/ApplicationError';
 
-/** Security requirements for passwords (CU-03, and later CU-02/CU-17). */
 export class PasswordPolicy {
   static readonly MIN_LENGTH = 8;
 
-  /** Returns the unmet criteria; empty when the password is acceptable. */
   static unmetCriteria(password: string): string[] {
     const unmet: string[] = [];
     if (password.length < PasswordPolicy.MIN_LENGTH) {
@@ -19,10 +17,10 @@ export class PasswordPolicy {
     return unmet;
   }
 
-  static assertSatisfiedBy(password: string): void {
+  static assertSatisfiedBy(password: string, field = 'password'): void {
     const unmet = PasswordPolicy.unmetCriteria(password);
     if (unmet.length > 0) {
-      throw new ValidationError(`Password must contain ${unmet.join(', ')}`, { unmet });
+      throw new ValidationError(`Password must contain ${unmet.join(', ')}`, { field, unmet });
     }
   }
 }

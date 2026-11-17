@@ -4,7 +4,7 @@ import type { RegisterProfessionalRequestDto } from '../contracts/auth.contracts
 import type { AuthService } from '../model/AuthService';
 import { type SessionResult, SessionViewModel } from './SessionViewModel';
 
-/** CU-03 Register professional: creates the account, starts the trial and opens a session. */
+// Presenter
 export class RegisterProfessionalPresenter extends Presenter<
   RegisterProfessionalRequestDto,
   SessionResult
@@ -17,10 +17,10 @@ export class RegisterProfessionalPresenter extends Presenter<
   }
 
   protected async execute(input: RegisterProfessionalRequestDto): Promise<SessionResult> {
-    const professional = await this.auth.register(input);
+    const subject = await this.auth.register({ ...input, offices: input.offices ?? [] });
     return {
-      token: await this.auth.issueSessionToken(professional),
-      session: SessionViewModel.from(professional, this.auth.now),
+      token: await this.auth.issueSessionToken(subject),
+      session: SessionViewModel.from(subject),
     };
   }
 }
