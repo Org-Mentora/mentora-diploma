@@ -1,5 +1,3 @@
-// Validates the first line of a commit message against Conventional Commits (ADR-0013).
-// Invoked by lefthook: `node tools/git/commit-msg.mjs <path-to-COMMIT_EDITMSG>`.
 import { readFileSync } from 'node:fs';
 
 const TYPES = 'feat|fix|docs|chore|refactor|test|build|ci|perf|style|revert';

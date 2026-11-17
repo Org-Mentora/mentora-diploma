@@ -1,5 +1,3 @@
-// ADR-0006: a class declaring `static getInstance()` is a Singleton and must not be
-// constructible from outside, so it must declare a private constructor.
 language js
 
 JsClassDeclaration() as $class where {
