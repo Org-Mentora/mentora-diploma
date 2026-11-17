@@ -5,7 +5,6 @@ import type {
 import type { AppointmentSlot } from '../model/Appointment';
 import type { AgendaEntry } from '../model/AppointmentService';
 
-/** Translations between the appointment contracts and the Model. */
 export class AppointmentViewModel {
   static toDto({ appointment, patientName }: AgendaEntry): AppointmentDto {
     return {

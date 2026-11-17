@@ -2,6 +2,7 @@ import type { DataMapper } from '#core/model/DataMapper';
 import { Appointment } from '../model/Appointment';
 import type { AppointmentDocument } from './AppointmentSchema';
 
+// Data Mapper
 export class AppointmentMapper implements DataMapper<Appointment, AppointmentDocument> {
   toDomain(record: AppointmentDocument): Appointment {
     return Appointment.restore(record._id, {
@@ -16,6 +17,7 @@ export class AppointmentMapper implements DataMapper<Appointment, AppointmentDoc
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
       cancelledAt: record.cancelledAt,
+      reminderSentAt: record.reminderSentAt ?? null,
     });
   }
 
@@ -34,6 +36,7 @@ export class AppointmentMapper implements DataMapper<Appointment, AppointmentDoc
       createdAt: appointment.createdAt,
       updatedAt: appointment.updatedAt,
       cancelledAt: appointment.cancelledAt,
+      reminderSentAt: appointment.reminderSentAt,
     };
   }
 }

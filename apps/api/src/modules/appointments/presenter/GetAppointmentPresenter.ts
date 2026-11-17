@@ -10,7 +10,7 @@ export interface AppointmentRef {
   appointmentId: string;
 }
 
-/** CU-10 step 8: appointment detail. */
+// Presenter
 export class GetAppointmentPresenter extends Presenter<AppointmentRef, AppointmentDto> {
   constructor(
     view: View<AppointmentDto>,

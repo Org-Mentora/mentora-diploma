@@ -6,6 +6,7 @@ import type { ListAppointmentsPresenter } from './ListAppointmentsPresenter';
 import type { RescheduleAppointmentPresenter } from './RescheduleAppointmentPresenter';
 import type { ScheduleAppointmentPresenter } from './ScheduleAppointmentPresenter';
 
+// Abstract Factory
 export interface AppointmentPresenterFactory {
   listAppointments(view: View<AppointmentDto[]>): ListAppointmentsPresenter;
   getAppointment(view: View<AppointmentDto>): GetAppointmentPresenter;

@@ -5,7 +5,6 @@ export interface AppointmentDocument extends MongoDocument {
   professionalId: string;
   patientId: string;
   startsAt: Date;
-  /** Denormalized so overlap checks are a single range query. */
   endsAt: Date;
   durationMinutes: number;
   type: 'first_visit' | 'control' | 'follow_up' | 'medication' | 'other';
@@ -15,6 +14,7 @@ export interface AppointmentDocument extends MongoDocument {
   createdAt: Date;
   updatedAt: Date;
   cancelledAt: Date | null;
+  reminderSentAt?: Date | null;
 }
 
 const schema = new Schema<AppointmentDocument>(
@@ -36,11 +36,13 @@ const schema = new Schema<AppointmentDocument>(
     createdAt: { type: Date, required: true },
     updatedAt: { type: Date, required: true },
     cancelledAt: { type: Date, default: null },
+    reminderSentAt: { type: Date, default: null },
   },
   { versionKey: false },
 );
 
 schema.index({ professionalId: 1, startsAt: 1 });
+schema.index({ status: 1, reminderSentAt: 1, startsAt: 1 });
 
 export const AppointmentModel = mongoose.model<AppointmentDocument>(
   'Appointment',

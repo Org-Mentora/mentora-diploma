@@ -13,7 +13,6 @@ import {
 } from '../contracts/appointments.contracts';
 import type { AppointmentPresenterFactory } from '../presenter/AppointmentPresenterFactory';
 
-/** HTTP entry points of CU-10. Every route requires an active subscription. */
 export class AppointmentRoutes {
   constructor(
     private readonly presenters: AppointmentPresenterFactory,
