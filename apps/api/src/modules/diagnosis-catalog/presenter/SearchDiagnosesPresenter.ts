@@ -8,7 +8,7 @@ export interface SearchDiagnosesInput {
   category: string | undefined;
 }
 
-/** CU-11 steps 2-5: filter the DSM-5 catalog. */
+// Presenter
 export class SearchDiagnosesPresenter extends Presenter<
   SearchDiagnosesInput,
   DiagnosisCatalogEntryDto[]

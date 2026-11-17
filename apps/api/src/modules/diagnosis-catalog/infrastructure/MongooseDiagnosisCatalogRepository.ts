@@ -10,7 +10,7 @@ function escapeRegex(term: string): string {
   return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Adapter (ADR-0007): read-only catalog on MongoDB. */
+// Repository, Adapter
 export class MongooseDiagnosisCatalogRepository implements DiagnosisCatalogRepository {
   async search(criteria: DiagnosisSearchCriteria): Promise<DiagnosisCatalogEntry[]> {
     const filter: QueryFilter<DiagnosisCatalogDocument> = { active: true };

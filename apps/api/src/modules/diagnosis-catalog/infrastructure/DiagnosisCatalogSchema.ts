@@ -1,7 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 
 export interface DiagnosisCatalogDocument {
-  /** ICD-10-CM code, e.g. `F41.1`. */
   _id: string;
   name: string;
   category: string;
