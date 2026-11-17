@@ -30,14 +30,8 @@ class MemoryNotifications extends NotificationRepository {
   async findById() {
     return null;
   }
-  async findAll() {
-    return this.saved;
-  }
   async save(notification: Notification) {
     this.saved.push(notification);
-  }
-  async delete() {
-    return false;
   }
   async findByPatient() {
     return this.saved;
@@ -208,14 +202,8 @@ describe('VirtualConsultationService (CU-15 step 2 alternative)', () => {
         async findById() {
           return null;
         }
-        async findAll() {
-          return saved;
-        }
         async save(meeting: VirtualMeeting) {
           saved.push(meeting);
-        }
-        async delete() {
-          return false;
         }
         async findByPatient() {
           return saved;

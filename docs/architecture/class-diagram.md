@@ -68,7 +68,6 @@ classDiagram
     +id: TId
     #props: TProps
     +equals(other) boolean
-    +snapshot() Readonly~TProps~
   }
   class ForbiddenError {
     +kind
@@ -131,9 +130,7 @@ classDiagram
   class Repository~TEntity, TId~ {
     <<abstract · Repository>>
     +findById(id)* Promise~TEntity | null~
-    +findAll()* Promise~TEntity[]~
     +save(entity)* Promise~void~
-    +delete(id)* Promise~boolean~
   }
   class ServiceUnavailableError {
     +kind
@@ -145,7 +142,6 @@ classDiagram
   }
   class TokenService {
     <<abstract>>
-    +ttlSeconds: number
     +issue(claims)* Promise~string~
     +verify(token)* Promise~SessionClaims | null~
   }
@@ -283,9 +279,7 @@ classDiagram
     -context: TransactionContext
     #session: ClientSession | null
     +findById(id) Promise~TEntity | null~
-    +findAll() Promise~TEntity[]~
     +save(entity) Promise~void~
-    +delete(id) Promise~boolean~
   }
   class MongoRateLimitStore {
     <<Adapter>>
@@ -1061,7 +1055,6 @@ classDiagram
     +openedAt: Date
     +updatedAt: Date
     +consultations: Consultation[]
-    +isEmpty: boolean
   }
   class ClinicalRecordMapper {
     <<Data Mapper>>

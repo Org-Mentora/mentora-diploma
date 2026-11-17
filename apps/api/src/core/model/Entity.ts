@@ -11,8 +11,4 @@ export abstract class Entity<TProps extends object, TId = string> {
     }
     return other.id === this.id;
   }
-
-  snapshot(): Readonly<TProps> {
-    return Object.freeze({ ...this.props });
-  }
 }

@@ -49,6 +49,8 @@ class MongooseNoteRepository extends MongooseRepository<Note, NoteDocument> {
   }
 }
 
+const texts = async () => (await NoteModel.find().lean()).map((n) => n.text);
+
 describe('MongooseRepository adapter', () => {
   let mongo: MongoMemoryReplSet;
   const connection = MongoConnection.getInstance();
@@ -71,17 +73,14 @@ describe('MongooseRepository adapter', () => {
     await NoteModel.deleteMany({});
   });
 
-  it('saves, finds, updates and deletes entities through the mapper', async () => {
+  it('saves, finds and updates entities through the mapper', async () => {
     const note = Note.create('first');
 
     await repository.save(note);
     expect((await repository.findById(note.id))?.text).toBe('first');
 
     await repository.save(Note.create('edited', note.id));
-    expect((await repository.findAll()).map((n) => n.text)).toEqual(['edited']);
-
-    expect(await repository.delete(note.id)).toBe(true);
-    expect(await repository.findById(note.id)).toBeNull();
+    expect((await repository.findById(note.id))?.text).toBe('edited');
   });
 
   it('pings the database through the connection singleton', async () => {
@@ -105,7 +104,7 @@ describe('MongooseRepository adapter', () => {
       });
 
       expect(result).toBe('done');
-      expect((await repository.findAll()).map((n) => n.text).sort()).toEqual(['a', 'b']);
+      expect((await texts()).sort()).toEqual(['a', 'b']);
     });
 
     it('rolls back every write when the unit of work throws', async () => {
@@ -115,7 +114,7 @@ describe('MongooseRepository adapter', () => {
       });
 
       await expect(failure).rejects.toThrow('boom');
-      expect(await repository.findAll()).toEqual([]);
+      expect(await texts()).toEqual([]);
     });
 
     it('sees its own writes inside, hides them outside until commit', async () => {
@@ -139,7 +138,7 @@ describe('MongooseRepository adapter', () => {
       });
 
       await expect(failure).rejects.toThrow('outer fails');
-      expect(await repository.findAll()).toEqual([]);
+      expect(await texts()).toEqual([]);
     });
 
     it('exposes the session only while a transaction runs', async () => {
