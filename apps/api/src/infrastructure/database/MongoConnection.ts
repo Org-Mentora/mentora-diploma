@@ -1,9 +1,6 @@
 import mongoose, { type Connection } from 'mongoose';
 
-/**
- * Singleton (ADR-0006): owns the single Mongoose connection of the process.
- * Repositories never call `mongoose.connect` themselves.
- */
+// Singleton
 export class MongoConnection {
   static #instance: MongoConnection | undefined;
 
@@ -19,6 +16,18 @@ export class MongoConnection {
       return;
     }
     await mongoose.connect(uri, { serverSelectionTimeoutMS: 5_000 });
+    await this.assertSupportsTransactions();
+  }
+
+  private async assertSupportsTransactions(): Promise<void> {
+    const hello = await mongoose.connection.db?.admin().command({ hello: 1 });
+    if (!hello?.setName && hello?.msg !== 'isdbgrid') {
+      await mongoose.disconnect();
+      throw new Error(
+        'MongoDB must run as a replica set to support transactions (ADR-0025). ' +
+          'Start it with `docker compose up -d mongo`.',
+      );
+    }
   }
 
   async disconnect(): Promise<void> {
@@ -33,7 +42,6 @@ export class MongoConnection {
     return mongoose.connection;
   }
 
-  /** Round-trips a `ping` command and returns its latency in milliseconds. */
   async ping(): Promise<number> {
     const db = mongoose.connection.db;
     if (!this.isConnected || !db) {
