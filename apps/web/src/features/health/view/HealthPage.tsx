@@ -4,7 +4,6 @@ import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { useHealthViewModel } from '../viewmodel/useHealthViewModel';
 
-/** View (MVVM): renders the ViewModel state and forwards user intents to its commands. */
 export function HealthPage() {
   const { health, isLoading, isRefreshing, error, refresh } = useHealthViewModel();
 

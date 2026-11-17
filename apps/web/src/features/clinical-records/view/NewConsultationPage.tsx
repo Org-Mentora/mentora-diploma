@@ -9,7 +9,6 @@ import { useNewConsultationViewModel } from '../viewmodel/useNewConsultationView
 import { DiagnosisPicker } from './DiagnosisPicker';
 import { MedicationFields } from './MedicationFields';
 
-/** CU-09 Register consultation (+ CU-11 diagnosis, CU-12 medication). */
 export function NewConsultationPage() {
   const vm = useNewConsultationViewModel();
   const { errors } = vm.form.formState;

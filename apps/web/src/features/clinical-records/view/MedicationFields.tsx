@@ -18,7 +18,6 @@ const COLUMNS = [
   { key: 'duration', label: 'Duration' },
 ] as const;
 
-/** CU-12: one row per prescribed medication; several can be added. */
 export function MedicationFields({ form, medications, onAdd }: MedicationFieldsProps) {
   const errors = form.formState.errors.medications;
 

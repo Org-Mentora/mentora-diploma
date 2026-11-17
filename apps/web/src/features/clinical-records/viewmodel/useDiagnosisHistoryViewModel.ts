@@ -12,7 +12,7 @@ export interface DiagnosisHistoryViewModel {
   error: UiError | null;
 }
 
-/** CU-11 step 10: diagnosis history of the patient. */
+// ViewModel
 export function useDiagnosisHistoryViewModel(patientId: string): DiagnosisHistoryViewModel {
   const { data, isLoading, error } = useGetDiagnosisHistoryQuery({ patientId });
   const items = useMemo(() => (data ? ClinicalRecordAdapter.toDiagnosisHistory(data) : []), [data]);

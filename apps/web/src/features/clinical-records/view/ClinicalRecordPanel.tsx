@@ -11,7 +11,6 @@ import {
 import { EmptyState } from '@/shared/ui/empty-state';
 import { useClinicalRecordViewModel } from '../viewmodel/useClinicalRecordViewModel';
 
-/** CU-08: consultations newest first; clicking one opens its full detail. */
 export function ClinicalRecordPanel({ patientId }: { patientId: string }) {
   const vm = useClinicalRecordViewModel(patientId);
 

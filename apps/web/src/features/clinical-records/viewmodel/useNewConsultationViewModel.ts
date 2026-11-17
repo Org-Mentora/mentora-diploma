@@ -26,7 +26,6 @@ import {
 } from '@/model/domain/clinical-records/consultation.form';
 import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
 
-/** Re-exported so views can type form props without importing the Model. */
 export type { ConsultationFormValues };
 
 export interface DiagnosisSearch {
@@ -52,7 +51,7 @@ export interface NewConsultationViewModel {
   cancel: () => void;
 }
 
-/** CU-09 Register consultation, with CU-11 (DSM-5 diagnosis) and CU-12 (medication). */
+// ViewModel
 export function useNewConsultationViewModel(): NewConsultationViewModel {
   const { patientId = '' } = useParams();
   const navigate = useNavigate();
@@ -66,7 +65,6 @@ export function useNewConsultationViewModel(): NewConsultationViewModel {
   });
   const medications = useFieldArray({ control: form.control, name: 'medications' });
 
-  // CU-11 steps 3-4: filter the catalog while the professional types.
   const [term, setTerm] = useState('');
   const debouncedTerm = useDebouncedValue(term.trim());
   const diagnoses = useSearchDiagnosesQuery(

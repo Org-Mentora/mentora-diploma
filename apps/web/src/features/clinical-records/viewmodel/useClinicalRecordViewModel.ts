@@ -22,7 +22,7 @@ export interface ClinicalRecordViewModel {
   closeConsultation: () => void;
 }
 
-/** CU-08 Consult clinical record: chronological list + detail of one consultation. */
+// ViewModel
 export function useClinicalRecordViewModel(patientId: string): ClinicalRecordViewModel {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const record = useGetClinicalRecordQuery({ patientId });
