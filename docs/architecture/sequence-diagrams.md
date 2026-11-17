@@ -249,17 +249,20 @@ sequenceDiagram
   participant S as AppointmentService
   participant T as TransactionManager
   participant PN as PatientDirectoryNames
+  participant L as AgendaLock (agenda_locks)
   participant AR as AppointmentRepository
-  participant N as WhatsAppAppointmentNotifier
+  participant N as NotificationAppointmentNotifier
   participant PD as PatientDirectory
   participant NC as NotificationCenter
   participant G as WhatsAppGateway (LocalWhatsAppOutbox or WhatsAppCloudApiGateway)
+  participant E as EmailGateway (MailEmailGateway)
   participant NR as NotificationRepository
 
   W->>S: POST /api/appointments {patientId, startsAt, duration, modality}
   S->>T: run
   activate T
   T->>PN: exists(professionalId, patientId)
+  S->>L: acquire(professionalId), a concurrent booking gets a write conflict and is retried
   S->>S: Appointment.schedule(...) (marks the reminder sent if it starts within 24 h)
   S->>AR: findScheduledOverlapping
   alt overlaps
@@ -270,11 +273,17 @@ sequenceDiagram
   deactivate T
   S->>N: notify('scheduled', appointment)
   N->>PD: contacts(professionalId, [patientId])
-  N->>NC: sendWhatsApp({phone, topic, body})
-  loop up to 2 attempts, stops on a permanent error
-    NC->>G: send(phone, body)
+  N->>NC: send({phone, email, topic, body})
+  opt the patient has a phone
+    loop up to 2 attempts, stops on a permanent error
+      NC->>G: send(phone, body)
+    end
+    NC->>NR: save(whatsapp Notification sent / failed)
   end
-  NC->>NR: save(Notification sent / failed / skipped)
+  opt no phone or WhatsApp failed, and the patient has an email
+    NC->>E: send(email, subject, body)
+    NC->>NR: save(email Notification sent / failed)
+  end
   S-->>W: 201 AppointmentDto
 ```
 
@@ -291,7 +300,7 @@ sequenceDiagram
   participant S as AppointmentService
   participant AR as AppointmentRepository
   participant T as TransactionManager
-  participant N as WhatsAppAppointmentNotifier
+  participant N as NotificationAppointmentNotifier
 
   SCH->>SCH: tick('appointments.send-reminders'), skip if still running
   SCH->>LK: acquire(name, leaseMs)

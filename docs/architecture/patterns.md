@@ -32,7 +32,7 @@ instance injected.
 | `TokenService` | `JoseTokenService` | `jose` (JWT HS256) |
 | `PatientLookup` / `PatientNames` | `PatientDirectoryLookup` / `PatientDirectoryNames` | patients module query service |
 | `DiagnosisResolver` | `CatalogDiagnosisResolver` | DSM-5 catalog module |
-| `AppointmentNotifier` | `WhatsAppAppointmentNotifier` | notifications module (CU-14) |
+| `AppointmentNotifier` | `NotificationAppointmentNotifier` | notifications module (CU-14) |
 | `TransactionManager` | `MongoTransactionManager` | Mongoose `connection.transaction` + `TransactionContext` |
 | `MailTransport` | `SmtpMailTransport` | nodemailer (Mailpit locally) |
 | `PasswordRecoveryNotifier` / `BillingNotifier` | `EmailPasswordRecoveryNotifier` / `EmailBillingNotifier` | `MailTransport` |
