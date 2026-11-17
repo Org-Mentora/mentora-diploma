@@ -15,9 +15,11 @@ import {
   type AppointmentDto,
   registerAppointmentContracts,
 } from './contracts/appointments.contracts';
+import { MongooseAgendaLock } from './infrastructure/MongooseAgendaLock';
 import { MongooseAppointmentRepository } from './infrastructure/MongooseAppointmentRepository';
 import { PatientDirectoryNames } from './infrastructure/PatientDirectoryNames';
 import { WhatsAppAppointmentNotifier } from './infrastructure/WhatsAppAppointmentNotifier';
+import type { AgendaLock } from './model/AgendaLock';
 import { AppointmentDirectory } from './model/AppointmentDirectory';
 import type { AppointmentNotifier } from './model/AppointmentNotifier';
 import type { AppointmentRepository } from './model/AppointmentRepository';
@@ -41,6 +43,7 @@ export interface AppointmentsModuleDependencies {
   context: TransactionContext;
   repository?: AppointmentRepository;
   notifier?: AppointmentNotifier;
+  lock?: AgendaLock;
 }
 
 const TEN_MINUTES_MS = 10 * 60 * 1000;
@@ -63,6 +66,7 @@ export class AppointmentsModule implements AppModule, AppointmentPresenterFactor
       deps.notifier ??
         new WhatsAppAppointmentNotifier(deps.patients, deps.notifications, deps.dates),
       deps.clock,
+      deps.lock ?? new MongooseAgendaLock(deps.context),
     );
   }
 

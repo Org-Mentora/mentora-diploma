@@ -50,6 +50,14 @@ describe('Appointments API (CU-10)', () => {
     expect(past.status).toBe(400);
   });
 
+  it('books a slot only once when the same slot is requested concurrently', async () => {
+    const responses = await Promise.all(
+      Array.from({ length: 5 }, () => schedule('2030-03-05T10:00:00.000Z')),
+    );
+
+    expect(responses.map((r) => r.status).sort()).toEqual([201, 409, 409, 409, 409]);
+  });
+
   it('lists the month ordered by start time', async () => {
     await schedule('2030-01-08T09:00:00.000Z', { type: 'first_visit', modality: 'virtual' }).expect(
       201,
