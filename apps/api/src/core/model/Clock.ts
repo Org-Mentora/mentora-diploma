@@ -1,4 +1,3 @@
-/** Time source abstraction so the Model stays deterministic in tests. */
 export abstract class Clock {
   abstract now(): Date;
 }

@@ -1,6 +1,5 @@
 import { Entity } from './Entity';
 
-/** Attributes shared by every person in the domain (`Persona` in the class diagram). */
 export interface PersonProps {
   firstName: string;
   lastName: string;
@@ -12,7 +11,7 @@ export interface PersonProps {
   address: string | null;
 }
 
-/** Base class of `Professional` and `Patient`. */
+// Entity
 export abstract class Person<TProps extends PersonProps> extends Entity<TProps> {
   get firstName(): string {
     return this.props.firstName;
@@ -50,7 +49,6 @@ export abstract class Person<TProps extends PersonProps> extends Entity<TProps> 
     return this.props.address;
   }
 
-  /** Age in whole years at `at`, or `null` when the birth date is unknown. */
   age(at: Date): number | null {
     const birth = this.props.birthDate;
     if (!birth) {

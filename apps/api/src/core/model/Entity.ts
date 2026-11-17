@@ -1,7 +1,4 @@
-/**
- * Base class for domain entities: objects with identity that outlive a single request.
- * Subclasses keep their state in `props` and expose behaviour through methods, never setters.
- */
+// Entity
 export abstract class Entity<TProps extends object, TId = string> {
   protected constructor(
     readonly id: TId,
@@ -15,7 +12,6 @@ export abstract class Entity<TProps extends object, TId = string> {
     return other.id === this.id;
   }
 
-  /** Read-only copy of the entity state, used by data mappers. */
   snapshot(): Readonly<TProps> {
     return Object.freeze({ ...this.props });
   }
