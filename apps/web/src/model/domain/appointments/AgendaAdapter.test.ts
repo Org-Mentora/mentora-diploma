@@ -20,7 +20,6 @@ function appointment(start: Date, overrides: Partial<AppointmentDto> = {}): Appo
   };
 }
 
-// Local dates, so the tests do not depend on the machine time zone.
 const january = new Date(2030, 0, 1);
 const tenth = new Date(2030, 0, 10);
 const appointments = [
@@ -37,7 +36,7 @@ describe('AgendaAdapter (CU-10)', () => {
     expect(weeks.every((week) => week.length === 7)).toBe(true);
     expect(days[0]?.date.getDay()).toBe(1);
     expect(days.find((d) => d.key === '2030-01-10')).toMatchObject({
-      appointmentCount: 2, // the cancelled one does not count
+      appointmentCount: 2,
       isSelected: true,
       isToday: true,
       inMonth: true,

@@ -23,7 +23,6 @@ export interface PatientProfile {
   statusTone: StatusTone;
   statusChange: string;
   allergies: string[];
-  /** Label/value pairs for the overview card; empty values are shown as "—". */
   details: { label: string; value: string }[];
   observations: string | null;
 }
@@ -37,13 +36,12 @@ const STATUS: Record<PatientStatus, { label: string; tone: StatusTone }> = {
 const EMPTY = '—';
 const money = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 
-/** Adapter (ADR-0007): patient DTOs → display-ready models. */
+// Adapter
 export class PatientAdapter {
   static statusLabel(status: PatientStatus): string {
     return STATUS[status].label;
   }
 
-  /** 30123456 → 30.123.456 */
   static formatDni(dni: string): string {
     return dni.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
@@ -63,7 +61,10 @@ export class PatientAdapter {
 
   static toProfile(dto: PatientDto): PatientProfile {
     const age = dto.age === null ? null : `${dto.age} years`;
-    const origin = dto.statusOrigin === 'automatic' ? 'automatically' : 'manually';
+    const origin =
+      dto.statusOrigin === 'automatic'
+        ? 'automatically, 3 months without consultations'
+        : 'manually';
     return {
       id: dto.id,
       fullName: dto.fullName,
@@ -93,6 +94,12 @@ export class PatientAdapter {
             : EMPTY,
         },
         { label: 'Debt', value: dto.debt > 0 ? money.format(dto.debt) : 'No debt' },
+        {
+          label: 'Last consultation',
+          value: dto.lastConsultationAt
+            ? new Date(dto.lastConsultationAt).toLocaleDateString()
+            : 'None yet',
+        },
       ],
     };
   }

@@ -47,7 +47,7 @@ const dateTime = (iso: string) => format(new Date(iso), 'dd/MM/yyyy HH:mm');
 const date = (iso: string) => format(new Date(iso), 'dd/MM/yyyy');
 const diagnosisLabel = (d: { code: string; name: string }) => `${d.code} · ${d.name}`;
 
-/** Adapter (ADR-0007): clinical record DTOs → display-ready models (CU-08, CU-11). */
+// Adapter
 export class ClinicalRecordAdapter {
   static toTimeline(record: ClinicalRecordDto): TimelineItem[] {
     return record.consultations.map((c) => ({
