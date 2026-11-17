@@ -55,10 +55,6 @@ class EntityStore<TEntity extends Entity<object>> {
   put(entity: TEntity): void {
     this.#items.set(entity.id, entity);
   }
-
-  remove(id: string): boolean {
-    return this.#items.delete(id);
-  }
 }
 
 // Unit of Work
@@ -78,16 +74,8 @@ export class InMemoryProfessionalRepository extends ProfessionalRepository {
     return this.#store.get(id);
   }
 
-  async findAll(): Promise<Professional[]> {
-    return this.#store.all();
-  }
-
   async save(professional: Professional): Promise<void> {
     this.#store.put(professional);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    return this.#store.remove(id);
   }
 
   async findByEmail(email: string): Promise<Professional | null> {
@@ -108,16 +96,8 @@ export class InMemoryPasswordRecoveryRepository extends PasswordRecoveryReposito
     return this.#store.get(id);
   }
 
-  async findAll(): Promise<PasswordRecovery[]> {
-    return this.#store.all();
-  }
-
   async save(recovery: PasswordRecovery): Promise<void> {
     this.#store.put(recovery);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    return this.#store.remove(id);
   }
 
   async findLatestUnused(professionalId: string): Promise<PasswordRecovery | null> {
@@ -153,16 +133,8 @@ export class InMemoryPatientRepository extends PatientRepository {
     return this.#store.get(id);
   }
 
-  async findAll(): Promise<Patient[]> {
-    return this.#store.all();
-  }
-
   async save(patient: Patient): Promise<void> {
     this.#store.put(patient);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    return this.#store.remove(id);
   }
 
   async findOwned(professionalId: string, id: string): Promise<Patient | null> {
@@ -210,16 +182,8 @@ export class InMemoryClinicalRecordRepository extends ClinicalRecordRepository {
     return this.#store.get(id);
   }
 
-  async findAll(): Promise<ClinicalRecord[]> {
-    return this.#store.all();
-  }
-
   async save(record: ClinicalRecord): Promise<void> {
     this.#store.put(record);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    return this.#store.remove(id);
   }
 
   async findByPatient(professionalId: string, patientId: string): Promise<ClinicalRecord | null> {
@@ -281,16 +245,8 @@ export class InMemoryAppointmentRepository extends AppointmentRepository {
     return this.#store.get(id);
   }
 
-  async findAll(): Promise<Appointment[]> {
-    return this.#store.all();
-  }
-
   async save(appointment: Appointment): Promise<void> {
     this.#store.put(appointment);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    return this.#store.remove(id);
   }
 
   async findOwned(professionalId: string, id: string): Promise<Appointment | null> {
@@ -341,16 +297,8 @@ export class InMemorySubscriptionRepository extends SubscriptionRepository {
     return this.#store.get(id);
   }
 
-  async findAll(): Promise<Subscription[]> {
-    return this.#store.all();
-  }
-
   async save(subscription: Subscription): Promise<void> {
     this.#store.put(subscription);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    return this.#store.remove(id);
   }
 
   async findDue(now: Date, limit: number): Promise<Subscription[]> {
@@ -374,16 +322,8 @@ export class InMemoryPaymentRepository extends PaymentRepository {
     return this.#store.get(id);
   }
 
-  async findAll(): Promise<Payment[]> {
-    return this.#store.all();
-  }
-
   async save(payment: Payment): Promise<void> {
     this.#store.put(payment);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    return this.#store.remove(id);
   }
 
   async findByProfessional(professionalId: string, limit: number): Promise<Payment[]> {
@@ -416,16 +356,8 @@ export class InMemoryNotificationRepository extends NotificationRepository {
     return this.#store.get(id);
   }
 
-  async findAll(): Promise<Notification[]> {
-    return this.#store.all();
-  }
-
   async save(notification: Notification): Promise<void> {
     this.#store.put(notification);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    return this.#store.remove(id);
   }
 
   async findByPatient(professionalId: string, patientId: string): Promise<Notification[]> {
@@ -444,16 +376,8 @@ export class InMemoryVirtualMeetingRepository extends VirtualMeetingRepository {
     return this.#store.get(id);
   }
 
-  async findAll(): Promise<VirtualMeeting[]> {
-    return this.#store.all();
-  }
-
   async save(meeting: VirtualMeeting): Promise<void> {
     this.#store.put(meeting);
-  }
-
-  async delete(id: string): Promise<boolean> {
-    return this.#store.remove(id);
   }
 
   async insertIfFirstForAppointment(meeting: VirtualMeeting): Promise<boolean> {

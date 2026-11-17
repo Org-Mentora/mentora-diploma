@@ -87,8 +87,4 @@ export class ClinicalRecord extends Entity<ClinicalRecordProps> {
   get consultations(): readonly Consultation[] {
     return this.props.consultations;
   }
-
-  get isEmpty(): boolean {
-    return this.props.consultations.length === 0;
-  }
 }

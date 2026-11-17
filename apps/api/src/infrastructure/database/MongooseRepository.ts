@@ -30,23 +30,11 @@ export abstract class MongooseRepository<
     return record ? this.mapper.toDomain(record) : null;
   }
 
-  async findAll(): Promise<TEntity[]> {
-    const records = await this.model.find().session(this.session).lean<TDocument[]>().exec();
-    return records.map((record) => this.mapper.toDomain(record));
-  }
-
   async save(entity: TEntity): Promise<void> {
     const document = this.mapper.toPersistence(entity);
     const filter = { _id: document._id } as QueryFilter<TDocument>;
     await this.model
       .replaceOne(filter, document, { upsert: true, session: this.session ?? undefined })
       .exec();
-  }
-
-  async delete(id: string): Promise<boolean> {
-    const result = await this.model
-      .deleteOne({ _id: id } as QueryFilter<TDocument>, { session: this.session ?? undefined })
-      .exec();
-    return result.deletedCount > 0;
   }
 }

@@ -25,7 +25,6 @@ export const NotificationSchema = z
 export const ListNotificationsQuerySchema = z.object({ patientId: z.uuid() });
 
 export type NotificationDto = z.infer<typeof NotificationSchema>;
-export type ListNotificationsQueryDto = z.infer<typeof ListNotificationsQuerySchema>;
 
 export function registerNotificationContracts(registry: ContractRegistry): void {
   registry.registerRoute({
