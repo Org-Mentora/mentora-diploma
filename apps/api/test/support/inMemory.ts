@@ -1,5 +1,6 @@
 import type { Entity } from '#core/model/Entity';
 import { TransactionManager } from '#core/model/TransactionManager';
+import { RateLimitStore, type RateLimitWindow } from '#infrastructure/http/RateLimitStore';
 import { AgendaLock } from '../../src/modules/appointments/model/AgendaLock';
 import type { Appointment } from '../../src/modules/appointments/model/Appointment';
 import {
@@ -225,6 +226,20 @@ export class InMemoryClinicalRecordRepository extends ClinicalRecordRepository {
           (record) => record.professionalId === professionalId && record.patientId === patientId,
         ) ?? null
     );
+  }
+}
+
+export class InMemoryRateLimitStore extends RateLimitStore {
+  readonly #windows = new Map<string, RateLimitWindow>();
+
+  async hit(id: string, windowMs: number, now: number): Promise<RateLimitWindow> {
+    const current = this.#windows.get(id);
+    const window =
+      current && current.resetsAt > now
+        ? { count: current.count + 1, resetsAt: current.resetsAt }
+        : { count: 1, resetsAt: now + windowMs };
+    this.#windows.set(id, window);
+    return window;
   }
 }
 

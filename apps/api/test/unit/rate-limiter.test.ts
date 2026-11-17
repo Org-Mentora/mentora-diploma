@@ -3,6 +3,7 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { HttpErrorHandler } from '#infrastructure/http/HttpErrorHandler';
 import { RateLimiter } from '#infrastructure/http/RateLimiter';
+import { InMemoryRateLimitStore } from '../support/inMemory';
 
 const silent = {
   info: () => undefined,
@@ -30,7 +31,7 @@ function appWith(limiter: RateLimiter) {
 describe('RateLimiter', () => {
   it('answers 429 with Retry-After once a key goes over its limit, until the window ends', async () => {
     let now = 0;
-    const app = appWith(new RateLimiter(true, () => now));
+    const app = appWith(new RateLimiter(true, new InMemoryRateLimitStore(), () => now));
     const login = (email: string) => request(app).post('/login').send({ email });
 
     await login('a@b.com').expect(204);
@@ -45,7 +46,7 @@ describe('RateLimiter', () => {
   });
 
   it('lets everything through when disabled', async () => {
-    const app = appWith(new RateLimiter(false));
+    const app = appWith(new RateLimiter(false, new InMemoryRateLimitStore()));
     for (let i = 0; i < 5; i++) {
       await request(app).post('/login').send({ email: 'a@b.com' }).expect(204);
     }

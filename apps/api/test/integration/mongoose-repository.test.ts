@@ -11,6 +11,7 @@ import {
 } from '#infrastructure/database/MongooseRepository';
 import { MongoTransactionManager } from '#infrastructure/database/MongoTransactionManager';
 import { TransactionContext } from '#infrastructure/database/TransactionContext';
+import { MongoRateLimitStore } from '#infrastructure/http/MongoRateLimitStore';
 import { MongoJobLock } from '#infrastructure/scheduling/MongoJobLock';
 
 class Note extends Entity<{ text: string }> {
@@ -156,5 +157,20 @@ describe('MongooseRepository adapter', () => {
     expect(await first.acquire('job-b', 1)).toBe(true);
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(await second.acquire('job-b', 60_000)).toBe(true);
+  });
+
+  it('MongoRateLimitStore counts hits per window shared by every instance', async () => {
+    const first = new MongoRateLimitStore();
+    const second = new MongoRateLimitStore();
+    const t0 = Date.now();
+
+    const hits = await Promise.all(
+      Array.from({ length: 6 }, (_, i) => (i % 2 ? first : second).hit('login:a', 60_000, t0)),
+    );
+    const afterWindow = await first.hit('login:a', 60_000, t0 + 60_000);
+
+    expect(hits.map((w) => w.count).sort()).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(new Set(hits.map((w) => w.resetsAt))).toEqual(new Set([t0 + 60_000]));
+    expect(afterWindow).toEqual({ count: 1, resetsAt: t0 + 120_000 });
   });
 });
