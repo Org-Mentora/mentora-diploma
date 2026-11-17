@@ -1,7 +1,7 @@
 import type { Logger as PinoLogger } from 'pino';
 import type { AppLogger } from '#core/logging/AppLogger';
 
-/** Adapter (ADR-0007): exposes a pino instance through the `AppLogger` interface. */
+// Adapter
 export class PinoLoggerAdapter implements AppLogger {
   constructor(private readonly pino: PinoLogger) {}
 
@@ -25,7 +25,6 @@ export class PinoLoggerAdapter implements AppLogger {
     return new PinoLoggerAdapter(this.pino.child(bindings));
   }
 
-  /** Underlying pino instance, needed by `pino-http`. */
   get native(): PinoLogger {
     return this.pino;
   }
