@@ -3,6 +3,7 @@
 #   api     http://localhost:3000/api   (Swagger UI at /api/docs)
 #   mongo   mongodb://localhost:27017/?directConnection=true  (single-node replica set, ADR-0025)
 #   mailpit http://localhost:8025   (inbox of every email the API sends, ADR-0027)
+#   seed    demo login demo@mentora.test / Demo1234 with test data (ADR-0043, SETUP.md)
 name: mentora
 
 services:
@@ -45,25 +46,20 @@ services:
       dockerfile: docker/api.Dockerfile
       target: runtime
     restart: unless-stopped
+    # Your local .env (copied from .env.example) configures the API; the values below only
+    # point it at the other containers and override the matching .env entries.
+    env_file:
+      - path: .env
+        required: false
     environment:
       NODE_ENV: production
       PORT: 3000
       MONGO_URI: mongodb://mongo:27017/mentora?directConnection=true
-      LOG_LEVEL: info
       CORS_ORIGIN: http://localhost:8080
-      # Local default only: set JWT_SECRET in .env for any shared deployment (ADR-0018).
-      JWT_SECRET: ${JWT_SECRET:-compose-local-jwt-secret-change-me-0123456789}
-      TRIAL_DAYS: ${TRIAL_DAYS:-14}
       APP_URL: http://localhost:8080
       SMTP_URL: smtp://mailpit:1025
-      # External providers stay local unless configured (ADR-0029..0031).
-      WHATSAPP_PROVIDER: ${WHATSAPP_PROVIDER:-local}
-      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
-      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
-      MEETING_PROVIDER: ${MEETING_PROVIDER:-jitsi}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN:-}
+      # Local default only: set JWT_SECRET in .env for any shared deployment (ADR-0018).
+      JWT_SECRET: ${JWT_SECRET:-compose-local-jwt-secret-change-me-0123456789}
     ports:
       - "3000:3000"
     depends_on:
@@ -71,6 +67,25 @@ services:
         condition: service_healthy
       mailpit:
         condition: service_started
+
+  # One-off job: loads a demo professional and test data through the public API (ADR-0043).
+  # Runs on every `up` and does nothing once the demo account exists. SEED_DEMO_DATA=false skips it.
+  seed:
+    image: node:24-alpine
+    restart: "no"
+    read_only: true
+    user: node
+    environment:
+      SEED_BASE_URL: http://api:3000
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-true}
+      DEMO_EMAIL: ${DEMO_EMAIL:-demo@mentora.test}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-Demo1234}
+    volumes:
+      - ./tools/seed:/seed:ro
+    command: ["node", "/seed/seed-demo.mjs"]
+    depends_on:
+      api:
+        condition: service_healthy
 
   web:
     build:

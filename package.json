@@ -24,7 +24,8 @@
     "db:backup": "node tools/db/backup.mjs",
     "db:restore": "node tools/db/restore.mjs",
     "docs:classes": "node tools/docs/class-diagram.mjs",
-    "docs:check": "node tools/docs/class-diagram.mjs --check"
+    "docs:check": "node tools/docs/class-diagram.mjs --check",
+    "seed": "node --env-file-if-exists=.env tools/seed/seed-demo.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",

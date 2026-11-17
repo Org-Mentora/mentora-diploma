@@ -1,7 +1,17 @@
 {
   "$schema": "https://turborepo.com/schema.json",
   "ui": "stream",
-  "globalPassThroughEnv": ["BASE_URL", "SMOKE_WAIT_SECONDS", "BACKUP_DIR", "MONGO_DATABASE"],
+  "globalPassThroughEnv": [
+    "BASE_URL",
+    "SMOKE_WAIT_SECONDS",
+    "BACKUP_DIR",
+    "MONGO_DATABASE",
+    "SEED_BASE_URL",
+    "SEED_DEMO_DATA",
+    "SEED_WAIT_SECONDS",
+    "DEMO_EMAIL",
+    "DEMO_PASSWORD"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
