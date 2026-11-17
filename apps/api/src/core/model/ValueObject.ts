@@ -1,4 +1,4 @@
-/** Immutable object compared by value instead of identity. */
+// Value Object
 export abstract class ValueObject<TProps extends object> {
   protected readonly props: Readonly<TProps>;
 

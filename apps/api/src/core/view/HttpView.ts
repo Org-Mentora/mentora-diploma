@@ -8,17 +8,16 @@ const STATUS_BY_KIND: Record<ErrorKind, number> = {
   forbidden: 403,
   not_found: 404,
   conflict: 409,
+  payment_required: 402,
+  unavailable: 503,
+  too_many_requests: 429,
 };
 
-/** Shape of every error body returned by the API (documented as `ErrorResponseDto`). */
 export interface ErrorResponseBody {
   error: { code: string; message: string; details?: unknown };
 }
 
-/**
- * Base class for JSON-over-HTTP passive views. Subclasses only choose the success status
- * and, if needed, override `serialize` to shape the body.
- */
+// Passive View, Template Method
 export abstract class HttpView<TViewModel> implements View<TViewModel> {
   protected readonly successStatus: number = 200;
 

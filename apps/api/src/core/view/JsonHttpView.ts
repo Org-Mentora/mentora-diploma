@@ -1,10 +1,7 @@
 import type { HttpResponder } from './HttpResponder';
 import { HttpView } from './HttpView';
 
-/**
- * Generic passive JSON view for view models that need no transport-specific shaping.
- * Pass `201` for creations.
- */
+// Passive View
 export class JsonHttpView<TViewModel> extends HttpView<TViewModel> {
   constructor(
     responder: HttpResponder,

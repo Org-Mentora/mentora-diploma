@@ -1,13 +1,7 @@
 import { ApplicationError } from '#core/errors/ApplicationError';
 import type { ErrorViewModel, View } from '#core/view/View';
 
-/**
- * MVP Presenter: one class per use case. It receives input already parsed by the View,
- * drives the Model, builds the output ViewModel (a DTO) and tells the View to render it.
- *
- * Known `ApplicationError`s are rendered through `view.renderError`; anything else is
- * re-thrown so the HTTP error middleware can log it and answer with a 500.
- */
+// Template Method
 export abstract class Presenter<TInput, TViewModel> {
   constructor(protected readonly view: View<TViewModel>) {}
 
