@@ -1,17 +1,19 @@
 import { randomUUID } from 'node:crypto';
 import type { Express } from 'express';
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
+import mongoose from 'mongoose';
 import request from 'supertest';
 import { Clock } from '#core/model/Clock';
 import { AppConfig } from '#infrastructure/config/AppConfig';
+import { MigrationLog } from '#infrastructure/database/MigrationLog';
 import { MongoConnection } from '#infrastructure/database/MongoConnection';
 import { OpenApiRegistry } from '#infrastructure/openapi/OpenApiRegistry';
 import { Application } from '../../src/app/Application';
 import { createModules } from '../../src/app/modules';
+import { CapturingMailTransport, RecordingWhatsApp } from './fakes';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** A clock tests can move forward (e.g. to expire the free trial). */
 export class MutableClock extends Clock {
   constructor(private current: Date) {
     super();
@@ -24,37 +26,73 @@ export class MutableClock extends Clock {
   advanceDays(days: number): void {
     this.current = new Date(this.current.getTime() + days * DAY_MS);
   }
+
+  advanceMinutes(minutes: number): void {
+    this.current = new Date(this.current.getTime() + minutes * 60_000);
+  }
+
+  set(date: Date): void {
+    this.current = new Date(date);
+  }
 }
 
 export type Agent = ReturnType<typeof request.agent>;
 
-/** Full API on an in-memory MongoDB, with helpers to get an authenticated agent. */
 export class TestApp {
   static readonly START = new Date('2030-01-01T12:00:00.000Z');
 
   private constructor(
     readonly app: Express,
     readonly clock: MutableClock,
-    private readonly mongo: MongoMemoryServer,
+    readonly mail: CapturingMailTransport,
+    readonly whatsapp: RecordingWhatsApp,
+    private readonly application: Application,
+    private readonly mongo: MongoMemoryReplSet,
   ) {}
 
   static async start(): Promise<TestApp> {
     AppConfig.resetInstance();
     OpenApiRegistry.resetInstance();
-    const mongo = await MongoMemoryServer.create();
+    const mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
     await MongoConnection.getInstance().connect(mongo.getUri());
 
     const clock = new MutableClock(TestApp.START);
-    const application = new Application(createModules({ clock }));
+    const mail = new CapturingMailTransport();
+    const whatsapp = new RecordingWhatsApp();
+    const application = new Application(createModules({ clock, mail, whatsapp }));
     await application.bootstrapModules();
-    return new TestApp(application.createServer({ quiet: true }).app, clock, mongo);
+    await application.runMigrations();
+    return new TestApp(
+      application.createServer({ quiet: true }).app,
+      clock,
+      mail,
+      whatsapp,
+      application,
+      mongo,
+    );
   }
 
   agent(): Agent {
     return request.agent(this.app);
   }
 
-  /** Registers a new professional (CU-03) and returns an agent holding the session cookie. */
+  async rerunMigrations(): Promise<string[]> {
+    await mongoose.connection.collection(MigrationLog.COLLECTION).deleteMany({});
+    return this.application.runMigrations();
+  }
+
+  runMigrations(): Promise<string[]> {
+    return this.application.runMigrations();
+  }
+
+  async runJob(name: string): Promise<void> {
+    const job = this.application.scheduledJobs().find((j) => j.name === name);
+    if (!job) {
+      throw new Error(`Unknown job ${name}`);
+    }
+    await job.run();
+  }
+
   async loggedInAgent(overrides: Record<string, unknown> = {}): Promise<Agent> {
     const agent = this.agent();
     await agent.post('/api/auth/register').send(TestApp.professional(overrides)).expect(201);
