@@ -7,7 +7,6 @@ export interface VirtualMeetingItem {
   providerLabel: string;
   origin: string;
   invitationLabel: string;
-  invitationSent: boolean;
 }
 
 const PROVIDER: Record<VirtualMeetingDto['provider'], string> = {
@@ -40,7 +39,6 @@ export class VirtualMeetingAdapter {
       providerLabel: PROVIDER[dto.provider],
       origin: dto.appointmentId ? 'Virtual appointment' : 'From the patient file',
       invitationLabel: INVITATION[dto.invitationStatus],
-      invitationSent: dto.invitationStatus === 'sent',
     };
   }
 }
