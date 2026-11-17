@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { Button } from '@/shared/ui/button';
 import { FormField } from '@/shared/ui/form-field';
 import { Input } from '@/shared/ui/input';
+import { Textarea } from '@/shared/ui/textarea';
 import { useRegisterViewModel } from '../viewmodel/useRegisterViewModel';
 import { AuthLayout } from './AuthLayout';
 
@@ -21,9 +22,9 @@ const FIELDS = [
   },
 ] as const;
 
-/** CU-03 Register professional. */
 export function RegisterPage() {
-  const { form, error, isSubmitting, submit } = useRegisterViewModel();
+  const { form, error, isSubmitting, passwordHint, logo, selectLogo, submit } =
+    useRegisterViewModel();
   const { errors } = form.formState;
 
   return (
@@ -47,9 +48,7 @@ export function RegisterPage() {
             id={field.name}
             label={field.label}
             error={errors[field.name]?.message}
-            {...(field.name === 'password'
-              ? { hint: 'At least 8 characters, with letters and numbers' }
-              : {})}
+            {...(field.name === 'password' ? { hint: passwordHint } : {})}
           >
             <Input
               id={field.name}
@@ -60,6 +59,38 @@ export function RegisterPage() {
             />
           </FormField>
         ))}
+        <FormField
+          id="offices"
+          label="Office addresses (optional)"
+          hint="One per line, up to 5. They are printed on prescriptions."
+          error={errors.offices?.message}
+          className="sm:col-span-2"
+        >
+          <Textarea id="offices" rows={2} {...form.register('offices')} />
+        </FormField>
+        <FormField
+          id="logo"
+          label="Logo (optional)"
+          hint={logo.hint}
+          error={logo.error ?? undefined}
+          className="sm:col-span-2"
+        >
+          <div className="flex items-center gap-3">
+            {logo.preview && (
+              <img
+                src={logo.preview}
+                alt="Logo preview"
+                className="size-12 rounded object-contain"
+              />
+            )}
+            <Input
+              id="logo"
+              type="file"
+              accept={logo.accept}
+              onChange={(event) => void selectLogo(event.target.files?.[0] ?? null)}
+            />
+          </div>
+        </FormField>
         {error && (
           <p role="alert" className="text-destructive text-sm sm:col-span-2">
             {error.message}
