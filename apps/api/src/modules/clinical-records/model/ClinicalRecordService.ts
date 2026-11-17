@@ -1,4 +1,5 @@
 import { NotFoundError, ValidationError } from '#core/errors/ApplicationError';
+import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
@@ -34,6 +35,7 @@ export class ClinicalRecordService {
     private readonly clock: Clock,
     private readonly accesses: RecordAccessLog,
     private readonly ids: IdGenerator,
+    private readonly trail: AuditTrail,
   ) {}
 
   async getRecord(professionalId: string, patientId: string): Promise<ClinicalRecord> {
@@ -84,6 +86,12 @@ export class ClinicalRecordService {
     await this.records.save(record);
     await this.activity.record(professionalId, patientId, consultation.date);
     await this.audit(professionalId, patientId, 'register_consultation', consultation.id);
+    await this.trail.record({
+      professionalId,
+      action: 'consultation.registered',
+      target: { type: 'patient', id: patientId },
+      details: { consultationId: consultation.id, diagnosis: data.diagnosisCode ?? null },
+    });
     return consultation;
   }
 

@@ -1,4 +1,5 @@
 import type { Router } from 'express';
+import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
@@ -43,6 +44,7 @@ export interface ClinicalRecordsModuleDependencies {
   catalog: DiagnosisCatalog;
   transactions: TransactionManager;
   context: TransactionContext;
+  audit: AuditTrail;
   repository?: ClinicalRecordRepository;
   accessLog?: RecordAccessLog;
 }
@@ -65,6 +67,7 @@ export class ClinicalRecordsModule implements AppModule, ClinicalRecordPresenter
       deps.clock,
       deps.accessLog ?? new MongooseRecordAccessLog(deps.context),
       deps.ids,
+      deps.audit,
     );
   }
 

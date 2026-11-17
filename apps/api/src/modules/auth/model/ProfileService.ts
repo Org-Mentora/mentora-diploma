@@ -1,3 +1,4 @@
+import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import { AuthService, type SessionSubject } from './AuthService';
@@ -15,6 +16,7 @@ export class ProfileService {
     private readonly access: ProfessionalAccess,
     private readonly transactions: TransactionManager,
     private readonly clock: Clock,
+    private readonly audit: AuditTrail,
   ) {}
 
   updateProfile(professionalId: string, profile: ProfessionalProfile): Promise<SessionSubject> {
@@ -24,6 +26,11 @@ export class ProfileService {
       await this.auth.assertUnique(professional.email, professional.licenseNumber, professional.id);
       await this.professionals.save(professional);
       await this.access.updateContact(professional.id, AuthService.contactOf(professional));
+      await this.audit.record({
+        professionalId,
+        action: 'account.profile_updated',
+        target: { type: 'professional', id: professionalId },
+      });
       return this.auth.getSession(professional.id);
     });
   }
@@ -36,6 +43,7 @@ export class ProfileService {
       await this.logos.save(professionalId, logo, now);
       professional.markLogo(now, now);
       await this.professionals.save(professional);
+      await this.audit.record({ professionalId, action: 'account.logo_updated' });
     });
   }
 
@@ -45,6 +53,7 @@ export class ProfileService {
       await this.logos.delete(professionalId);
       professional.markLogo(null, this.clock.now());
       await this.professionals.save(professional);
+      await this.audit.record({ professionalId, action: 'account.logo_removed' });
     });
   }
 

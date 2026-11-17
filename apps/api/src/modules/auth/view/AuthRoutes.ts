@@ -21,6 +21,7 @@ import {
   VerifyRecoveryCodeRequestSchema,
 } from '../contracts/auth.contracts';
 import type { AuthPresenterFactory } from '../presenter/AuthPresenterFactory';
+import { LogoutHttpView } from './LogoutHttpView';
 import { SessionHttpView } from './SessionHttpView';
 
 const MINUTE_MS = 60_000;
@@ -82,10 +83,9 @@ export class AuthRoutes {
       },
     );
 
-    router.post('/logout', (_req, res) => {
-      const responder = new ExpressResponderAdapter(res);
-      this.cookie.clear(responder);
-      responder.noContent();
+    router.post('/logout', this.guard.readSession, async (_req, res) => {
+      const view = new LogoutHttpView(new ExpressResponderAdapter(res), this.cookie);
+      await this.presenters.logout(view).present(ActorReader.optional(res));
     });
 
     router.get('/me', this.guard.requireSession, async (_req, res) => {

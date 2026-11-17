@@ -1,6 +1,7 @@
 import type { Router } from 'express';
 import type { DateFormatter } from '#core/format/DateFormatter';
 import type { AppLogger } from '#core/logging/AppLogger';
+import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
@@ -48,6 +49,7 @@ export interface SubscriptionsModuleDependencies {
   dates: DateFormatter;
   logger: AppLogger;
   prices: PlanPrices;
+  audit: AuditTrail;
   trialDays: number;
   planUrl: string;
   subscriptions?: SubscriptionRepository;
@@ -76,6 +78,7 @@ export class SubscriptionsModule implements AppModule, SubscriptionPresenterFact
       new PlanCatalog(deps.prices),
       deps.clock,
       deps.ids,
+      deps.audit,
     );
   }
 

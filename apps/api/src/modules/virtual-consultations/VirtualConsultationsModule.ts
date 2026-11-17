@@ -1,4 +1,5 @@
 import type { Router } from 'express';
+import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
@@ -37,6 +38,7 @@ export interface VirtualConsultationsModuleDependencies {
   patients: PatientDirectory;
   appointments: AppointmentDirectory;
   notifications: NotificationCenter;
+  audit: AuditTrail;
   repository?: VirtualMeetingRepository;
 }
 
@@ -55,6 +57,7 @@ export class VirtualConsultationsModule implements AppModule, VirtualConsultatio
       deps.transactions,
       deps.clock,
       deps.ids,
+      deps.audit,
     );
   }
 

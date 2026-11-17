@@ -1,4 +1,5 @@
 import { ValidationError } from '#core/errors/ApplicationError';
+import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
@@ -23,6 +24,7 @@ export class PasswordRecoveryService {
     private readonly transactions: TransactionManager,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly audit: AuditTrail,
   ) {}
 
   async request(email: string): Promise<void> {
@@ -41,6 +43,10 @@ export class PasswordRecoveryService {
       }
       const recovery = PasswordRecovery.issue(this.ids.next(), professional.id, codeHash, now);
       await this.recoveries.save(recovery);
+      await this.audit.record({
+        professionalId: professional.id,
+        action: 'account.password_recovery_requested',
+      });
       return {
         email: professional.email,
         name: professional.firstName,
@@ -73,6 +79,10 @@ export class PasswordRecoveryService {
       checked.professional.changePasswordHash(hash, now);
       await this.recoveries.save(checked.recovery);
       await this.professionals.save(checked.professional);
+      await this.audit.record({
+        professionalId: checked.professional.id,
+        action: 'account.password_reset',
+      });
       return true;
     });
     if (!changed) {

@@ -1,5 +1,6 @@
 import type { Router } from 'express';
 import type { AppLogger } from '#core/logging/AppLogger';
+import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
@@ -17,6 +18,7 @@ import {
 import { MongoosePatientRepository } from './infrastructure/MongoosePatientRepository';
 import { PatientActivity } from './model/PatientActivity';
 import { PatientDirectory } from './model/PatientDirectory';
+import { PatientIntake } from './model/PatientIntake';
 import type { PatientRepository } from './model/PatientRepository';
 import { PatientService } from './model/PatientService';
 import { ChangePatientStatusPresenter } from './presenter/ChangePatientStatusPresenter';
@@ -34,6 +36,7 @@ export interface PatientsModuleDependencies {
   transactions: TransactionManager;
   context: TransactionContext;
   logger: AppLogger;
+  audit: AuditTrail;
   repository?: PatientRepository;
 }
 
@@ -44,11 +47,19 @@ export class PatientsModule implements AppModule, PatientPresenterFactory {
   readonly basePath = '/patients';
   readonly directory: PatientDirectory;
   readonly activity: PatientActivity;
+  readonly intake: PatientIntake;
   readonly #service: PatientService;
 
   constructor(private readonly deps: PatientsModuleDependencies) {
     const repository = deps.repository ?? new MongoosePatientRepository(deps.context);
-    this.#service = new PatientService(repository, deps.transactions, deps.clock, deps.ids);
+    this.#service = new PatientService(
+      repository,
+      deps.transactions,
+      deps.clock,
+      deps.ids,
+      deps.audit,
+    );
+    this.intake = new PatientIntake(this.#service);
     this.directory = new PatientDirectory(repository);
     this.activity = new PatientActivity(repository);
   }

@@ -1,6 +1,7 @@
 import type { Router } from 'express';
 import type { DateFormatter } from '#core/format/DateFormatter';
 import type { AppLogger } from '#core/logging/AppLogger';
+import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
@@ -33,6 +34,7 @@ import { AuthService } from './model/AuthService';
 import type { LogoRepository } from './model/LogoRepository';
 import type { PasswordRecoveryRepository } from './model/PasswordRecoveryRepository';
 import { PasswordRecoveryService } from './model/PasswordRecoveryService';
+import { ProfessionalDirectory } from './model/ProfessionalDirectory';
 import type { ProfessionalRepository } from './model/ProfessionalRepository';
 import { ProfileService } from './model/ProfileService';
 import type { AuthPresenterFactory } from './presenter/AuthPresenterFactory';
@@ -40,6 +42,7 @@ import { ChangePasswordPresenter } from './presenter/ChangePasswordPresenter';
 import { GetCurrentProfessionalPresenter } from './presenter/GetCurrentProfessionalPresenter';
 import { GetLogoPresenter } from './presenter/GetLogoPresenter';
 import { LoginPresenter } from './presenter/LoginPresenter';
+import { LogoutPresenter } from './presenter/LogoutPresenter';
 import { RegisterProfessionalPresenter } from './presenter/RegisterProfessionalPresenter';
 import { RemoveLogoPresenter } from './presenter/RemoveLogoPresenter';
 import { RequestPasswordRecoveryPresenter } from './presenter/RequestPasswordRecoveryPresenter';
@@ -65,6 +68,7 @@ export interface AuthModuleDependencies {
   logger: AppLogger;
   recoveryUrl: string;
   limiter: RateLimiter;
+  audit: AuditTrail;
   professionals?: ProfessionalRepository;
   recoveries?: PasswordRecoveryRepository;
   logos?: LogoRepository;
@@ -73,6 +77,7 @@ export interface AuthModuleDependencies {
 // Composition Root, Abstract Factory
 export class AuthModule implements AppModule, AuthPresenterFactory {
   readonly basePath = '/auth';
+  readonly directory: ProfessionalDirectory;
   readonly #auth: AuthService;
   readonly #profiles: ProfileService;
   readonly #recovery: PasswordRecoveryService;
@@ -81,6 +86,7 @@ export class AuthModule implements AppModule, AuthPresenterFactory {
   constructor(private readonly deps: AuthModuleDependencies) {
     const professionals = deps.professionals ?? new MongooseProfessionalRepository(deps.context);
     const access = new SubscriptionAccessAdapter(deps.subscriptions);
+    this.directory = new ProfessionalDirectory(professionals);
     const logger = deps.logger.child({ module: 'auth' });
     this.#auth = new AuthService(
       professionals,
@@ -90,6 +96,7 @@ export class AuthModule implements AppModule, AuthPresenterFactory {
       deps.tokens,
       deps.clock,
       deps.ids,
+      deps.audit,
     );
     this.#profiles = new ProfileService(
       this.#auth,
@@ -98,6 +105,7 @@ export class AuthModule implements AppModule, AuthPresenterFactory {
       access,
       deps.transactions,
       deps.clock,
+      deps.audit,
     );
     this.#recovery = new PasswordRecoveryService(
       professionals,
@@ -108,6 +116,7 @@ export class AuthModule implements AppModule, AuthPresenterFactory {
       deps.transactions,
       deps.clock,
       deps.ids,
+      deps.audit,
     );
     this.#migration = new LegacySubscriptionMigration(deps.subscriptions, logger);
   }
@@ -130,6 +139,10 @@ export class AuthModule implements AppModule, AuthPresenterFactory {
 
   login(view: View<SessionResult>): LoginPresenter {
     return new LoginPresenter(view, this.#auth);
+  }
+
+  logout(view: View<void>): LogoutPresenter {
+    return new LogoutPresenter(view, this.#auth);
   }
 
   getCurrentProfessional(view: View<SessionResult>): GetCurrentProfessionalPresenter {

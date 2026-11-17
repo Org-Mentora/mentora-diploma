@@ -5,6 +5,7 @@ import {
   ServiceUnavailableError,
   ValidationError,
 } from '#core/errors/ApplicationError';
+import type { AuditDetailValue, AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
@@ -56,6 +57,7 @@ export class SubscriptionService {
     private readonly catalog: PlanCatalog,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly audit: AuditTrail,
   ) {}
 
   get now(): Date {
@@ -84,6 +86,7 @@ export class SubscriptionService {
       const subscription = await this.get(professionalId);
       if (!subscription.choosePlan(plan, this.now)) {
         await this.subscriptions.save(subscription);
+        await this.record(professionalId, 'subscription.plan_changed', { planId: plan.id });
         return null;
       }
       const method = subscription.defaultPaymentMethod;
@@ -113,6 +116,10 @@ export class SubscriptionService {
         current.applyPayment(pending.plan, this.now);
         await this.subscriptions.save(current);
       }
+      await this.record(professionalId, 'subscription.plan_changed', {
+        planId: pending.plan.id,
+        charge: result.outcome,
+      });
       return current;
     });
     SubscriptionService.assertApproved(result);
@@ -143,6 +150,10 @@ export class SubscriptionService {
       );
       subscription.addPaymentMethod(method, makeDefault, this.now);
       await this.subscriptions.save(subscription);
+      await this.record(professionalId, 'payment_method.added', {
+        brand: method.brand,
+        last4: method.last4,
+      });
       return subscription;
     });
   }
@@ -152,7 +163,12 @@ export class SubscriptionService {
     methodId: string,
     changes: PaymentMethodChanges,
   ): Promise<Subscription> {
-    return this.mutate(professionalId, (s) => s.updatePaymentMethod(methodId, changes, this.now));
+    return this.mutate(
+      professionalId,
+      (s) => s.updatePaymentMethod(methodId, changes, this.now),
+      'payment_method.updated',
+      { methodId },
+    );
   }
 
   removePaymentMethod(
@@ -160,15 +176,25 @@ export class SubscriptionService {
     methodId: string,
     confirmed: boolean,
   ): Promise<Subscription> {
-    return this.mutate(professionalId, (s) => s.removePaymentMethod(methodId, confirmed, this.now));
+    return this.mutate(
+      professionalId,
+      (s) => s.removePaymentMethod(methodId, confirmed, this.now),
+      'payment_method.removed',
+      { methodId },
+    );
   }
 
   setAutoDebit(professionalId: string, enabled: boolean): Promise<Subscription> {
-    return this.mutate(professionalId, (s) => s.setAutoDebit(enabled, this.now));
+    return this.mutate(
+      professionalId,
+      (s) => s.setAutoDebit(enabled, this.now),
+      'subscription.auto_debit_changed',
+      { enabled },
+    );
   }
 
   cancel(professionalId: string): Promise<Subscription> {
-    return this.mutate(professionalId, (s) => s.cancel(this.now));
+    return this.mutate(professionalId, (s) => s.cancel(this.now), 'subscription.cancelled');
   }
 
   registerManualPayment(professionalId: string, data: ManualPaymentData): Promise<Payment> {
@@ -213,6 +239,10 @@ export class SubscriptionService {
       subscription.applyPayment(plan, this.now);
       await this.payments.save(payment);
       await this.subscriptions.save(subscription);
+      await this.record(professionalId, 'payment.manual_registered', {
+        amount: data.amount,
+        method: data.method,
+      });
       return payment;
     });
   }
@@ -367,13 +397,24 @@ export class SubscriptionService {
   private mutate(
     professionalId: string,
     change: (subscription: Subscription) => void,
+    action: string,
+    details: Record<string, AuditDetailValue> = {},
   ): Promise<Subscription> {
     return this.transactions.run(async () => {
       const subscription = await this.get(professionalId);
       change(subscription);
       await this.subscriptions.save(subscription);
+      await this.record(professionalId, action, details);
       return subscription;
     });
+  }
+
+  private record(
+    professionalId: string,
+    action: string,
+    details: Record<string, AuditDetailValue> = {},
+  ): Promise<void> {
+    return this.audit.record({ professionalId, action, details });
   }
 
   private async safeNotify(subscription: Subscription, event: BillingEvent): Promise<void> {

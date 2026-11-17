@@ -4,6 +4,7 @@ import type { ChangePasswordPresenter } from './ChangePasswordPresenter';
 import type { GetCurrentProfessionalPresenter } from './GetCurrentProfessionalPresenter';
 import type { GetLogoPresenter } from './GetLogoPresenter';
 import type { LoginPresenter } from './LoginPresenter';
+import type { LogoutPresenter } from './LogoutPresenter';
 import type { RegisterProfessionalPresenter } from './RegisterProfessionalPresenter';
 import type { RemoveLogoPresenter } from './RemoveLogoPresenter';
 import type { RequestPasswordRecoveryPresenter } from './RequestPasswordRecoveryPresenter';
@@ -17,6 +18,7 @@ import type { VerifyRecoveryCodePresenter } from './VerifyRecoveryCodePresenter'
 export interface AuthPresenterFactory {
   registerProfessional(view: View<SessionResult>): RegisterProfessionalPresenter;
   login(view: View<SessionResult>): LoginPresenter;
+  logout(view: View<void>): LogoutPresenter;
   getCurrentProfessional(view: View<SessionResult>): GetCurrentProfessionalPresenter;
   requestPasswordRecovery(view: View<RecoveryRequestedDto>): RequestPasswordRecoveryPresenter;
   verifyRecoveryCode(view: View<void>): VerifyRecoveryCodePresenter;

@@ -1,4 +1,5 @@
 import { ConflictError, UnauthorizedError, ValidationError } from '#core/errors/ApplicationError';
+import type { AuditRecord, AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
@@ -34,6 +35,7 @@ export class AuthService {
     private readonly tokens: TokenService,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly audit: AuditTrail,
   ) {}
 
   get now(): Date {
@@ -55,6 +57,12 @@ export class AuthService {
         professional.id,
         AuthService.contactOf(professional),
       );
+      await this.audit.record({
+        professionalId: professional.id,
+        action: 'account.registered',
+        target: { type: 'professional', id: professional.id },
+        details: { email: professional.email },
+      });
       return { professional, access };
     });
   }
@@ -63,9 +71,17 @@ export class AuthService {
     const professional = await this.professionals.findByEmail(Professional.normalizeEmail(email));
     const valid = professional && (await this.hasher.verify(password, professional.passwordHash));
     if (!professional || !valid) {
+      if (professional) {
+        await this.safeRecord({ professionalId: professional.id, action: 'session.login_failed' });
+      }
       throw new UnauthorizedError('Invalid email or password');
     }
+    await this.safeRecord({ professionalId: professional.id, action: 'session.login' });
     return this.subject(professional);
+  }
+
+  async logout(professionalId: string): Promise<void> {
+    await this.safeRecord({ professionalId, action: 'session.logout' });
   }
 
   async getSession(professionalId: string, credentialsVersion?: number): Promise<SessionSubject> {
@@ -106,6 +122,7 @@ export class AuthService {
       const current = await this.getProfessional(professionalId);
       current.changePasswordHash(hash, this.clock.now());
       await this.professionals.save(current);
+      await this.audit.record({ professionalId, action: 'account.password_changed' });
       return current;
     });
     return this.subject(changed);
@@ -136,6 +153,12 @@ export class AuthService {
 
   static contactOf(professional: Professional): { email: string; name: string } {
     return { email: professional.email, name: professional.fullName };
+  }
+
+  private async safeRecord(entry: AuditRecord): Promise<void> {
+    try {
+      await this.audit.record(entry);
+    } catch {}
   }
 
   private async subject(professional: Professional): Promise<SessionSubject> {

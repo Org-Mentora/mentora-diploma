@@ -4,6 +4,7 @@ import {
   ServiceUnavailableError,
   ValidationError,
 } from '#core/errors/ApplicationError';
+import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
@@ -36,6 +37,7 @@ export class VirtualConsultationService {
     private readonly transactions: TransactionManager,
     private readonly clock: Clock,
     private readonly ids: IdGenerator,
+    private readonly audit: AuditTrail,
   ) {}
 
   async start(professionalId: string, request: StartMeetingRequest): Promise<VirtualMeeting> {
@@ -100,7 +102,19 @@ export class VirtualConsultationService {
       body: VirtualConsultationService.invitation(patient, joinUrl, appointment),
     });
     meeting.recordInvitation(outcome.status, outcome.error);
-    await this.transactions.run(() => this.meetings.save(meeting));
+    await this.transactions.run(async () => {
+      await this.meetings.save(meeting);
+      await this.audit.record({
+        professionalId,
+        action: 'virtual_meeting.started',
+        target: { type: 'patient', id: request.patientId },
+        details: {
+          provider: this.links.provider,
+          appointmentId: appointment?.id ?? null,
+          invitation: outcome.status,
+        },
+      });
+    });
     return meeting;
   }
 
