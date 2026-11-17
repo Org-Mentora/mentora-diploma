@@ -5,7 +5,7 @@ import type { AppointmentService } from '../model/AppointmentService';
 import { AppointmentViewModel } from './AppointmentViewModel';
 import type { AppointmentRef } from './GetAppointmentPresenter';
 
-/** CU-10 step 10: cancel an appointment. */
+// Presenter
 export class CancelAppointmentPresenter extends Presenter<AppointmentRef, AppointmentDto> {
   constructor(
     view: View<AppointmentDto>,

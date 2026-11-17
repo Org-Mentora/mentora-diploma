@@ -13,7 +13,7 @@ export interface ScheduleAppointmentInput {
   data: ScheduleAppointmentRequestDto;
 }
 
-/** CU-10 step 7: create an appointment, rejecting overlaps. */
+// Presenter
 export class ScheduleAppointmentPresenter extends Presenter<
   ScheduleAppointmentInput,
   AppointmentDto

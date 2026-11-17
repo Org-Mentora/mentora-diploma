@@ -11,7 +11,7 @@ export interface ListAppointmentsInput {
   to: string;
 }
 
-/** CU-10 steps 2-5: appointments of the visible month or the selected day. */
+// Presenter
 export class ListAppointmentsPresenter extends Presenter<ListAppointmentsInput, AppointmentDto[]> {
   constructor(
     view: View<AppointmentDto[]>,

@@ -8,7 +8,7 @@ import type { AppointmentService } from '../model/AppointmentService';
 import { AppointmentViewModel } from './AppointmentViewModel';
 import type { AppointmentRef } from './GetAppointmentPresenter';
 
-/** CU-10 step 9: modify an appointment, re-checking availability. */
+// Presenter
 export class RescheduleAppointmentPresenter extends Presenter<
   AppointmentRef & { data: RescheduleAppointmentRequestDto },
   AppointmentDto

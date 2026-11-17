@@ -1,7 +1,6 @@
 import { ConflictError, ValidationError } from '#core/errors/ApplicationError';
 import { Entity } from '#core/model/Entity';
 
-/** CU-10 consultation categories: first visit, control, follow-up, medication, other. */
 export type AppointmentType = 'first_visit' | 'control' | 'follow_up' | 'medication' | 'other';
 export type AppointmentModality = 'in_person' | 'virtual';
 export type AppointmentStatus = 'scheduled' | 'cancelled';
@@ -21,14 +20,16 @@ export interface AppointmentProps extends AppointmentSlot {
   createdAt: Date;
   updatedAt: Date;
   cancelledAt: Date | null;
+  reminderSentAt: Date | null;
 }
 
 const MINUTE_MS = 60_000;
 
-/** An appointment in the professional's agenda (`Turno`). */
+// Aggregate Root
 export class Appointment extends Entity<AppointmentProps> {
   static readonly MIN_DURATION = 10;
   static readonly MAX_DURATION = 240;
+  static readonly REMINDER_WINDOW_MS = 24 * 60 * MINUTE_MS;
 
   static schedule(professionalId: string, patientId: string, slot: AppointmentSlot, now: Date) {
     Appointment.validateSlot(slot, now);
@@ -41,11 +42,16 @@ export class Appointment extends Entity<AppointmentProps> {
       createdAt: now,
       updatedAt: now,
       cancelledAt: null,
+      reminderSentAt: Appointment.confirmationCoversReminder(slot.startsAt, now) ? now : null,
     });
   }
 
   static restore(id: string, props: AppointmentProps): Appointment {
     return new Appointment(id, props);
+  }
+
+  private static confirmationCoversReminder(startsAt: Date, now: Date): boolean {
+    return startsAt.getTime() - now.getTime() <= Appointment.REMINDER_WINDOW_MS;
   }
 
   static endOf(startsAt: Date, durationMinutes: number): Date {
@@ -71,20 +77,42 @@ export class Appointment extends Entity<AppointmentProps> {
     }
   }
 
-  /** CU-10 step 9: change the slot. Cancelled appointments cannot be modified. */
   reschedule(slot: AppointmentSlot, now: Date): void {
     this.assertScheduled();
     Appointment.validateSlot(slot, now);
-    this.props = { ...this.props, ...slot, notes: slot.notes?.trim() || null, updatedAt: now };
+    const moved = slot.startsAt.getTime() !== this.props.startsAt.getTime();
+    this.props = {
+      ...this.props,
+      ...slot,
+      notes: slot.notes?.trim() || null,
+      updatedAt: now,
+      reminderSentAt: moved
+        ? Appointment.confirmationCoversReminder(slot.startsAt, now)
+          ? now
+          : null
+        : this.props.reminderSentAt,
+    };
   }
 
-  /** CU-10 step 10. */
   cancel(now: Date): void {
     this.assertScheduled();
     this.props = { ...this.props, status: 'cancelled', cancelledAt: now, updatedAt: now };
   }
 
-  /** True when both appointments are scheduled and their time ranges intersect. */
+  markReminderSent(now: Date): void {
+    this.props = { ...this.props, reminderSentAt: now };
+  }
+
+  needsReminderAt(now: Date, windowMs: number): boolean {
+    const start = this.props.startsAt.getTime();
+    return (
+      this.isScheduled &&
+      this.props.reminderSentAt === null &&
+      start > now.getTime() &&
+      start <= now.getTime() + windowMs
+    );
+  }
+
   overlaps(other: Appointment): boolean {
     return (
       this.id !== other.id &&
@@ -151,5 +179,9 @@ export class Appointment extends Entity<AppointmentProps> {
 
   get cancelledAt(): Date | null {
     return this.props.cancelledAt;
+  }
+
+  get reminderSentAt(): Date | null {
+    return this.props.reminderSentAt;
   }
 }

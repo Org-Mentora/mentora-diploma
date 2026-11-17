@@ -1,18 +1,24 @@
 import type { Router } from 'express';
 import type { AppLogger } from '#core/logging/AppLogger';
 import type { Clock } from '#core/model/Clock';
+import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
+import type { ScheduledJob } from '#core/scheduling/ScheduledJob';
 import type { View } from '#core/view/View';
+import type { TransactionContext } from '#infrastructure/database/TransactionContext';
+import type { DateTimeFormatter } from '#infrastructure/format/DateTimeFormatter';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
+import type { NotificationCenter } from '#modules/notifications';
 import type { PatientDirectory } from '#modules/patients';
 import {
   type AppointmentDto,
   registerAppointmentContracts,
 } from './contracts/appointments.contracts';
-import { LoggingAppointmentNotifier } from './infrastructure/LoggingAppointmentNotifier';
 import { MongooseAppointmentRepository } from './infrastructure/MongooseAppointmentRepository';
 import { PatientDirectoryNames } from './infrastructure/PatientDirectoryNames';
+import { WhatsAppAppointmentNotifier } from './infrastructure/WhatsAppAppointmentNotifier';
+import { AppointmentDirectory } from './model/AppointmentDirectory';
 import type { AppointmentNotifier } from './model/AppointmentNotifier';
 import type { AppointmentRepository } from './model/AppointmentRepository';
 import { AppointmentService } from './model/AppointmentService';
@@ -28,24 +34,34 @@ export interface AppointmentsModuleDependencies {
   guard: AuthGuard;
   clock: Clock;
   patients: PatientDirectory;
+  notifications: NotificationCenter;
+  dates: DateTimeFormatter;
   logger: AppLogger;
-  /** Defaults to MongoDB; tests may pass an in-memory implementation. */
+  transactions: TransactionManager;
+  context: TransactionContext;
   repository?: AppointmentRepository;
-  /** Defaults to logging the notification until the WhatsApp adapter exists (CU-14). */
   notifier?: AppointmentNotifier;
 }
 
-/** Composition root of the agenda module (CU-10). */
+const TEN_MINUTES_MS = 10 * 60 * 1000;
+
+// Composition Root, Abstract Factory
 export class AppointmentsModule implements AppModule, AppointmentPresenterFactory {
   readonly basePath = '/appointments';
+  readonly directory: AppointmentDirectory;
   readonly #service: AppointmentService;
+  readonly #logger: AppLogger;
 
   constructor(private readonly deps: AppointmentsModuleDependencies) {
+    const repository = deps.repository ?? new MongooseAppointmentRepository(deps.context);
+    this.#logger = deps.logger.child({ module: 'appointments' });
+    this.directory = new AppointmentDirectory(repository);
     this.#service = new AppointmentService(
-      deps.repository ?? new MongooseAppointmentRepository(),
+      repository,
+      deps.transactions,
       new PatientDirectoryNames(deps.patients),
       deps.notifier ??
-        new LoggingAppointmentNotifier(deps.logger.child({ module: 'appointments' })),
+        new WhatsAppAppointmentNotifier(deps.patients, deps.notifications, deps.dates),
       deps.clock,
     );
   }
@@ -56,6 +72,21 @@ export class AppointmentsModule implements AppModule, AppointmentPresenterFactor
 
   createRouter(): Router {
     return new AppointmentRoutes(this, this.deps.guard).build();
+  }
+
+  scheduledJobs(): ScheduledJob[] {
+    return [
+      {
+        name: 'appointments.send-reminders',
+        intervalMs: TEN_MINUTES_MS,
+        run: async () => {
+          const sent = await this.#service.sendDueReminders();
+          if (sent > 0) {
+            this.#logger.info('Appointment reminders sent', { sent });
+          }
+        },
+      },
+    ];
   }
 
   listAppointments(view: View<AppointmentDto[]>): ListAppointmentsPresenter {
