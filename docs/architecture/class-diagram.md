@@ -185,7 +185,7 @@ classDiagram
 
 ## API infrastructure
 
-24 classes.
+26 classes.
 
 ```mermaid
 classDiagram
@@ -284,6 +284,11 @@ classDiagram
     +save(entity) Promise~void~
     +delete(id) Promise~boolean~
   }
+  class MongoRateLimitStore {
+    <<Adapter>>
+    +COLLECTION$
+    +hit(id, windowMs, now) Promise~RateLimitWindow~
+  }
   class MongoTransactionManager {
     <<Unit of Work, Adapter>>
     -database: MongoConnection
@@ -309,10 +314,15 @@ classDiagram
   }
   class RateLimiter {
     -enabled: boolean
+    -store: RateLimitStore
     -now: Function
     +byIp(req)$ string
     +byEmail(req)$ string | null
     +limit(rules) RequestHandler
+  }
+  class RateLimitStore {
+    <<abstract>>
+    +hit(id, windowMs, now)* Promise~RateLimitWindow~
   }
   class ScryptPasswordHasher {
     <<Adapter>>
@@ -366,6 +376,8 @@ classDiagram
   MongoTransactionManager --> TransactionContext
   MongooseRepository --> TransactionContext
   PasswordHasher <|-- ScryptPasswordHasher
+  RateLimitStore <|-- MongoRateLimitStore
+  RateLimiter --> RateLimitStore
   Repository <|-- MongooseRepository
   TokenService <|-- JoseTokenService
   TransactionManager <|-- MongoTransactionManager

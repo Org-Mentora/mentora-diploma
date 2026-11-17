@@ -7,6 +7,7 @@ import { MongoTransactionManager } from '#infrastructure/database/MongoTransacti
 import { TransactionContext } from '#infrastructure/database/TransactionContext';
 import { DateTimeFormatter } from '#infrastructure/format/DateTimeFormatter';
 import { AuthGuard } from '#infrastructure/http/AuthGuard';
+import { MongoRateLimitStore } from '#infrastructure/http/MongoRateLimitStore';
 import { RateLimiter } from '#infrastructure/http/RateLimiter';
 import { SessionCookie } from '#infrastructure/http/SessionCookie';
 import { Logger } from '#infrastructure/logger/Logger';
@@ -135,7 +136,7 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
       dates,
       logger,
       recoveryUrl: `${appUrl}/forgot-password`,
-      limiter: new RateLimiter(env.RATE_LIMIT_ENABLED),
+      limiter: new RateLimiter(env.RATE_LIMIT_ENABLED, new MongoRateLimitStore()),
     }),
     subscriptions,
     patients,
