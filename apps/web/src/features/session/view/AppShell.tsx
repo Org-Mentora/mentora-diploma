@@ -1,17 +1,21 @@
-import { AlertTriangle, CalendarDays, LogOut, Settings, Users } from 'lucide-react';
+import { AlertTriangle, BarChart3, CalendarDays, LogOut, Settings, Users } from 'lucide-react';
 import { Link, NavLink, Outlet } from 'react-router';
+import { LanguageSwitcher } from '@/features/preferences';
+import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/lib/utils';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { PLAN_PATH, useSessionViewModel } from '../viewmodel/useSessionViewModel';
 
 const NAV = [
-  { to: '/patients', label: 'Patients', icon: Users, needsAccess: true },
-  { to: '/agenda', label: 'Agenda', icon: CalendarDays, needsAccess: true },
-  { to: '/settings', label: 'Settings', icon: Settings, needsAccess: false },
+  { to: '/patients', label: 'nav.patients', icon: Users, needsAccess: true },
+  { to: '/agenda', label: 'nav.agenda', icon: CalendarDays, needsAccess: true },
+  { to: '/reports', label: 'nav.reports', icon: BarChart3, needsAccess: true },
+  { to: '/settings', label: 'nav.settings', icon: Settings, needsAccess: false },
 ];
 
 export function AppShell() {
+  const { t } = useTranslation();
   const { state, session, logout, isLoggingOut } = useSessionViewModel();
   const restricted = state === 'restricted';
   const nav = NAV.filter((item) => !restricted || !item.needsAccess);
@@ -34,12 +38,13 @@ export function AppShell() {
                 }
               >
                 <Icon className="size-4" />
-                <span className="hidden sm:inline">{label}</span>
+                <span className="hidden sm:inline">{t(label)}</span>
               </NavLink>
             ))}
           </nav>
           {session && (
             <div className="ml-auto flex items-center gap-3">
+              <LanguageSwitcher />
               <Link to={PLAN_PATH} className="hidden sm:inline-flex">
                 <Badge variant={session.subscriptionTone}>{session.subscriptionLabel}</Badge>
               </Link>
@@ -53,7 +58,7 @@ export function AppShell() {
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Log out"
+                aria-label={t('nav.logout')}
                 onClick={() => void logout()}
                 disabled={isLoggingOut}
               >
@@ -71,11 +76,10 @@ export function AppShell() {
           <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2 text-sm">
             <AlertTriangle className="size-4 shrink-0" />
             <span>
-              {session.subscriptionLabel}. Your data is safe: choose a plan or regularize the
-              payment to use the practice again.
+              {session.subscriptionLabel}. {t('nav.restricted')}
             </span>
             <Link to={PLAN_PATH} className="ml-auto font-medium underline">
-              Manage plan
+              {t('nav.managePlan')}
             </Link>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { LanguageSwitcher } from '@/features/preferences';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 
 interface AuthLayoutProps {
@@ -13,7 +14,10 @@ export function AuthLayout({ title, description, children, footer, wide }: AuthL
   return (
     <div className="flex min-h-dvh items-center justify-center bg-muted/30 p-4">
       <div className={wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>
-        <p className="mb-6 text-center font-semibold text-xl tracking-tight">Mentora</p>
+        <div className="mb-6 flex items-center justify-between">
+          <p className="font-semibold text-xl tracking-tight">Mentora</p>
+          <LanguageSwitcher />
+        </div>
         <Card>
           <CardHeader>
             <CardTitle>{title}</CardTitle>
