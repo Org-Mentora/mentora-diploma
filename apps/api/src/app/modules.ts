@@ -10,6 +10,7 @@ import { IntlDateFormatter } from '#infrastructure/format/IntlDateFormatter';
 import { AuthGuard } from '#infrastructure/http/AuthGuard';
 import { MongoRateLimitStore } from '#infrastructure/http/MongoRateLimitStore';
 import { RateLimiter } from '#infrastructure/http/RateLimiter';
+import { RequestOriginContext } from '#infrastructure/http/RequestOriginContext';
 import { SessionCookie } from '#infrastructure/http/SessionCookie';
 import { Logger } from '#infrastructure/logger/Logger';
 import type { MailTransport } from '#infrastructure/mail/MailTransport';
@@ -18,7 +19,9 @@ import { HmacSha256SigningAlgorithm } from '#infrastructure/security/HmacSha256S
 import { JoseTokenService } from '#infrastructure/security/JoseTokenService';
 import { ScryptPasswordHasher } from '#infrastructure/security/ScryptPasswordHasher';
 import { AppointmentsModule } from '#modules/appointments';
+import { AuditModule } from '#modules/audit';
 import { AuthModule } from '#modules/auth';
+import { BookingModule } from '#modules/booking';
 import { ClinicalRecordsModule } from '#modules/clinical-records';
 import { DiagnosisCatalogModule } from '#modules/diagnosis-catalog';
 import { HealthModule, MongoHealthIndicator } from '#modules/health';
@@ -92,6 +95,15 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
   const dates = new IntlDateFormatter(env.APP_TIMEZONE);
   const mail = options.mail ?? new SmtpMailTransport(env.SMTP_URL, env.MAIL_FROM);
   const appUrl = env.APP_URL.replace(/\/$/, '');
+  const limiter = new RateLimiter(env.RATE_LIMIT_ENABLED, new MongoRateLimitStore(database));
+  const auditing = new AuditModule({
+    guard,
+    clock,
+    ids,
+    context,
+    origins: new RequestOriginContext(),
+  });
+  const audit = auditing.trail;
 
   const subscriptions = new SubscriptionsModule({
     guard,
@@ -106,8 +118,9 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
     prices: { monthly: env.PLAN_MONTHLY_PRICE, annual: env.PLAN_ANNUAL_PRICE },
     trialDays: env.TRIAL_DAYS,
     planUrl: `${appUrl}/settings/plan`,
+    audit,
   });
-  const patients = new PatientsModule({ guard, clock, ids, transactions, context, logger });
+  const patients = new PatientsModule({ guard, clock, ids, transactions, context, logger, audit });
   const diagnoses = new DiagnosisCatalogModule({ guard });
   const notifications = new NotificationsModule({
     guard,
@@ -127,6 +140,25 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
     logger,
     transactions,
     context,
+    audit,
+    timezone: env.APP_TIMEZONE,
+  });
+  const auth = new AuthModule({
+    guard,
+    cookie: new SessionCookie(config.isProduction, env.SESSION_TTL_SECONDS),
+    hasher: new ScryptPasswordHasher(),
+    tokens,
+    clock,
+    ids,
+    transactions,
+    context,
+    subscriptions: subscriptions.access,
+    mail,
+    dates,
+    logger,
+    recoveryUrl: `${appUrl}/forgot-password`,
+    limiter,
+    audit,
   });
 
   return [
@@ -134,22 +166,8 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
       indicators: [new MongoHealthIndicator(database)],
       clock,
     }),
-    new AuthModule({
-      guard,
-      cookie: new SessionCookie(config.isProduction, env.SESSION_TTL_SECONDS),
-      hasher: new ScryptPasswordHasher(),
-      tokens,
-      clock,
-      ids,
-      transactions,
-      context,
-      subscriptions: subscriptions.access,
-      mail,
-      dates,
-      logger,
-      recoveryUrl: `${appUrl}/forgot-password`,
-      limiter: new RateLimiter(env.RATE_LIMIT_ENABLED, new MongoRateLimitStore(database)),
-    }),
+    auth,
+    auditing,
     subscriptions,
     patients,
     diagnoses,
@@ -162,6 +180,7 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
       catalog: diagnoses.catalog,
       transactions,
       context,
+      audit,
     }),
     appointments,
     notifications,
@@ -175,6 +194,24 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
       patients: patients.directory,
       appointments: appointments.directory,
       notifications: notifications.center,
+      audit,
+    }),
+    new BookingModule({
+      guard,
+      limiter,
+      clock,
+      ids,
+      transactions,
+      context,
+      audit,
+      timezone: env.APP_TIMEZONE,
+      professionals: auth.directory,
+      access: subscriptions.access,
+      patients: patients.intake,
+      appointments: appointments.booking,
+      mail,
+      dates,
+      logger,
     }),
   ];
 }
