@@ -394,6 +394,10 @@ export class InMemoryPaymentRepository extends PaymentRepository {
     return this.of(professionalId).length;
   }
 
+  async hasChargeKey(chargeKey: string): Promise<boolean> {
+    return this.#store.all().some((payment) => payment.chargeKey === chargeKey);
+  }
+
   async hasManualReference(professionalId: string, reference: string): Promise<boolean> {
     return this.of(professionalId).some(
       (payment) => payment.kind === 'manual' && payment.reference === reference,

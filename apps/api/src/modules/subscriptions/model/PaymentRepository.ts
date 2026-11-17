@@ -5,5 +5,6 @@ import type { Payment } from './Payment';
 export abstract class PaymentRepository extends Repository<Payment> {
   abstract findByProfessional(professionalId: string): Promise<Payment[]>;
   abstract countByProfessional(professionalId: string): Promise<number>;
+  abstract hasChargeKey(chargeKey: string): Promise<boolean>;
   abstract hasManualReference(professionalId: string, reference: string): Promise<boolean>;
 }
