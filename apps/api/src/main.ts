@@ -7,6 +7,8 @@ import { MongoJobLock } from '#infrastructure/scheduling/MongoJobLock';
 import { Application } from './app/Application';
 
 const KEEP_ALIVE_MS = 65_000;
+const MIGRATIONS_LOCK = 'data-migrations';
+const MIGRATIONS_LEASE_MS = 10 * 60_000;
 
 function closeServer(server: Server): Promise<void> {
   return new Promise((resolve) => {
@@ -30,19 +32,23 @@ async function bootstrap(): Promise<void> {
 
   const application = new Application();
   await application.bootstrapModules();
-  const migrated = await application.runMigrations();
-  if (migrated.length > 0) {
-    logger.info('Data migrations applied', { migrations: migrated });
+  const locks = new MongoJobLock(database);
+  if (await locks.acquire(MIGRATIONS_LOCK, MIGRATIONS_LEASE_MS)) {
+    try {
+      const migrated = await application.runMigrations();
+      if (migrated.length > 0) {
+        logger.info('Data migrations applied', { migrations: migrated });
+      }
+    } finally {
+      await locks.release(MIGRATIONS_LOCK);
+    }
   }
   const server = await application.createServer().listen(env.PORT);
   server.keepAliveTimeout = KEEP_ALIVE_MS;
   server.headersTimeout = KEEP_ALIVE_MS + 1_000;
   logger.info(`API listening on http://localhost:${env.PORT} (docs at /api/docs)`);
 
-  const scheduler = new IntervalJobScheduler(
-    logger.child({ component: 'scheduler' }),
-    new MongoJobLock(database),
-  );
+  const scheduler = new IntervalJobScheduler(logger.child({ component: 'scheduler' }), locks);
   if (env.SCHEDULER_ENABLED) {
     scheduler.start(application.scheduledJobs());
   }
