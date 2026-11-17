@@ -1,6 +1,6 @@
 # Web (apps/web): MVVM + RTK Query + Tailwind/shadcn
 
-ADRs: 0010 (codegen), 0011 (MVVM), 0012 (Tailwind/shadcn), 0006 (AppStore singleton).
+ADRs: 0010 (codegen), 0011 (MVVM), 0012 (Tailwind/shadcn), 0006 (AppStore singleton), 0042 (platform ports).
 Reference slice to copy: `src/features/health`. Recipe: `.claude/skills/new-frontend-feature`.
 
 ## Layout

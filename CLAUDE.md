@@ -76,6 +76,7 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | Backend | [0033](docs/adr/0033-cross-module-commands.md) | Cross-module command services called inside the caller's transaction | Accepted |
 | Backend | [0040](docs/adr/0040-concurrency-and-audit-hardening.md) | Agenda lock per professional, rate limits in Mongo (`MongoRateLimitStore`), append-only clinical record access log, email fallback in `NotificationCenter.send` | Accepted |
 | Patterns | [0006](docs/adr/0006-singleton-pattern.md) | Singleton: AppConfig, Logger, MongoConnection, OpenApiRegistry, AppStore | Accepted |
+| Patterns | [0042](docs/adr/0042-dependency-inversion-for-platform-services.md) | DIP for platform services: API `IdGenerator` + `DateFormatter`; web `UserFeedback` + `BrowserActions` via `PlatformContext` | Accepted |
 | Patterns | [0007](docs/adr/0007-adapter-pattern.md) | Adapter at every technology boundary (Mongoose, pino, Express, zod-to-openapi, DTO→UI) | Accepted |
 | API | [0009](docs/adr/0009-code-first-openapi.md) | zod contracts with `.meta({id})` → OpenAPI → Swagger UI at `/api/docs` (~~OpenAPI 3.0.3~~ → 0023) | Amended |
 | API | [0023](docs/adr/0023-openapi-3-1-nullable-refs.md) | OpenAPI **3.1** output; nullable DTO refs via `nullableRef(Schema)`, never `.nullable()` | Accepted |

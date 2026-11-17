@@ -37,6 +37,8 @@ instance injected.
 | `MailTransport` | `SmtpMailTransport` | nodemailer (Mailpit locally) |
 | `PasswordRecoveryNotifier` / `BillingNotifier` | `EmailPasswordRecoveryNotifier` / `EmailBillingNotifier` | `MailTransport` |
 | `RecoveryCodeGenerator` | `CryptoRecoveryCodeGenerator` | `node:crypto` randomInt |
+| `IdGenerator` | `UuidIdGenerator` | `crypto.randomUUID` (ADR-0042) |
+| `DateFormatter` | `IntlDateFormatter` | `Intl.DateTimeFormat` in `APP_TIMEZONE` (ADR-0042) |
 | `ProfessionalAccess` | `SubscriptionAccessAdapter` | subscriptions module |
 | `PaymentGateway` | `SimulatedPaymentGateway` | local sandbox (test cards) |
 | `WhatsAppGateway` | `LocalWhatsAppOutbox` / `WhatsAppCloudApiGateway` | log / Meta Graph API |
@@ -45,6 +47,8 @@ instance injected.
 | `LogoRepository` | `MongooseLogoRepository` | Mongoose (binary) |
 | PDF document | `PrescriptionPdfAdapter` | jsPDF (web) |
 | UI model | `HealthAdapter` | generated `HealthDto` |
+| `UserFeedback` | `SonnerUserFeedback` | sonner toasts (web, ADR-0042) |
+| `BrowserActions` | `WindowBrowserActions` | `window.print`, `navigator.clipboard` (web, ADR-0042) |
 | `UiError` | `ApiErrorAdapter` | RTK Query error union |
 
 ## Other patterns that appear by design
@@ -61,7 +65,7 @@ lists them.
 | **ViewModel** | MVVM: every `use<Name>ViewModel` hook in the web (ADR-0011) |
 | **Repository** | `Repository<T>` and the per-aggregate abstract repositories in each `model/` |
 | **Data Mapper** | `DataMapper<Entity, Document>` and every `*Mapper` |
-| **Composition Root** | `<Name>Module.ts`, `Application.ts`, `createModules`, `main.ts` |
+| **Composition Root** | `<Name>Module.ts`, `Application.ts`, `createModules`, `main.ts`; web `AppProviders` (provides `PlatformContext`) |
 | **Unit of Work** | `TransactionManager.run` + `TransactionContext` (ADR-0025) |
 | **Strategy** | `PaymentGateway`, `WhatsAppGateway`, `MeetingLinkProvider`: implementation picked by configuration; `TokenSigningAlgorithm` (`HmacSha256SigningAlgorithm`) for JWTs (ADR-0041) |
 | **Facade** | `NotificationCenter`: delivery, retry and log behind one call (ADR-0030) |

@@ -2,7 +2,7 @@
 
 ADRs: 0004 (MVP), 0005 (OOP), 0006 (Singleton), 0007 (Adapter), 0008 (Mongo), 0009 (OpenAPI),
 0024 (module dependencies), 0025 (transactions), 0026 (jobs), 0027 (email), 0029 (subscriptions), 0030 (WhatsApp),
-0031 (video calls), 0033 (cross-module commands), 0040 (agenda lock, rate-limit store, access log), 0041 (JWT signing Strategy).
+0031 (video calls), 0033 (cross-module commands), 0040 (agenda lock, rate-limit store, access log), 0041 (JWT signing Strategy), 0042 (IdGenerator, DateFormatter).
 Reference slice to copy: `src/modules/health`. Recipe: `.claude/skills/new-backend-module`.
 
 ## Layout
