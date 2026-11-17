@@ -53,7 +53,9 @@ export class ExpressServer {
       next();
     });
     app.use(helmet({ contentSecurityPolicy: false }));
-    app.use(cors({ origin: corsOrigin.split(','), credentials: true }));
+    app.use(
+      cors({ origin: corsOrigin.split(',').map((origin) => origin.trim()), credentials: true }),
+    );
     app.use(express.json({ limit: '1mb' }));
     app.use(cookieParser());
     if (!quiet) {
