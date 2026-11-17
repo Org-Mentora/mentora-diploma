@@ -5,13 +5,9 @@ import type { AppLogger } from '#core/logging/AppLogger';
 import { HttpView } from '#core/view/HttpView';
 import { ExpressResponderAdapter } from './ExpressResponderAdapter';
 
+// Passive View
 class ErrorHttpView extends HttpView<never> {}
 
-/**
- * Last line of defence. Known `ApplicationError`s (e.g. a `ValidationError` thrown by a
- * view's input parsing) are rendered like any presenter error; everything else is logged
- * and answered with an opaque 500.
- */
 export class HttpErrorHandler {
   constructor(private readonly logger: AppLogger) {}
 

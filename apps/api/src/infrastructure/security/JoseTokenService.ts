@@ -3,7 +3,7 @@ import { type SessionClaims, TokenService } from '#core/security/TokenService';
 
 const ISSUER = 'mentora-api';
 
-/** Adapter (ADR-0007): signs and verifies HS256 JWTs with `jose` (ADR-0018). */
+// Adapter
 export class JoseTokenService extends TokenService {
   readonly #key: Uint8Array;
 
@@ -16,7 +16,10 @@ export class JoseTokenService extends TokenService {
   }
 
   issue(claims: SessionClaims): Promise<string> {
-    return new SignJWT({ aex: claims.accessEndsAt?.getTime() ?? null })
+    return new SignJWT({
+      aex: claims.accessEndsAt?.getTime() ?? null,
+      cv: claims.credentialsVersion,
+    })
       .setProtectedHeader({ alg: 'HS256' })
       .setSubject(claims.professionalId)
       .setIssuer(ISSUER)
@@ -32,7 +35,8 @@ export class JoseTokenService extends TokenService {
         return null;
       }
       const accessEndsAt = typeof payload.aex === 'number' ? new Date(payload.aex) : null;
-      return { professionalId: payload.sub, accessEndsAt };
+      const credentialsVersion = typeof payload.cv === 'number' ? payload.cv : 0;
+      return { professionalId: payload.sub, accessEndsAt, credentialsVersion };
     } catch {
       return null;
     }

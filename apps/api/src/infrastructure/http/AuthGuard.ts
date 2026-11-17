@@ -5,23 +5,17 @@ import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
 import type { TokenService } from '#core/security/TokenService';
 import { SESSION_COOKIE_NAME } from './SessionCookie';
 
-/**
- * Express middleware that turns the session cookie into an `AuthenticatedActor` stored in
- * `res.locals.actor` (ADR-0018). Errors are thrown and rendered by `HttpErrorHandler`.
- */
 export class AuthGuard {
   constructor(
     private readonly tokens: TokenService,
     private readonly clock: Clock,
   ) {}
 
-  /** Requires a valid session, whatever the subscription status (e.g. `/auth/me`). */
   readonly requireSession: RequestHandler = async (req, res, next) => {
     await this.authenticate(req.cookies?.[SESSION_COOKIE_NAME], res);
     next();
   };
 
-  /** Requires a valid session and an active subscription or trial (CU-01 step 7). */
   readonly requireActiveSubscription: RequestHandler = async (req, res, next) => {
     const accessEndsAt = await this.authenticate(req.cookies?.[SESSION_COOKIE_NAME], res);
     if (accessEndsAt && accessEndsAt.getTime() <= this.clock.now().getTime()) {
@@ -38,7 +32,10 @@ export class AuthGuard {
     if (!claims) {
       throw new UnauthorizedError('Your session is invalid or has expired');
     }
-    const actor: AuthenticatedActor = { professionalId: claims.professionalId };
+    const actor: AuthenticatedActor = {
+      professionalId: claims.professionalId,
+      credentialsVersion: claims.credentialsVersion,
+    };
     res.locals.actor = actor;
     return claims.accessEndsAt;
   }

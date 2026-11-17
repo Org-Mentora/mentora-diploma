@@ -1,4 +1,5 @@
-import type { Server } from 'node:http';
+import { randomUUID } from 'node:crypto';
+import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express, { type Express } from 'express';
@@ -14,11 +15,19 @@ export interface ExpressServerOptions {
   logger: PinoLoggerAdapter;
   corsOrigin: string;
   openApiDocument: object;
-  /** Disable request logging (tests). */
   quiet?: boolean;
+  trustProxy?: number;
 }
 
-/** Builds the Express application: global middleware, module routers, docs and errors. */
+const REQUEST_ID = /^[\w.-]{1,100}$/;
+
+function requestIdOf(req: IncomingMessage, res: ServerResponse): string {
+  const incoming = req.headers['x-request-id'];
+  const id = typeof incoming === 'string' && REQUEST_ID.test(incoming) ? incoming : randomUUID();
+  res.setHeader('X-Request-Id', id);
+  return id;
+}
+
 export class ExpressServer {
   readonly app: Express;
 
@@ -33,17 +42,27 @@ export class ExpressServer {
   }
 
   private build(): Express {
-    const { modules, logger, corsOrigin, openApiDocument, quiet } = this.options;
+    const { modules, logger, corsOrigin, openApiDocument, quiet, trustProxy = 0 } = this.options;
     const app = express();
     const errors = new HttpErrorHandler(logger);
 
     app.disable('x-powered-by');
+    app.set('trust proxy', trustProxy);
+    app.use((req, res, next) => {
+      requestIdOf(req, res);
+      next();
+    });
     app.use(helmet({ contentSecurityPolicy: false }));
     app.use(cors({ origin: corsOrigin.split(','), credentials: true }));
     app.use(express.json({ limit: '1mb' }));
     app.use(cookieParser());
     if (!quiet) {
-      app.use(pinoHttp({ logger: logger.native }));
+      app.use(
+        pinoHttp({
+          logger: logger.native,
+          genReqId: (_req, res) => String(res.getHeader('X-Request-Id') ?? randomUUID()),
+        }),
+      );
     }
 
     app.get('/api/openapi.json', (_req, res) => {
