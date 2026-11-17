@@ -247,6 +247,7 @@ classDiagram
   }
   class Logger {
     <<Singleton>>
+    +REDACTED_PATHS$
     +getInstance()$ PinoLoggerAdapter
     +resetInstance()$ void
   }

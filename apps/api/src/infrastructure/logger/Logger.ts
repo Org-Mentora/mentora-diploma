@@ -4,6 +4,11 @@ import { PinoLoggerAdapter } from './PinoLoggerAdapter';
 
 // Singleton
 export class Logger {
+  static readonly REDACTED_PATHS = [
+    'req.headers.cookie',
+    'req.headers.authorization',
+    'res.headers["set-cookie"]',
+  ];
   static #instance: PinoLoggerAdapter | undefined;
 
   private constructor() {}
@@ -15,6 +20,7 @@ export class Logger {
       Logger.#instance = new PinoLoggerAdapter(
         pino({
           level: env.LOG_LEVEL,
+          redact: Logger.REDACTED_PATHS,
           ...(usePretty
             ? { transport: { target: 'pino-pretty', options: { colorize: true } } }
             : {}),
