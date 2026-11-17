@@ -1,5 +1,5 @@
+import type { DateFormatter } from '#core/format/DateFormatter';
 import type { AppLogger } from '#core/logging/AppLogger';
-import type { DateTimeFormatter } from '#infrastructure/format/DateTimeFormatter';
 import type { NotificationCenter, NotificationTopic } from '#modules/notifications';
 import type { PatientDirectory } from '#modules/patients';
 import type { Appointment } from '../model/Appointment';
@@ -17,7 +17,7 @@ export class NotificationAppointmentNotifier extends AppointmentNotifier {
   constructor(
     private readonly patients: PatientDirectory,
     private readonly notifications: NotificationCenter,
-    private readonly dates: DateTimeFormatter,
+    private readonly dates: DateFormatter,
     private readonly logger: AppLogger,
   ) {
     super();

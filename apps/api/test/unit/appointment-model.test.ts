@@ -18,7 +18,7 @@ function slot(startsAt: string, durationMinutes = 45): AppointmentSlot {
 }
 
 const schedule = (startsAt: string, duration = 45) =>
-  Appointment.schedule('prof', 'patient', slot(startsAt, duration), now);
+  Appointment.schedule(crypto.randomUUID(), 'prof', 'patient', slot(startsAt, duration), now);
 
 describe('Appointment (CU-10)', () => {
   it('detects overlapping scheduled appointments', () => {

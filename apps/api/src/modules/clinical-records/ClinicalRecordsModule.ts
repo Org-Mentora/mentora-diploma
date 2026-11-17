@@ -1,5 +1,6 @@
 import type { Router } from 'express';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
@@ -36,6 +37,7 @@ import { ClinicalRecordRoutes } from './view/ClinicalRecordRoutes';
 export interface ClinicalRecordsModuleDependencies {
   guard: AuthGuard;
   clock: Clock;
+  ids: IdGenerator;
   patients: PatientDirectory;
   activity: PatientActivity;
   catalog: DiagnosisCatalog;
@@ -62,6 +64,7 @@ export class ClinicalRecordsModule implements AppModule, ClinicalRecordPresenter
       new CatalogDiagnosisResolver(deps.catalog),
       deps.clock,
       deps.accessLog ?? new MongooseRecordAccessLog(deps.context),
+      deps.ids,
     );
   }
 

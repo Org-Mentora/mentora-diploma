@@ -16,8 +16,8 @@ export class PasswordRecovery extends Entity<PasswordRecoveryProps> {
   static readonly TTL_MINUTES = 15;
   static readonly MAX_ATTEMPTS = 5;
 
-  static issue(professionalId: string, codeHash: string, now: Date): PasswordRecovery {
-    return new PasswordRecovery(crypto.randomUUID(), {
+  static issue(id: string, professionalId: string, codeHash: string, now: Date): PasswordRecovery {
+    return new PasswordRecovery(id, {
       professionalId,
       codeHash,
       expiresAt: new Date(now.getTime() + PasswordRecovery.TTL_MINUTES * MINUTE_MS),

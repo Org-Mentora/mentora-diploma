@@ -29,7 +29,7 @@ describe('Professional (CU-03, CU-16, CU-17)', () => {
   };
 
   it('normalizes the profile and removes empty or repeated offices', () => {
-    const professional = Professional.register(data, now);
+    const professional = Professional.register(crypto.randomUUID(), data, now);
 
     expect(professional.email).toBe('ana@mentora.test');
     expect(professional.licenseNumber).toBe('MN-123');
@@ -39,14 +39,20 @@ describe('Professional (CU-03, CU-16, CU-17)', () => {
   });
 
   it('rejects a profile without required fields or with too many offices', () => {
-    expect(() => Professional.register({ ...data, specialty: ' ' }, now)).toThrow(/specialty/);
     expect(() =>
-      Professional.register({ ...data, offices: ['a', 'b', 'c', 'd', 'e', 'f'] }, now),
+      Professional.register(crypto.randomUUID(), { ...data, specialty: ' ' }, now),
+    ).toThrow(/specialty/);
+    expect(() =>
+      Professional.register(
+        crypto.randomUUID(),
+        { ...data, offices: ['a', 'b', 'c', 'd', 'e', 'f'] },
+        now,
+      ),
     ).toThrow(/up to 5 offices/);
   });
 
   it('updates the profile and records password and logo changes', () => {
-    const professional = Professional.register(data, now);
+    const professional = Professional.register(crypto.randomUUID(), data, now);
     professional.updateProfile({ ...data, specialty: 'Child psychiatry' }, days(1));
     professional.changePasswordHash('new-hash', days(2));
     professional.markLogo(days(3), days(3));
@@ -79,7 +85,7 @@ describe('ProfessionalLogo (CU-16 step 5)', () => {
 
 describe('PasswordRecovery (CU-02)', () => {
   it('can be used until it expires, is used or runs out of attempts', () => {
-    const recovery = PasswordRecovery.issue('p-1', 'hash', now);
+    const recovery = PasswordRecovery.issue(crypto.randomUUID(), 'p-1', 'hash', now);
     expect(recovery.isUsableAt(minutes(14))).toBe(true);
     expect(recovery.isUsableAt(minutes(15))).toBe(false);
 
@@ -88,7 +94,7 @@ describe('PasswordRecovery (CU-02)', () => {
     }
     expect(recovery.isUsableAt(now)).toBe(false);
 
-    const used = PasswordRecovery.issue('p-1', 'hash', now);
+    const used = PasswordRecovery.issue(crypto.randomUUID(), 'p-1', 'hash', now);
     used.invalidate(minutes(1));
     expect(used.isUsableAt(minutes(2))).toBe(false);
   });

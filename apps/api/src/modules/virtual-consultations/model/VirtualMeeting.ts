@@ -17,13 +17,14 @@ export interface VirtualMeetingProps {
 // Aggregate Root
 export class VirtualMeeting extends Entity<VirtualMeetingProps> {
   static start(
+    id: string,
     data: Pick<
       VirtualMeetingProps,
       'professionalId' | 'patientId' | 'appointmentId' | 'provider' | 'joinUrl'
     >,
     now: Date,
   ): VirtualMeeting {
-    return new VirtualMeeting(crypto.randomUUID(), {
+    return new VirtualMeeting(id, {
       ...data,
       invitationStatus: 'pending',
       invitationError: null,

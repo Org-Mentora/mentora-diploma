@@ -31,8 +31,8 @@ const MAX_OFFICES = 5;
 
 // Aggregate Root
 export class Professional extends Person<ProfessionalProps> {
-  static register(data: NewProfessionalData, now: Date): Professional {
-    return new Professional(crypto.randomUUID(), {
+  static register(id: string, data: NewProfessionalData, now: Date): Professional {
+    return new Professional(id, {
       ...Professional.validate(data),
       passwordHash: data.passwordHash,
       passwordChangedAt: null,

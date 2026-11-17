@@ -1,5 +1,6 @@
 import { ValidationError } from '#core/errors/ApplicationError';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { PasswordHasher } from '#core/security/PasswordHasher';
 import { PasswordPolicy } from './PasswordPolicy';
@@ -21,6 +22,7 @@ export class PasswordRecoveryService {
     private readonly notifier: PasswordRecoveryNotifier,
     private readonly transactions: TransactionManager,
     private readonly clock: Clock,
+    private readonly ids: IdGenerator,
   ) {}
 
   async request(email: string): Promise<void> {
@@ -37,7 +39,7 @@ export class PasswordRecoveryService {
         previous.invalidate(now);
         await this.recoveries.save(previous);
       }
-      const recovery = PasswordRecovery.issue(professional.id, codeHash, now);
+      const recovery = PasswordRecovery.issue(this.ids.next(), professional.id, codeHash, now);
       await this.recoveries.save(recovery);
       return {
         email: professional.email,

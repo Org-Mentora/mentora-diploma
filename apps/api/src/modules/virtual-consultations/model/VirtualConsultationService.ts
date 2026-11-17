@@ -5,6 +5,7 @@ import {
   ValidationError,
 } from '#core/errors/ApplicationError';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import {
   type AppointmentInfo,
@@ -34,6 +35,7 @@ export class VirtualConsultationService {
     private readonly invitations: MeetingInvitations,
     private readonly transactions: TransactionManager,
     private readonly clock: Clock,
+    private readonly ids: IdGenerator,
   ) {}
 
   async start(professionalId: string, request: StartMeetingRequest): Promise<VirtualMeeting> {
@@ -70,6 +72,7 @@ export class VirtualConsultationService {
     }
 
     const meeting = VirtualMeeting.start(
+      this.ids.next(),
       {
         professionalId,
         patientId: request.patientId,

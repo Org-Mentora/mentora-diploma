@@ -1,5 +1,5 @@
+import type { DateFormatter } from '#core/format/DateFormatter';
 import type { AppLogger } from '#core/logging/AppLogger';
-import type { DateTimeFormatter } from '#infrastructure/format/DateTimeFormatter';
 import type { MailTransport } from '#infrastructure/mail/MailTransport';
 import { type BillingEvent, BillingNotifier } from '../model/BillingNotifier';
 import type { BillingContact } from '../model/Subscription';
@@ -8,7 +8,7 @@ import type { BillingContact } from '../model/Subscription';
 export class EmailBillingNotifier extends BillingNotifier {
   constructor(
     private readonly mail: MailTransport,
-    private readonly dates: DateTimeFormatter,
+    private readonly dates: DateFormatter,
     private readonly planUrl: string,
     private readonly logger: AppLogger,
   ) {

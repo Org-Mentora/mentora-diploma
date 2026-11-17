@@ -10,12 +10,13 @@ Reference slice to copy: `src/modules/health`. Recipe: `.claude/skills/new-backe
 ```
 src/core/            base classes: Presenter, View/HttpView, InputParser, Entity, ValueObject,
                      Repository, DataMapper, TransactionManager, ApplicationError, AppModule,
-                     ContractRegistry, ScheduledJob, JobLock, CalendarMonths, NoContentHttpView
+                     ContractRegistry, ScheduledJob, JobLock, CalendarMonths, NoContentHttpView,
+                     Clock, IdGenerator, DateFormatter (ports injected from src/app/modules.ts)
 src/infrastructure/  singletons + adapters: AppConfig, Logger(Pino), MongoConnection,
                      MongooseRepository, TransactionContext, MongoTransactionManager,
                      OpenApiRegistry, ExpressServer, ExpressResponderAdapter, MailTransport,
                      IntervalJobScheduler, MongoJobLock, MigrationLog, RateLimiter,
-                     DateTimeFormatter
+                     IntlDateFormatter
 src/modules/<m>/     model/ infrastructure/ presenter/ view/ contracts/ <M>Module.ts index.ts
 src/app/             Application (composition root), modules.ts (register modules here)
 test/                unit/ integration/ support/ (fakes: SpyView, FixedClock, ...)

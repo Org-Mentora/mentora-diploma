@@ -18,8 +18,8 @@ export interface DiagnosisHistoryEntry {
 
 // Aggregate Root
 export class ClinicalRecord extends Entity<ClinicalRecordProps> {
-  static open(professionalId: string, patientId: string, now: Date): ClinicalRecord {
-    return new ClinicalRecord(crypto.randomUUID(), {
+  static open(id: string, professionalId: string, patientId: string, now: Date): ClinicalRecord {
+    return new ClinicalRecord(id, {
       professionalId,
       patientId,
       openedAt: now,

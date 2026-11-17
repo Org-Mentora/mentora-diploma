@@ -1,13 +1,14 @@
 import type { Router } from 'express';
+import type { DateFormatter } from '#core/format/DateFormatter';
 import type { AppLogger } from '#core/logging/AppLogger';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 import type { ScheduledJob } from '#core/scheduling/ScheduledJob';
 import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
-import type { DateTimeFormatter } from '#infrastructure/format/DateTimeFormatter';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { MailTransport } from '#infrastructure/mail/MailTransport';
 import {
@@ -39,11 +40,12 @@ import { SubscriptionRoutes } from './view/SubscriptionRoutes';
 export interface SubscriptionsModuleDependencies {
   guard: AuthGuard;
   clock: Clock;
+  ids: IdGenerator;
   transactions: TransactionManager;
   context: TransactionContext;
   gateway: PaymentGateway;
   mail: MailTransport;
-  dates: DateTimeFormatter;
+  dates: DateFormatter;
   logger: AppLogger;
   prices: PlanPrices;
   trialDays: number;
@@ -73,6 +75,7 @@ export class SubscriptionsModule implements AppModule, SubscriptionPresenterFact
       new EmailBillingNotifier(deps.mail, deps.dates, deps.planUrl, this.#logger),
       new PlanCatalog(deps.prices),
       deps.clock,
+      deps.ids,
     );
   }
 

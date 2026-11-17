@@ -20,12 +20,12 @@ export type NewConsultation = Omit<ConsultationProps, 'recordedAt'>;
 
 // Entity
 export class Consultation extends Entity<ConsultationProps> {
-  static record(data: NewConsultation, now: Date): Consultation {
+  static record(id: string, data: NewConsultation, now: Date): Consultation {
     const reason = data.reason.trim();
     if (!reason) {
       throw new ValidationError('The consultation reason is required', { field: 'reason' });
     }
-    return new Consultation(crypto.randomUUID(), {
+    return new Consultation(id, {
       ...data,
       reason,
       observations: data.observations?.trim() || null,

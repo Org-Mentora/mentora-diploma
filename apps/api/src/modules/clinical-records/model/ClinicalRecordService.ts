@@ -1,5 +1,6 @@
 import { NotFoundError, ValidationError } from '#core/errors/ApplicationError';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import { AssignedDiagnosis } from './AssignedDiagnosis';
 import type { ClinicalActivityRecorder } from './ClinicalActivityRecorder';
@@ -32,6 +33,7 @@ export class ClinicalRecordService {
     private readonly diagnoses: DiagnosisResolver,
     private readonly clock: Clock,
     private readonly accesses: RecordAccessLog,
+    private readonly ids: IdGenerator,
   ) {}
 
   async getRecord(professionalId: string, patientId: string): Promise<ClinicalRecord> {
@@ -62,6 +64,7 @@ export class ClinicalRecordService {
     const now = this.clock.now();
 
     const consultation = Consultation.record(
+      this.ids.next(),
       {
         date: data.date,
         type: data.type,
@@ -76,7 +79,7 @@ export class ClinicalRecordService {
 
     const record =
       (await this.records.findByPatient(professionalId, patientId)) ??
-      ClinicalRecord.open(professionalId, patientId, now);
+      ClinicalRecord.open(this.ids.next(), professionalId, patientId, now);
     record.addConsultation(consultation, now);
     await this.records.save(record);
     await this.activity.record(professionalId, patientId, consultation.date);
@@ -123,7 +126,9 @@ export class ClinicalRecordService {
   private async loadRecord(professionalId: string, patientId: string): Promise<ClinicalRecord> {
     await this.assertPatient(professionalId, patientId);
     const record = await this.records.findByPatient(professionalId, patientId);
-    return record ?? ClinicalRecord.open(professionalId, patientId, this.clock.now());
+    return (
+      record ?? ClinicalRecord.open(this.ids.next(), professionalId, patientId, this.clock.now())
+    );
   }
 
   private audit(

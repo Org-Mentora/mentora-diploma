@@ -6,6 +6,7 @@ import {
   ValidationError,
 } from '#core/errors/ApplicationError';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { BillingEvent, BillingNotifier } from './BillingNotifier';
 import { type ManualPaymentMethod, Payment, type PaymentKind } from './Payment';
@@ -54,6 +55,7 @@ export class SubscriptionService {
     private readonly notifier: BillingNotifier,
     private readonly catalog: PlanCatalog,
     private readonly clock: Clock,
+    private readonly ids: IdGenerator,
   ) {}
 
   get now(): Date {
@@ -127,6 +129,7 @@ export class SubscriptionService {
     return this.transactions.run(async () => {
       const subscription = await this.get(professionalId);
       const method = PaymentMethod.register(
+        this.ids.next(),
         {
           brand: tokenized.brand,
           last4: tokenized.last4,
@@ -195,6 +198,7 @@ export class SubscriptionService {
         );
       }
       const payment = Payment.manual(
+        this.ids.next(),
         {
           professionalId,
           planId: plan.id,
@@ -329,6 +333,7 @@ export class SubscriptionService {
     result: ChargeResult,
   ): Payment {
     return Payment.charged(
+      this.ids.next(),
       {
         professionalId: subscription.professionalId,
         planId: pending.plan.id,
