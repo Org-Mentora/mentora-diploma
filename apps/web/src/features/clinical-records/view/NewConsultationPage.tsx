@@ -1,4 +1,5 @@
 import { ArrowLeft } from 'lucide-react';
+import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { FormField } from '@/shared/ui/form-field';
@@ -10,6 +11,7 @@ import { DiagnosisPicker } from './DiagnosisPicker';
 import { MedicationFields } from './MedicationFields';
 
 export function NewConsultationPage() {
+  const { t } = useTranslation();
   const vm = useNewConsultationViewModel();
   const { errors } = vm.form.formState;
 
@@ -20,37 +22,49 @@ export function NewConsultationPage() {
         onClick={vm.cancel}
         className="flex w-fit items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
       >
-        <ArrowLeft className="size-4" /> Back to the patient
+        <ArrowLeft className="size-4" /> {t('clinical.backToPatient')}
       </button>
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">New consultation</CardTitle>
+          <CardTitle className="text-xl">{t('patients.profile.newConsultation')}</CardTitle>
           <CardDescription>{vm.patientName}</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-6" noValidate onSubmit={vm.submit}>
             <div className="grid gap-4 sm:grid-cols-2">
-              <FormField id="date" label="Date and time" error={errors.date?.message}>
+              <FormField
+                id="date"
+                label={t('clinical.field.dateTime')}
+                error={errors.date?.message}
+              >
                 <Input id="date" type="datetime-local" {...vm.form.register('date')} />
               </FormField>
-              <FormField id="type" label="Type">
+              <FormField id="type" label={t('clinical.field.type')}>
                 <NativeSelect id="type" {...vm.form.register('type')}>
-                  <option value="in_person">In person</option>
-                  <option value="virtual">Virtual</option>
+                  <option value="in_person">{t('agenda.modality.in_person')}</option>
+                  <option value="virtual">{t('agenda.modality.virtual')}</option>
                 </NativeSelect>
               </FormField>
               <FormField
                 id="reason"
-                label="Reason for consultation"
+                label={t('clinical.field.reason')}
                 className="sm:col-span-2"
                 error={errors.reason?.message}
               >
                 <Input id="reason" aria-invalid={!!errors.reason} {...vm.form.register('reason')} />
               </FormField>
-              <FormField id="evolution" label="Evolution" className="sm:col-span-2">
+              <FormField
+                id="evolution"
+                label={t('clinical.field.evolution')}
+                className="sm:col-span-2"
+              >
                 <Textarea id="evolution" rows={5} {...vm.form.register('evolution')} />
               </FormField>
-              <FormField id="observations" label="Observations" className="sm:col-span-2">
+              <FormField
+                id="observations"
+                label={t('patients.profile.observations')}
+                className="sm:col-span-2"
+              >
                 <Textarea id="observations" {...vm.form.register('observations')} />
               </FormField>
             </div>
@@ -70,10 +84,10 @@ export function NewConsultationPage() {
             )}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={vm.cancel}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={vm.isSubmitting}>
-                {vm.isSubmitting ? 'Saving…' : 'Save consultation'}
+                {vm.isSubmitting ? t('common.saving') : t('clinical.save')}
               </Button>
             </div>
           </form>

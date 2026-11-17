@@ -1,4 +1,5 @@
 import { VirtualMeetingButton } from '@/features/virtual-consultations';
+import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import {
   Dialog,
@@ -21,6 +22,7 @@ interface AppointmentDialogProps {
 }
 
 export function AppointmentDialog({ appointmentId, day, onClose }: AppointmentDialogProps) {
+  const { t } = useTranslation();
   const vm = useAppointmentFormViewModel({ appointmentId, day, onDone: onClose });
   const { errors } = vm.form.formState;
   const readOnly = vm.isCancelled;
@@ -29,11 +31,11 @@ export function AppointmentDialog({ appointmentId, day, onClose }: AppointmentDi
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{vm.isEdit ? 'Appointment' : 'New appointment'}</DialogTitle>
+          <DialogTitle>{vm.isEdit ? t('agenda.appointment') : t('agenda.new')}</DialogTitle>
           <DialogDescription>
             {vm.isEdit
-              ? `${vm.patientName}${readOnly ? ' · cancelled' : ''}`
-              : 'The time slot must be free.'}
+              ? `${vm.patientName}${readOnly ? ` · ${t('agenda.cancelledLower')}` : ''}`
+              : t('agenda.slotFree')}
           </DialogDescription>
         </DialogHeader>
 
@@ -45,22 +47,26 @@ export function AppointmentDialog({ appointmentId, day, onClose }: AppointmentDi
         >
           {!vm.isEdit && (
             <>
-              <FormField id="patient-search" label="Find patient" className="sm:col-span-2">
+              <FormField
+                id="patient-search"
+                label={t('agenda.findPatient')}
+                className="sm:col-span-2"
+              >
                 <Input
                   id="patient-search"
-                  placeholder="Name, surname or DNI"
+                  placeholder={t('agenda.findPlaceholder')}
                   value={vm.patientSearch}
                   onChange={(event) => vm.setPatientSearch(event.target.value)}
                 />
               </FormField>
               <FormField
                 id="patientId"
-                label="Patient"
+                label={t('agenda.patient')}
                 className="sm:col-span-2"
                 error={errors.patientId?.message}
               >
                 <NativeSelect id="patientId" {...vm.form.register('patientId')}>
-                  <option value="">Select a patient…</option>
+                  <option value="">{t('agenda.selectPatient')}</option>
                   {vm.patientOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
@@ -70,15 +76,15 @@ export function AppointmentDialog({ appointmentId, day, onClose }: AppointmentDi
               </FormField>
             </>
           )}
-          <FormField id="date" label="Date" error={errors.date?.message}>
+          <FormField id="date" label={t('agenda.date')} error={errors.date?.message}>
             <Input id="date" type="date" disabled={readOnly} {...vm.form.register('date')} />
           </FormField>
-          <FormField id="time" label="Time" error={errors.time?.message}>
+          <FormField id="time" label={t('agenda.time')} error={errors.time?.message}>
             <Input id="time" type="time" disabled={readOnly} {...vm.form.register('time')} />
           </FormField>
           <FormField
             id="durationMinutes"
-            label="Duration (minutes)"
+            label={t('agenda.duration')}
             error={errors.durationMinutes?.message}
           >
             <Input
@@ -91,7 +97,7 @@ export function AppointmentDialog({ appointmentId, day, onClose }: AppointmentDi
               {...vm.form.register('durationMinutes')}
             />
           </FormField>
-          <FormField id="type" label="Consultation type">
+          <FormField id="type" label={t('agenda.consultationType')}>
             <NativeSelect id="type" disabled={readOnly} {...vm.form.register('type')}>
               {vm.typeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -100,7 +106,7 @@ export function AppointmentDialog({ appointmentId, day, onClose }: AppointmentDi
               ))}
             </NativeSelect>
           </FormField>
-          <FormField id="modality" label="Modality">
+          <FormField id="modality" label={t('agenda.modalityLabel')}>
             <NativeSelect id="modality" disabled={readOnly} {...vm.form.register('modality')}>
               {vm.modalityOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -109,14 +115,31 @@ export function AppointmentDialog({ appointmentId, day, onClose }: AppointmentDi
               ))}
             </NativeSelect>
           </FormField>
-          <FormField id="notes" label="Notes" className="sm:col-span-2">
+          <FormField
+            id="fee"
+            label={t('agenda.fee')}
+            hint={t('agenda.feeHint')}
+            className="sm:col-span-2"
+            error={errors.fee?.message}
+          >
+            <Input
+              id="fee"
+              type="number"
+              min={0}
+              step="any"
+              inputMode="decimal"
+              disabled={readOnly}
+              {...vm.form.register('fee')}
+            />
+          </FormField>
+          <FormField id="notes" label={t('agenda.notes')} className="sm:col-span-2">
             <Textarea id="notes" disabled={readOnly} {...vm.form.register('notes')} />
           </FormField>
         </form>
 
         {vm.virtualMeeting && (
           <div className="flex flex-wrap items-center gap-3 rounded-md border bg-muted/40 p-3 text-sm">
-            <span className="text-muted-foreground">Virtual appointment (CU-15):</span>
+            <span className="text-muted-foreground">{t('agenda.virtualAppointment')}</span>
             <VirtualMeetingButton
               patientId={vm.virtualMeeting.patientId}
               appointmentId={vm.virtualMeeting.appointmentId}
@@ -132,27 +155,27 @@ export function AppointmentDialog({ appointmentId, day, onClose }: AppointmentDi
 
         {vm.isConfirmingCancel ? (
           <DialogFooter className="items-center">
-            <p className="mr-auto text-sm">Cancel this appointment?</p>
+            <p className="mr-auto text-sm">{t('agenda.cancelConfirm')}</p>
             <Button variant="outline" onClick={vm.abortCancel}>
-              Keep it
+              {t('agenda.keep')}
             </Button>
             <Button onClick={() => void vm.confirmCancel()} disabled={vm.isSubmitting}>
-              Yes, cancel
+              {t('agenda.yesCancel')}
             </Button>
           </DialogFooter>
         ) : (
           <DialogFooter>
             {vm.isEdit && !readOnly && (
               <Button variant="ghost" className="sm:mr-auto" onClick={vm.requestCancel}>
-                Cancel appointment
+                {t('agenda.cancelAppointment')}
               </Button>
             )}
             <Button variant="outline" onClick={onClose}>
-              Close
+              {t('common.close')}
             </Button>
             {!readOnly && (
               <Button type="submit" form="appointment-form" disabled={vm.isSubmitting}>
-                {vm.isEdit ? 'Save changes' : 'Schedule'}
+                {vm.isEdit ? t('agenda.saveChanges') : t('agenda.schedule')}
               </Button>
             )}
           </DialogFooter>

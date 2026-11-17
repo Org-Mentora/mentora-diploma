@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { FormField } from '@/shared/ui/form-field';
@@ -5,20 +6,21 @@ import { Input } from '@/shared/ui/input';
 import { useChangePasswordViewModel } from '../viewmodel/useChangePasswordViewModel';
 
 export function ChangePasswordPage() {
+  const { t } = useTranslation();
   const vm = useChangePasswordViewModel();
   const { errors } = vm.form.formState;
 
   return (
     <Card className="max-w-lg">
       <CardHeader>
-        <CardTitle>Change password</CardTitle>
-        <CardDescription>Enter your current password and choose a new one.</CardDescription>
+        <CardTitle>{t('settings.password.title')}</CardTitle>
+        <CardDescription>{t('settings.password.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form className="grid gap-4" noValidate onSubmit={vm.save}>
           <FormField
             id="currentPassword"
-            label="Current password"
+            label={t('settings.password.current')}
             error={errors.currentPassword?.message}
           >
             <Input
@@ -30,7 +32,7 @@ export function ChangePasswordPage() {
           </FormField>
           <FormField
             id="newPassword"
-            label="New password"
+            label={t('auth.field.newPassword')}
             hint={vm.passwordHint}
             error={errors.newPassword?.message}
           >
@@ -43,7 +45,7 @@ export function ChangePasswordPage() {
           </FormField>
           <FormField
             id="confirmPassword"
-            label="Repeat the new password"
+            label={t('auth.field.confirmNewPassword')}
             error={errors.confirmPassword?.message}
           >
             <Input
@@ -60,10 +62,10 @@ export function ChangePasswordPage() {
           )}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={vm.discard}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type="submit" disabled={vm.isSaving}>
-              Save
+              {t('common.save')}
             </Button>
           </div>
         </form>

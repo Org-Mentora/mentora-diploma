@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { FormField } from '@/shared/ui/form-field';
 import { Input } from '@/shared/ui/input';
@@ -7,22 +8,28 @@ import { useRegisterViewModel } from '../viewmodel/useRegisterViewModel';
 import { AuthLayout } from './AuthLayout';
 
 const FIELDS = [
-  { name: 'firstName', label: 'First name', autoComplete: 'given-name' },
-  { name: 'lastName', label: 'Last name', autoComplete: 'family-name' },
-  { name: 'specialty', label: 'Specialty', autoComplete: 'off' },
-  { name: 'licenseNumber', label: 'License number', autoComplete: 'off' },
-  { name: 'email', label: 'Email', autoComplete: 'email', type: 'email' },
-  { name: 'phone', label: 'Phone', autoComplete: 'tel', type: 'tel' },
-  { name: 'password', label: 'Password', autoComplete: 'new-password', type: 'password' },
+  { name: 'firstName', label: 'auth.field.firstName', autoComplete: 'given-name' },
+  { name: 'lastName', label: 'auth.field.lastName', autoComplete: 'family-name' },
+  { name: 'specialty', label: 'auth.field.specialty', autoComplete: 'off' },
+  { name: 'licenseNumber', label: 'auth.field.licenseNumber', autoComplete: 'off' },
+  { name: 'email', label: 'auth.field.email', autoComplete: 'email', type: 'email' },
+  { name: 'phone', label: 'auth.field.phone', autoComplete: 'tel', type: 'tel' },
+  {
+    name: 'password',
+    label: 'auth.field.password',
+    autoComplete: 'new-password',
+    type: 'password',
+  },
   {
     name: 'confirmPassword',
-    label: 'Repeat password',
+    label: 'auth.field.confirmPassword',
     autoComplete: 'new-password',
     type: 'password',
   },
 ] as const;
 
 export function RegisterPage() {
+  const { t } = useTranslation();
   const { form, error, isSubmitting, passwordHint, logo, selectLogo, submit } =
     useRegisterViewModel();
   const { errors } = form.formState;
@@ -30,13 +37,13 @@ export function RegisterPage() {
   return (
     <AuthLayout
       wide
-      title="Create your account"
-      description="Register as a professional and start a free trial."
+      title={t('auth.register.title')}
+      description={t('auth.register.description')}
       footer={
         <>
-          Already have an account?{' '}
+          {t('auth.register.haveAccount')}{' '}
           <Link to="/login" className="font-medium text-foreground underline">
-            Log in
+            {t('auth.login.submit')}
           </Link>
         </>
       }
@@ -46,7 +53,7 @@ export function RegisterPage() {
           <FormField
             key={field.name}
             id={field.name}
-            label={field.label}
+            label={t(field.label)}
             error={errors[field.name]?.message}
             {...(field.name === 'password' ? { hint: passwordHint } : {})}
           >
@@ -61,8 +68,8 @@ export function RegisterPage() {
         ))}
         <FormField
           id="offices"
-          label="Office addresses (optional)"
-          hint="One per line, up to 5. They are printed on prescriptions."
+          label={t('auth.field.offices')}
+          hint={t('auth.field.officesHint')}
           error={errors.offices?.message}
           className="sm:col-span-2"
         >
@@ -70,7 +77,7 @@ export function RegisterPage() {
         </FormField>
         <FormField
           id="logo"
-          label="Logo (optional)"
+          label={t('auth.field.logo')}
           hint={logo.hint}
           error={logo.error ?? undefined}
           className="sm:col-span-2"
@@ -79,7 +86,7 @@ export function RegisterPage() {
             {logo.preview && (
               <img
                 src={logo.preview}
-                alt="Logo preview"
+                alt={t('auth.field.logoPreview')}
                 className="size-12 rounded object-contain"
               />
             )}
@@ -97,7 +104,7 @@ export function RegisterPage() {
           </p>
         )}
         <Button type="submit" disabled={isSubmitting} className="sm:col-span-2">
-          {isSubmitting ? 'Creating account…' : 'Create account'}
+          {isSubmitting ? t('auth.register.submitting') : t('auth.register.submit')}
         </Button>
       </form>
     </AuthLayout>

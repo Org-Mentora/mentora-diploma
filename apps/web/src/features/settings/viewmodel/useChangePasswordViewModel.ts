@@ -10,6 +10,7 @@ import {
   PASSWORD_HINT,
 } from '@/model/domain/session/auth.forms';
 import { useUserFeedback } from '@/model/platform/Platform';
+import { useTranslation } from '@/shared/i18n';
 
 export type { ChangePasswordFormValues };
 
@@ -23,6 +24,7 @@ export interface ChangePasswordViewModel {
 
 // ViewModel
 export function useChangePasswordViewModel(): ChangePasswordViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const form = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordFormSchema),
@@ -39,13 +41,13 @@ export function useChangePasswordViewModel(): ChangePasswordViewModel {
         await change({
           changePasswordRequestDto: AuthForms.toChangePasswordRequest(values),
         }).unwrap();
-        feedback.success('Your password was changed');
+        feedback.success(t('settings.password.changed'));
         form.reset(changePasswordDefaults);
       } catch (caught) {
         const error = ApiErrorAdapter.toUiError(caught);
         const field = error?.field === 'currentPassword' ? 'currentPassword' : 'newPassword';
         form.setError(error?.field ? field : 'root', {
-          message: error?.message ?? 'The password could not be changed',
+          message: error?.message ?? t('settings.password.failed'),
         });
       }
     }),

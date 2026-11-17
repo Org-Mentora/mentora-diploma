@@ -24,6 +24,7 @@ import {
   emptyMedication,
 } from '@/model/domain/clinical-records/consultation.form';
 import { useUserFeedback } from '@/model/platform/Platform';
+import { useTranslation } from '@/shared/i18n';
 import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
 
 export type { ConsultationFormValues };
@@ -52,6 +53,7 @@ export interface NewConsultationViewModel {
 
 // ViewModel
 export function useNewConsultationViewModel(): NewConsultationViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const { patientId = '' } = useParams();
   const navigate = useNavigate();
@@ -86,7 +88,7 @@ export function useNewConsultationViewModel(): NewConsultationViewModel {
         patientId,
         registerConsultationRequestDto: ConsultationForm.toRequest(values),
       }).unwrap();
-      feedback.success('Consultation added to the clinical record');
+      feedback.success(t('clinical.added'));
       navigate(profilePath);
     } catch (caught) {
       setError(ApiErrorAdapter.toUiError(caught));
@@ -104,9 +106,9 @@ export function useNewConsultationViewModel(): NewConsultationViewModel {
       options,
       hint:
         debouncedTerm.length < 2
-          ? 'Type at least 2 characters of a name or code (e.g. "anxiety", "F41")'
+          ? t('clinical.diagnosis.minChars')
           : options.length === 0 && !diagnoses.isFetching
-            ? 'No diagnoses match. Try another term.'
+            ? t('clinical.diagnosis.noMatch')
             : '',
       selected,
       select: (option) => {

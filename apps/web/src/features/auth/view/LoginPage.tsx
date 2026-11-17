@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { FormField } from '@/shared/ui/form-field';
 import { Input } from '@/shared/ui/input';
@@ -6,24 +7,25 @@ import { useLoginViewModel } from '../viewmodel/useLoginViewModel';
 import { AuthLayout } from './AuthLayout';
 
 export function LoginPage() {
+  const { t } = useTranslation();
   const { form, error, isSubmitting, submit } = useLoginViewModel();
   const { errors } = form.formState;
 
   return (
     <AuthLayout
-      title="Log in"
-      description="Enter your email and password to access your practice."
+      title={t('auth.login.title')}
+      description={t('auth.login.description')}
       footer={
         <>
-          New to Mentora?{' '}
+          {t('auth.login.newHere')}{' '}
           <Link to="/register" className="font-medium text-foreground underline">
-            Create an account
+            {t('auth.login.createAccount')}
           </Link>
         </>
       }
     >
       <form className="grid gap-4" noValidate onSubmit={submit}>
-        <FormField id="email" label="Email" error={errors.email?.message}>
+        <FormField id="email" label={t('auth.field.email')} error={errors.email?.message}>
           <Input
             id="email"
             type="email"
@@ -32,7 +34,7 @@ export function LoginPage() {
             {...form.register('email')}
           />
         </FormField>
-        <FormField id="password" label="Password" error={errors.password?.message}>
+        <FormField id="password" label={t('auth.field.password')} error={errors.password?.message}>
           <Input
             id="password"
             type="password"
@@ -45,7 +47,7 @@ export function LoginPage() {
           to="/forgot-password"
           className="-mt-2 w-fit text-muted-foreground text-sm underline hover:text-foreground"
         >
-          Forgot your password?
+          {t('auth.login.forgot')}
         </Link>
         {error && (
           <p role="alert" className="text-destructive text-sm">
@@ -53,7 +55,7 @@ export function LoginPage() {
           </p>
         )}
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Logging in…' : 'Log in'}
+          {isSubmitting ? t('auth.login.submitting') : t('auth.login.submit')}
         </Button>
       </form>
     </AuthLayout>

@@ -1,32 +1,32 @@
 import { Link } from 'react-router';
+import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { FormField } from '@/shared/ui/form-field';
 import { Input } from '@/shared/ui/input';
 import { useForgotPasswordViewModel } from '../viewmodel/useForgotPasswordViewModel';
 import { AuthLayout } from './AuthLayout';
 
-const DESCRIPTION = {
-  email: 'Enter the email of your account and we will send you a recovery code.',
-  code: 'Enter the 6-digit code we sent you.',
-  password: 'Choose your new password.',
-} as const;
-
 export function ForgotPasswordPage() {
+  const { t } = useTranslation();
   const vm = useForgotPasswordViewModel();
 
   return (
     <AuthLayout
-      title="Recover your password"
-      description={DESCRIPTION[vm.step]}
+      title={t('auth.recovery.title')}
+      description={t(`auth.recovery.step.${vm.step}`)}
       footer={
         <Link to="/login" className="font-medium text-foreground underline">
-          Back to log in
+          {t('auth.recovery.back')}
         </Link>
       }
     >
       {vm.step === 'email' && (
         <form className="grid gap-4" noValidate onSubmit={vm.requestCode}>
-          <FormField id="email" label="Email" error={vm.emailForm.formState.errors.email?.message}>
+          <FormField
+            id="email"
+            label={t('auth.field.email')}
+            error={vm.emailForm.formState.errors.email?.message}
+          >
             <Input
               id="email"
               type="email"
@@ -35,7 +35,7 @@ export function ForgotPasswordPage() {
             />
           </FormField>
           <Button type="submit" disabled={vm.isSubmitting}>
-            Send code
+            {t('auth.recovery.send')}
           </Button>
         </form>
       )}
@@ -43,7 +43,11 @@ export function ForgotPasswordPage() {
       {vm.step === 'code' && (
         <form className="grid gap-4" noValidate onSubmit={vm.verifyCode}>
           {vm.notice && <p className="text-muted-foreground text-sm">{vm.notice}</p>}
-          <FormField id="code" label="Code" error={vm.codeForm.formState.errors.code?.message}>
+          <FormField
+            id="code"
+            label={t('auth.recovery.code')}
+            error={vm.codeForm.formState.errors.code?.message}
+          >
             <Input
               id="code"
               inputMode="numeric"
@@ -55,11 +59,11 @@ export function ForgotPasswordPage() {
             />
           </FormField>
           <Button type="submit" disabled={vm.isSubmitting}>
-            Verify code
+            {t('auth.recovery.verify')}
           </Button>
           <div className="flex justify-between text-sm">
             <button type="button" className="underline" onClick={vm.startOver}>
-              Use another email
+              {t('auth.recovery.otherEmail')}
             </button>
             <button
               type="button"
@@ -67,7 +71,7 @@ export function ForgotPasswordPage() {
               onClick={() => void vm.resendCode()}
               disabled={vm.isSubmitting}
             >
-              Send a new code
+              {t('auth.recovery.resend')}
             </button>
           </div>
         </form>
@@ -77,7 +81,7 @@ export function ForgotPasswordPage() {
         <form className="grid gap-4" noValidate onSubmit={vm.resetPassword}>
           <FormField
             id="newPassword"
-            label="New password"
+            label={t('auth.field.newPassword')}
             hint={vm.passwordHint}
             error={vm.passwordForm.formState.errors.newPassword?.message}
           >
@@ -90,7 +94,7 @@ export function ForgotPasswordPage() {
           </FormField>
           <FormField
             id="confirmPassword"
-            label="Repeat the new password"
+            label={t('auth.field.confirmNewPassword')}
             error={vm.passwordForm.formState.errors.confirmPassword?.message}
           >
             <Input
@@ -101,7 +105,7 @@ export function ForgotPasswordPage() {
             />
           </FormField>
           <Button type="submit" disabled={vm.isSubmitting}>
-            Change password
+            {t('auth.recovery.change')}
           </Button>
         </form>
       )}

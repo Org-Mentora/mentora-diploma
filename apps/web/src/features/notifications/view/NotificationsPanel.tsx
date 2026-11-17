@@ -1,20 +1,22 @@
 import { MessageCircle } from 'lucide-react';
+import { useTranslation } from '@/shared/i18n';
 import { Badge } from '@/shared/ui/badge';
 import { Card, CardContent } from '@/shared/ui/card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { useNotificationsViewModel } from '../viewmodel/useNotificationsViewModel';
 
 export function NotificationsPanel({ patientId }: { patientId: string }) {
+  const { t } = useTranslation();
   const { items, isLoading } = useNotificationsViewModel(patientId);
 
   if (isLoading) {
-    return <p className="text-muted-foreground text-sm">Loading messages…</p>;
+    return <p className="text-muted-foreground text-sm">{t('notifications.loading')}</p>;
   }
   if (items.length === 0) {
     return (
       <EmptyState
-        title="No messages yet"
-        description="Appointment confirmations, changes, reminders and video call links are sent by WhatsApp, or by email when the patient has no phone or WhatsApp fails."
+        title={t('notifications.emptyTitle')}
+        description={t('notifications.emptyDescription')}
       />
     );
   }

@@ -9,6 +9,7 @@ import {
   type VirtualMeetingItem,
 } from '@/model/domain/virtual-consultations/VirtualMeetingAdapter';
 import { useBrowserActions, useUserFeedback } from '@/model/platform/Platform';
+import { useTranslation } from '@/shared/i18n';
 
 export type { VirtualMeetingItem };
 
@@ -31,6 +32,7 @@ export function useVirtualMeetingViewModel({
   patientId,
   appointmentId,
 }: Options): VirtualMeetingViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const browser = useBrowserActions();
   const { data } = useListVirtualMeetingsQuery(
@@ -55,15 +57,13 @@ export function useVirtualMeetingViewModel({
         }).unwrap();
         setStarted(VirtualMeetingAdapter.toItem(meeting));
       } catch (caught) {
-        feedback.error(
-          ApiErrorAdapter.toUiError(caught)?.message ?? 'The video call could not be created',
-        );
+        feedback.error(ApiErrorAdapter.toUiError(caught)?.message ?? t('meetings.createFailed'));
       }
     },
     close: () => setStarted(null),
     copyLink: async (url) => {
       await browser.copyText(url);
-      feedback.success('Link copied');
+      feedback.success(t('meetings.linkCopied'));
     },
   };
 }

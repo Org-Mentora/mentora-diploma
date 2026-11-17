@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { useTranslation } from '@/shared/i18n';
 import { Badge } from '@/shared/ui/badge';
 import { Card, CardContent } from '@/shared/ui/card';
 import {
@@ -12,10 +13,11 @@ import { EmptyState } from '@/shared/ui/empty-state';
 import { useClinicalRecordViewModel } from '../viewmodel/useClinicalRecordViewModel';
 
 export function ClinicalRecordPanel({ patientId }: { patientId: string }) {
+  const { t } = useTranslation();
   const vm = useClinicalRecordViewModel(patientId);
 
   if (vm.isLoading) {
-    return <p className="text-muted-foreground text-sm">Loading clinical record…</p>;
+    return <p className="text-muted-foreground text-sm">{t('clinical.loading')}</p>;
   }
   if (vm.error) {
     return (
@@ -27,11 +29,11 @@ export function ClinicalRecordPanel({ patientId }: { patientId: string }) {
   if (vm.timeline.length === 0) {
     return (
       <EmptyState
-        title="The clinical record is empty"
-        description="Consultations you register will appear here."
+        title={t('clinical.emptyTitle')}
+        description={t('clinical.emptyDescription')}
         action={
           <Link to={vm.newConsultationPath} className="text-sm underline">
-            Register the first consultation
+            {t('clinical.registerFirst')}
           </Link>
         }
       />
@@ -72,36 +74,38 @@ export function ClinicalRecordPanel({ patientId }: { patientId: string }) {
       >
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{vm.detail?.title ?? 'Consultation'}</DialogTitle>
+            <DialogTitle>{vm.detail?.title ?? t('clinical.consultation')}</DialogTitle>
             <DialogDescription>{vm.detail?.typeLabel}</DialogDescription>
           </DialogHeader>
           {vm.isLoadingDetail || !vm.detail ? (
-            <p className="text-muted-foreground text-sm">Loading…</p>
+            <p className="text-muted-foreground text-sm">{t('common.loading')}</p>
           ) : (
             <dl className="grid gap-4 text-sm">
               <div>
-                <dt className="text-muted-foreground text-xs">Reason</dt>
+                <dt className="text-muted-foreground text-xs">{t('clinical.field.reasonShort')}</dt>
                 <dd>{vm.detail.reason}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground text-xs">Evolution</dt>
+                <dt className="text-muted-foreground text-xs">{t('clinical.field.evolution')}</dt>
                 <dd className="whitespace-pre-wrap">{vm.detail.evolution}</dd>
               </div>
               {vm.detail.observations && (
                 <div>
-                  <dt className="text-muted-foreground text-xs">Observations</dt>
+                  <dt className="text-muted-foreground text-xs">
+                    {t('patients.profile.observations')}
+                  </dt>
                   <dd className="whitespace-pre-wrap">{vm.detail.observations}</dd>
                 </div>
               )}
               <div>
-                <dt className="text-muted-foreground text-xs">Diagnosis (DSM-5)</dt>
+                <dt className="text-muted-foreground text-xs">{t('clinical.field.diagnosis')}</dt>
                 <dd>{vm.detail.diagnosisLabel}</dd>
               </div>
               <div>
-                <dt className="text-muted-foreground text-xs">Medication</dt>
+                <dt className="text-muted-foreground text-xs">{t('clinical.medication.name')}</dt>
                 <dd>
                   {vm.detail.medications.length === 0 ? (
-                    'No medication prescribed'
+                    t('clinical.medication.noneShort')
                   ) : (
                     <ul className="grid gap-2">
                       {vm.detail.medications.map((m) => (

@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { useTranslation } from '@/shared/i18n';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -6,9 +7,10 @@ import { Label } from '@/shared/ui/label';
 import type { DiagnosisSearch } from '../viewmodel/useNewConsultationViewModel';
 
 export function DiagnosisPicker({ search }: { search: DiagnosisSearch }) {
+  const { t } = useTranslation();
   return (
     <div className="grid gap-2">
-      <Label htmlFor="diagnosis-search">Diagnosis (DSM-5, optional)</Label>
+      <Label htmlFor="diagnosis-search">{t('clinical.diagnosis.label')}</Label>
       {search.selected && (
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-sm">
@@ -18,7 +20,7 @@ export function DiagnosisPicker({ search }: { search: DiagnosisSearch }) {
             type="button"
             variant="ghost"
             size="icon"
-            aria-label="Remove diagnosis"
+            aria-label={t('clinical.diagnosis.remove')}
             onClick={search.clear}
           >
             <X />
@@ -27,14 +29,19 @@ export function DiagnosisPicker({ search }: { search: DiagnosisSearch }) {
       )}
       <Input
         id="diagnosis-search"
-        placeholder={search.selected ? 'Search to replace the diagnosis' : 'Search by name or code'}
+        placeholder={
+          search.selected ? t('clinical.diagnosis.replace') : t('clinical.diagnosis.search')
+        }
         value={search.term}
         onChange={(event) => search.setTerm(event.target.value)}
         autoComplete="off"
       />
       {search.hint && <p className="text-muted-foreground text-xs">{search.hint}</p>}
       {search.options.length > 0 && search.term.trim().length >= 2 && (
-        <ul className="max-h-56 overflow-y-auto rounded-md border" aria-label="Diagnosis results">
+        <ul
+          className="max-h-56 overflow-y-auto rounded-md border"
+          aria-label={t('clinical.diagnosis.results')}
+        >
           {search.options.map((option) => (
             <li key={option.code}>
               <button

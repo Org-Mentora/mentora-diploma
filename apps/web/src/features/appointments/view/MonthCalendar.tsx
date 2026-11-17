@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/lib/utils';
 import type { CalendarDay } from '../viewmodel/useAgendaViewModel';
 
@@ -9,6 +10,7 @@ interface MonthCalendarProps {
 }
 
 export function MonthCalendar({ title, weekdays, weeks, onSelectDay }: MonthCalendarProps) {
+  const { t } = useTranslation();
   return (
     <table className="w-full table-fixed border-separate border-spacing-1">
       <caption className="sr-only">{title}</caption>
@@ -33,7 +35,11 @@ export function MonthCalendar({ title, weekdays, weeks, onSelectDay }: MonthCale
                 <button
                   type="button"
                   aria-pressed={day.isSelected}
-                  aria-label={`${day.key}${day.appointmentCount ? `, ${day.appointmentCount} appointments` : ''}`}
+                  aria-label={
+                    day.appointmentCount
+                      ? t('agenda.dayWithCount', { day: day.key, count: day.appointmentCount })
+                      : day.key
+                  }
                   onClick={() => onSelectDay(day.date)}
                   className={cn(
                     'flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-md text-sm transition-colors hover:bg-accent',

@@ -16,6 +16,7 @@ import {
 } from '@/model/domain/session/auth.forms';
 import { LogoFile } from '@/model/domain/session/LogoFile';
 import { useUserFeedback } from '@/model/platform/Platform';
+import { useTranslation } from '@/shared/i18n';
 import { readFileAsDataUrl } from '@/shared/lib/readFileAsDataUrl';
 
 export type { RegisterFormValues };
@@ -34,6 +35,7 @@ const FIELDS = new Set<keyof RegisterFormValues>(['email', 'licenseNumber', 'pas
 
 // ViewModel
 export function useRegisterViewModel(): RegisterViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerFormSchema),
@@ -55,9 +57,9 @@ export function useRegisterViewModel(): RegisterViewModel {
       if (logo) {
         await uploadLogo({ uploadLogoRequestDto: { dataUrl: logo } })
           .unwrap()
-          .catch(() => feedback.warning('The logo could not be saved. Upload it from Settings.'));
+          .catch(() => feedback.warning(t('auth.register.logoFailed')));
       }
-      feedback.success(`Welcome! Your free trial lasts ${session.subscription.daysLeft} days.`);
+      feedback.success(t('auth.register.welcome', { count: session.subscription.daysLeft }));
       navigate('/patients', { replace: true });
     } catch (caught) {
       const uiError = ApiErrorAdapter.toUiError(caught);

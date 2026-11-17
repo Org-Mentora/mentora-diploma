@@ -14,6 +14,7 @@ import {
   patientFormSchema,
 } from '@/model/domain/patients/patient.form';
 import { useUserFeedback } from '@/model/platform/Platform';
+import { useTranslation } from '@/shared/i18n';
 
 export interface PatientFormViewModel {
   form: UseFormReturn<PatientFormValues>;
@@ -30,6 +31,7 @@ interface Options {
 
 // ViewModel
 export function usePatientFormViewModel({ patientId, onSaved }: Options): PatientFormViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const isEdit = Boolean(patientId);
   const { data: patient } = useGetPatientQuery({ id: patientId ?? '' }, { skip: !patientId });
@@ -55,7 +57,11 @@ export function usePatientFormViewModel({ patientId, onSaved }: Options): Patien
         isEdit && patientId
           ? await updatePatient({ id: patientId, patientInputDto }).unwrap()
           : await createPatient({ patientInputDto }).unwrap();
-      feedback.success(isEdit ? 'Patient updated' : `${saved.fullName} was registered`);
+      feedback.success(
+        isEdit
+          ? t('patients.form.updated')
+          : t('patients.form.registered', { name: saved.fullName }),
+      );
       form.reset(emptyPatientForm);
       onSaved(saved.id);
     } catch (caught) {

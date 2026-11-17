@@ -1,4 +1,5 @@
 import { Copy, ExternalLink, Video } from 'lucide-react';
+import { useTranslation } from '@/shared/i18n';
 import { Button, buttonVariants } from '@/shared/ui/button';
 import {
   Dialog,
@@ -17,6 +18,7 @@ interface VirtualMeetingButtonProps {
 }
 
 export function VirtualMeetingButton({ patientId, appointmentId }: VirtualMeetingButtonProps) {
+  const { t } = useTranslation();
   const vm = useVirtualMeetingViewModel({ patientId, appointmentId });
 
   return (
@@ -28,27 +30,27 @@ export function VirtualMeetingButton({ patientId, appointmentId }: VirtualMeetin
           rel="noopener noreferrer"
           className={buttonVariants({ variant: 'outline' })}
         >
-          <Video /> Join video call
+          <Video /> {t('meetings.join')}
         </a>
       ) : (
         <Button variant="outline" onClick={() => void vm.start()} disabled={vm.isStarting}>
-          <Video /> {vm.isStarting ? 'Creating call…' : 'Start virtual consultation'}
+          <Video /> {vm.isStarting ? t('meetings.creating') : t('meetings.start')}
         </Button>
       )}
 
       <Dialog open={vm.started !== null} onOpenChange={(open) => !open && vm.close()}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Virtual consultation ready</DialogTitle>
+            <DialogTitle>{t('meetings.ready')}</DialogTitle>
             <DialogDescription>{vm.started?.invitationLabel}</DialogDescription>
           </DialogHeader>
           {vm.started && (
             <div className="flex gap-2">
-              <Input readOnly value={vm.started.joinUrl} aria-label="Video call link" />
+              <Input readOnly value={vm.started.joinUrl} aria-label={t('meetings.link')} />
               <Button
                 variant="outline"
                 size="icon"
-                aria-label="Copy link"
+                aria-label={t('meetings.copyLink')}
                 onClick={() => vm.started && void vm.copyLink(vm.started.joinUrl)}
               >
                 <Copy />
@@ -57,7 +59,7 @@ export function VirtualMeetingButton({ patientId, appointmentId }: VirtualMeetin
           )}
           <DialogFooter>
             <Button variant="outline" onClick={vm.close}>
-              Close
+              {t('common.close')}
             </Button>
             {vm.started && (
               <a
@@ -67,7 +69,7 @@ export function VirtualMeetingButton({ patientId, appointmentId }: VirtualMeetin
                 className={buttonVariants()}
                 onClick={vm.close}
               >
-                <ExternalLink /> Open the call
+                <ExternalLink /> {t('meetings.openCall')}
               </a>
             )}
           </DialogFooter>

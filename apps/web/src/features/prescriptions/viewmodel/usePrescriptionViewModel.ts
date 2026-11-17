@@ -7,6 +7,7 @@ import {
 } from '@/model/api/generated/mentoraApi';
 import { type Letterhead, PrescriptionBuilder } from '@/model/domain/prescriptions/Prescription';
 import { useBrowserActions, useUserFeedback } from '@/model/platform/Platform';
+import { useTranslation } from '@/shared/i18n';
 
 export type { Letterhead };
 
@@ -27,6 +28,7 @@ export interface PrescriptionViewModel {
 
 // ViewModel
 export function usePrescriptionViewModel(): PrescriptionViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const browser = useBrowserActions();
   const { patientId = '' } = useParams();
@@ -70,7 +72,7 @@ export function usePrescriptionViewModel(): PrescriptionViewModel {
         );
         PrescriptionPdfAdapter.download(prescription);
       } catch {
-        feedback.error('The PDF could not be generated');
+        feedback.error(t('prescription.pdfFailed'));
       } finally {
         setGenerating(false);
       }

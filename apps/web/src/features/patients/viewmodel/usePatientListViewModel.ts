@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
 import { useSearchPatientsQuery } from '@/model/api/generated/mentoraApi';
 import { PatientAdapter, type PatientListItem } from '@/model/domain/patients/PatientAdapter';
+import { useTranslation } from '@/shared/i18n';
 import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
 
 export interface PatientListViewModel {
@@ -20,6 +21,7 @@ export interface PatientListViewModel {
 
 // ViewModel
 export function usePatientListViewModel(): PatientListViewModel {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [isCreateOpen, setCreateOpen] = useState(false);
   const term = useDebouncedValue(query.trim());
@@ -35,9 +37,7 @@ export function usePatientListViewModel(): PatientListViewModel {
     isLoading,
     isSearching: isFetching && !isLoading,
     error: ApiErrorAdapter.toUiError(error),
-    emptyMessage: term
-      ? `No patients match "${term}".`
-      : 'No patients registered yet. Add the first one.',
+    emptyMessage: term ? t('patients.list.noMatch', { term }) : t('patients.list.empty'),
     isCreateOpen,
     setCreateOpen,
     openPatient: (patientId) => navigate(`/patients/${patientId}`),

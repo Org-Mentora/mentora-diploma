@@ -12,6 +12,7 @@ import {
   type SubscriptionOverview,
 } from '@/model/domain/subscriptions/SubscriptionAdapter';
 import { useUserFeedback } from '@/model/platform/Platform';
+import { useTranslation } from '@/shared/i18n';
 import {
   type PaymentHistoryViewModel,
   usePaymentHistoryViewModel,
@@ -52,6 +53,7 @@ export interface PlanSettingsViewModel {
 
 // ViewModel
 export function usePlanSettingsViewModel(): PlanSettingsViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const { data, isLoading, error } = useGetSubscriptionQuery();
   const [choosePlan, choosing] = useChoosePlanMutation();
@@ -83,15 +85,15 @@ export function usePlanSettingsViewModel(): PlanSettingsViewModel {
         await choosePlan({ choosePlanRequestDto: { planId: pendingPlan.option.id } }).unwrap();
         feedback.success(
           pendingPlan.chargesNow
-            ? `Payment approved. The ${pendingPlan.option.name} plan is active.`
-            : `The ${pendingPlan.option.name} plan applies from your next renewal.`,
+            ? t('settings.plan.approved', { plan: pendingPlan.option.name })
+            : t('settings.plan.appliesNext', { plan: pendingPlan.option.name }),
         );
       } catch (caught) {
         const uiError = ApiErrorAdapter.toUiError(caught);
         if (uiError?.code === 'PAYMENT_METHOD_REQUIRED') {
-          cards.openAdd('Add a card to activate the plan, then choose it again.');
+          cards.openAdd(t('settings.plan.addCardForPlan'));
         } else {
-          feedback.error(uiError?.message ?? 'The plan could not be changed');
+          feedback.error(uiError?.message ?? t('settings.plan.changeFailed'));
         }
       } finally {
         setPendingPlan(null);
@@ -100,7 +102,7 @@ export function usePlanSettingsViewModel(): PlanSettingsViewModel {
     pendingAutoDebit,
     requestAutoDebit: (enabled) => {
       if (enabled && !overview?.hasPaymentMethod) {
-        cards.openAdd('Add a card to turn on automatic debit.');
+        cards.openAdd(t('settings.plan.addCardForDebit'));
         return;
       }
       setPendingAutoDebit(enabled);
@@ -112,9 +114,13 @@ export function usePlanSettingsViewModel(): PlanSettingsViewModel {
       }
       try {
         await setAutoDebit({ autoDebitRequestDto: { enabled: pendingAutoDebit } }).unwrap();
-        feedback.success(`Automatic debit ${pendingAutoDebit ? 'enabled' : 'disabled'}`);
+        feedback.success(
+          pendingAutoDebit ? t('settings.plan.debitEnabled') : t('settings.plan.debitDisabled'),
+        );
       } catch (caught) {
-        feedback.error(ApiErrorAdapter.toUiError(caught)?.message ?? 'Could not change the debit');
+        feedback.error(
+          ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.plan.debitFailed'),
+        );
       } finally {
         setPendingAutoDebit(null);
       }
@@ -125,9 +131,11 @@ export function usePlanSettingsViewModel(): PlanSettingsViewModel {
     confirmCancel: async () => {
       try {
         await cancel().unwrap();
-        feedback.success('Your subscription was cancelled. It will not renew.');
+        feedback.success(t('settings.plan.cancelled'));
       } catch (caught) {
-        feedback.error(ApiErrorAdapter.toUiError(caught)?.message ?? 'Could not cancel');
+        feedback.error(
+          ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.plan.cancelFailed'),
+        );
       } finally {
         setCancelling(false);
       }

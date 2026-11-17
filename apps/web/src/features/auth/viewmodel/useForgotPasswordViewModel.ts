@@ -18,6 +18,7 @@ import {
   recoveryPasswordSchema,
 } from '@/model/domain/session/auth.forms';
 import { useUserFeedback } from '@/model/platform/Platform';
+import { localizeServerMessage, useTranslation } from '@/shared/i18n';
 
 export type { RecoveryCodeValues, RecoveryEmailValues, RecoveryPasswordValues };
 
@@ -42,6 +43,7 @@ export interface ForgotPasswordViewModel {
 
 // ViewModel
 export function useForgotPasswordViewModel(): ForgotPasswordViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const [step, setStep] = useState<RecoveryStep>('email');
   const [email, setEmail] = useState('');
@@ -72,7 +74,7 @@ export function useForgotPasswordViewModel(): ForgotPasswordViewModel {
     try {
       const result = await request({ passwordRecoveryRequestDto: { email: address } }).unwrap();
       setEmail(address);
-      setNotice(result.message);
+      setNotice(localizeServerMessage(result.message));
       setStep('code');
     } catch (caught) {
       setError(ApiErrorAdapter.toUiError(caught));
@@ -119,7 +121,7 @@ export function useForgotPasswordViewModel(): ForgotPasswordViewModel {
         await reset({
           resetPasswordRequestDto: { email, code, newPassword: values.newPassword },
         }).unwrap();
-        feedback.success('Your password was changed. Log in with the new one.');
+        feedback.success(t('auth.recovery.changed'));
         navigate('/login', { replace: true });
       } catch (caught) {
         failOn('newPassword', caught);

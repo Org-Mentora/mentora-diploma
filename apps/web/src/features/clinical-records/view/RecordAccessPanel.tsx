@@ -1,12 +1,14 @@
+import { useTranslation } from '@/shared/i18n';
 import { Card, CardContent } from '@/shared/ui/card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { useRecordAccessLogViewModel } from '../viewmodel/useRecordAccessLogViewModel';
 
 export function RecordAccessPanel({ patientId }: { patientId: string }) {
+  const { t } = useTranslation();
   const { items, isLoading, error } = useRecordAccessLogViewModel(patientId);
 
   if (isLoading) {
-    return <p className="text-muted-foreground text-sm">Loading access log…</p>;
+    return <p className="text-muted-foreground text-sm">{t('clinical.access.loading')}</p>;
   }
   if (error) {
     return (
@@ -18,8 +20,8 @@ export function RecordAccessPanel({ patientId }: { patientId: string }) {
   if (items.length === 0) {
     return (
       <EmptyState
-        title="Nobody has opened this clinical record yet"
-        description="Every read and write of the record is logged here."
+        title={t('clinical.access.emptyTitle')}
+        description={t('clinical.access.emptyDescription')}
       />
     );
   }

@@ -11,6 +11,7 @@ import {
   type PatientStatus,
 } from '@/model/domain/patients/PatientAdapter';
 import { useUserFeedback } from '@/model/platform/Platform';
+import { translate as t } from '@/shared/i18n';
 
 type ManualStatus = Exclude<PatientStatus, 'inactive'>;
 
@@ -39,13 +40,13 @@ function actionFor(status: PatientStatus, fullName: string): StatusAction {
   return status === 'active'
     ? {
         status: 'discharged',
-        label: 'Discharge',
-        confirmation: `Discharge ${fullName}? You can reactivate the patient later.`,
+        label: t('patients.action.discharge'),
+        confirmation: t('patients.action.dischargeConfirm', { name: fullName }),
       }
     : {
         status: 'active',
-        label: 'Reactivate',
-        confirmation: `Mark ${fullName} as active again?`,
+        label: t('patients.action.reactivate'),
+        confirmation: t('patients.action.reactivateConfirm', { name: fullName }),
       };
 }
 
@@ -82,9 +83,11 @@ export function usePatientProfileViewModel(): PatientProfileViewModel {
           id: patientId,
           changePatientStatusRequestDto: { status: pendingStatus.status },
         }).unwrap();
-        feedback.success(`Status changed to ${PatientAdapter.statusLabel(updated.status)}`);
+        feedback.success(
+          t('patients.statusChanged', { status: PatientAdapter.statusLabel(updated.status) }),
+        );
       } catch (caught) {
-        feedback.error(ApiErrorAdapter.toUiError(caught)?.message ?? 'Could not change the status');
+        feedback.error(ApiErrorAdapter.toUiError(caught)?.message ?? t('patients.statusFailed'));
       } finally {
         setPendingStatus(null);
       }

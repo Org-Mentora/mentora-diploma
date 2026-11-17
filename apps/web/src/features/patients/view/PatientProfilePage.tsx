@@ -7,6 +7,7 @@ import {
 } from '@/features/clinical-records';
 import { NotificationsPanel } from '@/features/notifications';
 import { VirtualMeetingButton, VirtualMeetingsPanel } from '@/features/virtual-consultations';
+import { useTranslation } from '@/shared/i18n';
 import { Badge } from '@/shared/ui/badge';
 import { Button, buttonVariants } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
@@ -24,19 +25,20 @@ import { usePatientProfileViewModel } from '../viewmodel/usePatientProfileViewMo
 import { PatientFormDialog } from './PatientFormDialog';
 
 export function PatientProfilePage() {
+  const { t } = useTranslation();
   const vm = usePatientProfileViewModel();
 
   if (vm.isLoading) {
-    return <p className="text-muted-foreground text-sm">Loading patient…</p>;
+    return <p className="text-muted-foreground text-sm">{t('patients.profile.loading')}</p>;
   }
   if (!vm.profile) {
     return (
       <EmptyState
-        title="Patient not found"
+        title={t('patients.profile.notFound')}
         description={vm.error?.message}
         action={
           <Link to="/patients" className="text-sm underline">
-            Back to patients
+            {t('patients.profile.back')}
           </Link>
         }
       />
@@ -51,7 +53,7 @@ export function PatientProfilePage() {
         to="/patients"
         className="flex w-fit items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
       >
-        <ArrowLeft className="size-4" /> Patients
+        <ArrowLeft className="size-4" /> {t('nav.patients')}
       </Link>
 
       <Card>
@@ -67,7 +69,7 @@ export function PatientProfilePage() {
           </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => vm.setEditOpen(true)}>
-              <Pencil /> Edit data
+              <Pencil /> {t('patients.profile.edit')}
             </Button>
             {vm.statusAction && (
               <Button variant="outline" onClick={vm.requestStatusChange}>
@@ -79,13 +81,13 @@ export function PatientProfilePage() {
               to={`/patients/${vm.patientId}/prescriptions/new`}
               className={buttonVariants({ variant: 'outline' })}
             >
-              <FileText /> New prescription
+              <FileText /> {t('patients.profile.newPrescription')}
             </Link>
             <Link
               to={`/patients/${vm.patientId}/consultations/new`}
               className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 font-medium text-primary-foreground text-sm hover:bg-primary/90"
             >
-              <Stethoscope className="size-4" /> New consultation
+              <Stethoscope className="size-4" /> {t('patients.profile.newConsultation')}
             </Link>
           </div>
         </CardHeader>
@@ -93,12 +95,12 @@ export function PatientProfilePage() {
 
       <Tabs defaultValue="overview">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="record">Clinical record</TabsTrigger>
-          <TabsTrigger value="diagnoses">Diagnoses</TabsTrigger>
-          <TabsTrigger value="meetings">Virtual consultations</TabsTrigger>
-          <TabsTrigger value="messages">Messages</TabsTrigger>
-          <TabsTrigger value="access">Access log</TabsTrigger>
+          <TabsTrigger value="overview">{t('patients.tab.overview')}</TabsTrigger>
+          <TabsTrigger value="record">{t('patients.tab.record')}</TabsTrigger>
+          <TabsTrigger value="diagnoses">{t('patients.tab.diagnoses')}</TabsTrigger>
+          <TabsTrigger value="meetings">{t('patients.tab.meetings')}</TabsTrigger>
+          <TabsTrigger value="messages">{t('patients.tab.messages')}</TabsTrigger>
+          <TabsTrigger value="access">{t('patients.tab.access')}</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
           <Card>
@@ -112,10 +114,10 @@ export function PatientProfilePage() {
                 ))}
               </dl>
               <div className="grid gap-2">
-                <p className="text-muted-foreground text-xs">Allergies</p>
+                <p className="text-muted-foreground text-xs">{t('patients.allergies')}</p>
                 <div className="flex flex-wrap gap-2">
                   {profile.allergies.length === 0 ? (
-                    <span className="text-sm">None recorded</span>
+                    <span className="text-sm">{t('patients.profile.noneRecorded')}</span>
                   ) : (
                     profile.allergies.map((allergy) => (
                       <Badge key={allergy} variant="danger">
@@ -127,7 +129,9 @@ export function PatientProfilePage() {
               </div>
               {profile.observations && (
                 <div className="grid gap-2">
-                  <p className="text-muted-foreground text-xs">Observations</p>
+                  <p className="text-muted-foreground text-xs">
+                    {t('patients.profile.observations')}
+                  </p>
                   <p className="whitespace-pre-wrap text-sm">{profile.observations}</p>
                 </div>
               )}
@@ -163,15 +167,15 @@ export function PatientProfilePage() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Change patient status</DialogTitle>
+            <DialogTitle>{t('patients.profile.changeStatus')}</DialogTitle>
             <DialogDescription>{vm.pendingStatus?.confirmation}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={vm.cancelStatusChange}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button onClick={() => void vm.confirmStatusChange()} disabled={vm.isChangingStatus}>
-              Confirm
+              {t('common.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,12 +1,14 @@
+import { useTranslation } from '@/shared/i18n';
 import { Card, CardContent } from '@/shared/ui/card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { useDiagnosisHistoryViewModel } from '../viewmodel/useDiagnosisHistoryViewModel';
 
 export function DiagnosisHistoryPanel({ patientId }: { patientId: string }) {
+  const { t } = useTranslation();
   const { items, isLoading, error } = useDiagnosisHistoryViewModel(patientId);
 
   if (isLoading) {
-    return <p className="text-muted-foreground text-sm">Loading diagnoses…</p>;
+    return <p className="text-muted-foreground text-sm">{t('clinical.diagnosis.loading')}</p>;
   }
   if (error) {
     return (
@@ -16,7 +18,7 @@ export function DiagnosisHistoryPanel({ patientId }: { patientId: string }) {
     );
   }
   if (items.length === 0) {
-    return <EmptyState title="No diagnoses recorded for this patient" />;
+    return <EmptyState title={t('clinical.diagnosis.empty')} />;
   }
 
   return (

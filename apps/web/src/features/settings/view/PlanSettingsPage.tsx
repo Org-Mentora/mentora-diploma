@@ -1,4 +1,5 @@
 import { AlertTriangle, Check } from 'lucide-react';
+import { useTranslation } from '@/shared/i18n';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
@@ -9,13 +10,14 @@ import { PaymentHistoryCard } from './PaymentHistoryCard';
 import { PaymentMethodsCard } from './PaymentMethodsCard';
 
 export function PlanSettingsPage() {
+  const { t } = useTranslation();
   const vm = usePlanSettingsViewModel();
 
   if (vm.isLoading) {
-    return <p className="text-muted-foreground text-sm">Loading your plan…</p>;
+    return <p className="text-muted-foreground text-sm">{t('settings.plan.loading')}</p>;
   }
   if (!vm.overview) {
-    return <EmptyState title="The plan could not be loaded" description={vm.error?.message} />;
+    return <EmptyState title={t('settings.plan.loadFailed')} description={vm.error?.message} />;
   }
   const { overview } = vm;
 
@@ -36,14 +38,16 @@ export function PlanSettingsPage() {
               onClick={() => vm.requestAutoDebit(!overview.autoDebit)}
               disabled={vm.isSaving}
             >
-              {overview.autoDebit ? 'Turn off automatic debit' : 'Turn on automatic debit'}
+              {overview.autoDebit
+                ? t('settings.plan.autoDebitOff')
+                : t('settings.plan.autoDebitOn')}
             </Button>
             <Button variant="outline" onClick={vm.payments.openManual}>
-              Register a payment
+              {t('settings.payments.register')}
             </Button>
             {!overview.isCancelled && (
               <Button variant="ghost" onClick={vm.requestCancel}>
-                Cancel subscription
+                {t('settings.plan.cancel')}
               </Button>
             )}
           </div>
@@ -52,15 +56,14 @@ export function PlanSettingsPage() {
           <CardContent>
             <p className="flex items-center gap-2 text-destructive text-sm" role="alert">
               <AlertTriangle className="size-4" />
-              Your access is restricted. Choose a plan and pay, or register a payment, to use the
-              practice again. Your data is safe.
+              {t('settings.plan.restricted')}
             </p>
           </CardContent>
         )}
       </Card>
 
       <section className="grid gap-3">
-        <h2 className="font-semibold">Plans</h2>
+        <h2 className="font-semibold">{t('settings.plan.plans')}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           {vm.plans.map((plan) => (
             <Card key={plan.id} className={plan.isCurrent ? 'border-primary' : undefined}>
@@ -69,7 +72,7 @@ export function PlanSettingsPage() {
                   {plan.name}
                   {plan.isCurrent && (
                     <Badge variant="secondary">
-                      <Check className="size-3" /> Current
+                      <Check className="size-3" /> {t('settings.plan.current')}
                     </Badge>
                   )}
                 </CardTitle>
@@ -84,7 +87,9 @@ export function PlanSettingsPage() {
                   }
                   onClick={() => vm.requestPlan(plan)}
                 >
-                  {plan.isCurrent && !overview.hasAccess ? 'Pay and reactivate' : 'Choose'}
+                  {plan.isCurrent && !overview.hasAccess
+                    ? t('settings.plan.payReactivate')
+                    : t('settings.plan.choose')}
                 </Button>
               </CardContent>
             </Card>
@@ -97,36 +102,36 @@ export function PlanSettingsPage() {
 
       <ConfirmDialog
         open={vm.pendingPlan !== null}
-        title={`Choose the ${vm.pendingPlan?.option.name ?? ''} plan`}
+        title={t('settings.plan.chooseTitle', { plan: vm.pendingPlan?.option.name ?? '' })}
         description={
           vm.pendingPlan?.chargesNow ? (
-            <p>
-              We will charge {vm.pendingPlan.option.priceLabel} to your default card now and your
-              access will be restored immediately.
-            </p>
+            <p>{t('settings.plan.chargeNow', { price: vm.pendingPlan.option.priceLabel })}</p>
           ) : (
             <p>
-              {vm.pendingPlan?.option.priceLabel}. The new plan applies from your next renewal; your
-              current period does not change.
+              {vm.pendingPlan?.option.priceLabel}. {t('settings.plan.nextRenewal')}
             </p>
           )
         }
-        confirmLabel={vm.pendingPlan?.chargesNow ? 'Pay now' : 'Confirm plan'}
+        confirmLabel={
+          vm.pendingPlan?.chargesNow ? t('settings.plan.payNow') : t('settings.plan.confirm')
+        }
         busy={vm.isSaving}
         onConfirm={() => void vm.confirmPlan()}
         onCancel={vm.abortPlan}
       />
       <ConfirmDialog
         open={vm.pendingAutoDebit !== null}
-        title={vm.pendingAutoDebit ? 'Turn on automatic debit' : 'Turn off automatic debit'}
+        title={
+          vm.pendingAutoDebit ? t('settings.plan.autoDebitOn') : t('settings.plan.autoDebitOff')
+        }
         description={
           vm.pendingAutoDebit ? (
-            <p>Each renewal will be charged to your default card on the renewal date.</p>
+            <p>{t('settings.plan.autoDebitOnDescription')}</p>
           ) : (
-            <p>Renewals will not be charged. You will have to pay manually before access ends.</p>
+            <p>{t('settings.plan.autoDebitOffDescription')}</p>
           )
         }
-        confirmLabel="Confirm"
+        confirmLabel={t('common.confirm')}
         busy={vm.isSaving}
         onConfirm={() => void vm.confirmAutoDebit()}
         onCancel={vm.abortAutoDebit}
@@ -134,18 +139,15 @@ export function PlanSettingsPage() {
       <ConfirmDialog
         open={vm.isCancelling}
         destructive
-        title="Cancel your subscription?"
+        title={t('settings.plan.cancelTitle')}
         description={
           <>
-            <p>The subscription will not renew and automatic debit will be turned off.</p>
-            <p>
-              You keep access until the end of the period already paid. After that, only this page
-              will be available until you choose a plan again. Your data is not deleted.
-            </p>
+            <p>{t('settings.plan.cancelDescription1')}</p>
+            <p>{t('settings.plan.cancelDescription2')}</p>
           </>
         }
-        confirmLabel="Cancel subscription"
-        cancelLabel="Keep it"
+        confirmLabel={t('settings.plan.cancel')}
+        cancelLabel={t('agenda.keep')}
         busy={vm.isSaving}
         onConfirm={() => void vm.confirmCancel()}
         onCancel={vm.abortCancel}

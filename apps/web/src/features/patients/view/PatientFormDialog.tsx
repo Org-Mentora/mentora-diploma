@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import {
   Dialog,
@@ -36,23 +37,23 @@ type FieldName =
   | 'allergies';
 
 const REQUIRED: { name: FieldName; label: string }[] = [
-  { name: 'firstName', label: 'First name *' },
-  { name: 'lastName', label: 'Last name *' },
-  { name: 'dni', label: 'DNI *' },
+  { name: 'firstName', label: 'patients.form.firstName' },
+  { name: 'lastName', label: 'patients.form.lastName' },
+  { name: 'dni', label: 'patients.form.dni' },
 ];
 
 const OPTIONAL: { name: FieldName; label: string; type?: string; hint?: string }[] = [
-  { name: 'birthDate', label: 'Birth date', type: 'date' },
-  { name: 'gender', label: 'Gender' },
-  { name: 'phone', label: 'Phone', type: 'tel' },
-  { name: 'email', label: 'Email', type: 'email' },
-  { name: 'address', label: 'Address' },
-  { name: 'healthInsurance', label: 'Health insurance' },
-  { name: 'memberNumber', label: 'Member number' },
-  { name: 'familyContactName', label: 'Family contact' },
-  { name: 'familyContactPhone', label: 'Family contact phone', type: 'tel' },
-  { name: 'debt', label: 'Debt', type: 'number' },
-  { name: 'allergies', label: 'Allergies', hint: 'Separate with commas' },
+  { name: 'birthDate', label: 'patients.field.birthDate', type: 'date' },
+  { name: 'gender', label: 'patients.field.gender' },
+  { name: 'phone', label: 'patients.field.phone', type: 'tel' },
+  { name: 'email', label: 'patients.field.email', type: 'email' },
+  { name: 'address', label: 'patients.field.address' },
+  { name: 'healthInsurance', label: 'patients.field.healthInsurance' },
+  { name: 'memberNumber', label: 'patients.form.memberNumber' },
+  { name: 'familyContactName', label: 'patients.field.familyContact' },
+  { name: 'familyContactPhone', label: 'patients.form.familyContactPhone', type: 'tel' },
+  { name: 'debt', label: 'patients.field.debt', type: 'number' },
+  { name: 'allergies', label: 'patients.allergies', hint: 'patients.form.allergiesHint' },
 ];
 
 export function PatientFormDialog({
@@ -61,6 +62,7 @@ export function PatientFormDialog({
   patientId,
   onSaved,
 }: PatientFormDialogProps) {
+  const { t } = useTranslation();
   const { form, isEdit, isSubmitting, error, submit } = usePatientFormViewModel({
     patientId,
     onSaved: (id) => {
@@ -74,7 +76,7 @@ export function PatientFormDialog({
     <FormField
       key={field.name}
       id={field.name}
-      label={field.label}
+      label={t(field.label)}
       error={errors[field.name]?.message}
       {...(field.hint ? { hint: field.hint } : {})}
     >
@@ -91,11 +93,11 @@ export function PatientFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit patient' : 'New patient'}</DialogTitle>
+          <DialogTitle>
+            {isEdit ? t('patients.form.editTitle') : t('patients.list.new')}
+          </DialogTitle>
           <DialogDescription>
-            {isEdit
-              ? 'Update personal, contact, administrative and clinical data.'
-              : 'Only first name, last name and DNI are required.'}
+            {isEdit ? t('patients.form.editDescription') : t('patients.form.newDescription')}
           </DialogDescription>
         </DialogHeader>
         <form id="patient-form" className="grid gap-4 sm:grid-cols-3" noValidate onSubmit={submit}>
@@ -105,7 +107,7 @@ export function PatientFormDialog({
               {OPTIONAL.map(renderField)}
               <FormField
                 id="observations"
-                label="General observations"
+                label={t('patients.form.observations')}
                 className="sm:col-span-3"
                 error={errors.observations?.message}
               >
@@ -121,10 +123,10 @@ export function PatientFormDialog({
         )}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button type="submit" form="patient-form" disabled={isSubmitting}>
-            {isSubmitting ? 'Saving…' : 'Save'}
+            {isSubmitting ? t('common.saving') : t('common.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

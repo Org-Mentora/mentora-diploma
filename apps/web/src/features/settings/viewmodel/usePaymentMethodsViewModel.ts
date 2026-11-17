@@ -17,6 +17,7 @@ import {
   SubscriptionForms,
 } from '@/model/domain/subscriptions/subscription.forms';
 import { useUserFeedback } from '@/model/platform/Platform';
+import { useTranslation } from '@/shared/i18n';
 
 export type { CardFormValues, EditCardFormValues, PaymentMethodItem };
 
@@ -50,6 +51,7 @@ const CARD_FIELDS = new Set(['holderName', 'cardNumber', 'cvc']);
 
 // ViewModel
 export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentMethodsViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const [add, adding] = useAddPaymentMethodMutation();
   const [update, updating] = useUpdatePaymentMethodMutation();
@@ -89,7 +91,7 @@ export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentM
     submitAdd: addForm.handleSubmit(async (values) => {
       try {
         await add({ addPaymentMethodRequestDto: SubscriptionForms.toAddCard(values) }).unwrap();
-        feedback.success('Card registered');
+        feedback.success(t('settings.cards.registered'));
         closeAdd();
       } catch (caught) {
         const error = ApiErrorAdapter.toUiError(caught);
@@ -97,9 +99,9 @@ export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentM
         if (field && CARD_FIELDS.has(field)) {
           addForm.setError(field as keyof CardFormValues, { message: error.message });
         } else if (field === 'expYear' || field === 'expMonth') {
-          addForm.setError('expiry', { message: error?.message ?? 'Invalid expiry' });
+          addForm.setError('expiry', { message: error?.message ?? t('validation.expiry') });
         } else {
-          addForm.setError('root', { message: error?.message ?? 'The card could not be added' });
+          addForm.setError('root', { message: error?.message ?? t('settings.cards.addFailed') });
         }
       }
     }),
@@ -119,11 +121,11 @@ export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentM
           id: editing.id,
           updatePaymentMethodRequestDto: SubscriptionForms.toEditCard(values),
         }).unwrap();
-        feedback.success('Card updated');
+        feedback.success(t('settings.cards.updated'));
         setEditing(null);
       } catch (caught) {
         editForm.setError('expiry', {
-          message: ApiErrorAdapter.toUiError(caught)?.message ?? 'The card could not be updated',
+          message: ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.cards.updateFailed'),
         });
       }
     }),
@@ -136,7 +138,7 @@ export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentM
         feedback.success(`${item.label} is now the default card`);
       } catch (caught) {
         feedback.error(
-          ApiErrorAdapter.toUiError(caught)?.message ?? 'The card could not be updated',
+          ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.cards.updateFailed'),
         );
       }
     },
@@ -152,14 +154,14 @@ export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentM
           id: removal.item.id,
           ...(removal.warning ? { confirm: 'true' as const } : {}),
         }).unwrap();
-        feedback.success('Card removed');
+        feedback.success(t('settings.cards.removed'));
         setRemoval(null);
       } catch (caught) {
         const error = ApiErrorAdapter.toUiError(caught);
         if (error?.code === 'CONFIRMATION_REQUIRED') {
           setRemoval({ item: removal.item, warning: error.message });
         } else {
-          feedback.error(error?.message ?? 'The card could not be removed');
+          feedback.error(error?.message ?? t('settings.cards.removeFailed'));
           setRemoval(null);
         }
       }

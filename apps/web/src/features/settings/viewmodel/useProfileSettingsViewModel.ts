@@ -16,6 +16,7 @@ import {
 } from '@/model/domain/session/auth.forms';
 import { LogoFile } from '@/model/domain/session/LogoFile';
 import { useUserFeedback } from '@/model/platform/Platform';
+import { useTranslation } from '@/shared/i18n';
 import { readFileAsDataUrl } from '@/shared/lib/readFileAsDataUrl';
 
 export type { ProfileFormValues };
@@ -41,6 +42,7 @@ const FIELDS = new Set<keyof ProfileFormValues>(['email', 'licenseNumber', 'offi
 
 // ViewModel
 export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const { data: session, isLoading } = useGetCurrentProfessionalQuery();
   const { data: logo } = useGetLogoQuery();
@@ -65,12 +67,12 @@ export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
     save: form.handleSubmit(async (values) => {
       try {
         await update({ updateProfileRequestDto: AuthForms.toProfileRequest(values) }).unwrap();
-        feedback.success('Your data was updated');
+        feedback.success(t('settings.profile.updated'));
       } catch (caught) {
         const error = ApiErrorAdapter.toUiError(caught);
         const field = error?.field as keyof ProfileFormValues | undefined;
         form.setError(field && FIELDS.has(field) ? field : 'root', {
-          message: error?.message ?? 'Your data could not be saved',
+          message: error?.message ?? t('settings.profile.failed'),
         });
       }
     }),
@@ -94,18 +96,22 @@ export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
       }
       try {
         await upload({ uploadLogoRequestDto: { dataUrl: await readFileAsDataUrl(file) } }).unwrap();
-        feedback.success('Logo updated');
+        feedback.success(t('settings.profile.logoUpdated'));
       } catch (caught) {
-        setLogoError(ApiErrorAdapter.toUiError(caught)?.message ?? 'The logo could not be saved');
+        setLogoError(
+          ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.profile.logoFailed'),
+        );
       }
     },
     removeLogo: async () => {
       setLogoError(null);
       try {
         await remove().unwrap();
-        feedback.success('Logo removed. Prescriptions will use the default logo.');
+        feedback.success(t('settings.profile.logoRemoved'));
       } catch (caught) {
-        setLogoError(ApiErrorAdapter.toUiError(caught)?.message ?? 'The logo could not be removed');
+        setLogoError(
+          ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.profile.logoRemoveFailed'),
+        );
       }
     },
   };

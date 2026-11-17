@@ -1,17 +1,23 @@
 import { NavLink, Outlet } from 'react-router';
+import { useTranslation } from '@/shared/i18n';
 import { cn } from '@/shared/lib/utils';
 
 const SECTIONS = [
-  { to: '/settings/profile', label: 'Professional data' },
-  { to: '/settings/password', label: 'Password' },
-  { to: '/settings/plan', label: 'Plan and payments' },
+  { to: '/settings/profile', label: 'settings.section.profile' },
+  { to: '/settings/password', label: 'settings.section.password' },
+  { to: '/settings/plan', label: 'settings.section.plan' },
+  { to: '/settings/booking', label: 'settings.section.booking' },
+  { to: '/settings/fees', label: 'settings.section.fees' },
+  { to: '/settings/activity', label: 'settings.section.activity' },
+  { to: '/settings/preferences', label: 'settings.section.preferences' },
 ];
 
 export function SettingsLayout() {
+  const { t } = useTranslation();
   return (
     <div className="grid gap-6">
       <div className="grid gap-1">
-        <h1 className="font-semibold text-2xl tracking-tight">Settings</h1>
+        <h1 className="font-semibold text-2xl tracking-tight">{t('nav.settings')}</h1>
         <nav className="flex flex-wrap gap-1 border-b">
           {SECTIONS.map((section) => (
             <NavLink
@@ -24,7 +30,7 @@ export function SettingsLayout() {
                 )
               }
             >
-              {section.label}
+              {t(section.label)}
             </NavLink>
           ))}
         </nav>

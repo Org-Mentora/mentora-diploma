@@ -1,3 +1,4 @@
+import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { FormField } from '@/shared/ui/form-field';
@@ -6,28 +7,29 @@ import { Textarea } from '@/shared/ui/textarea';
 import { useProfileSettingsViewModel } from '../viewmodel/useProfileSettingsViewModel';
 
 const FIELDS = [
-  { name: 'firstName', label: 'First name' },
-  { name: 'lastName', label: 'Last name' },
-  { name: 'specialty', label: 'Specialty' },
-  { name: 'licenseNumber', label: 'License number' },
-  { name: 'email', label: 'Email', type: 'email' },
-  { name: 'phone', label: 'Phone', type: 'tel' },
+  { name: 'firstName', label: 'auth.field.firstName' },
+  { name: 'lastName', label: 'auth.field.lastName' },
+  { name: 'specialty', label: 'auth.field.specialty' },
+  { name: 'licenseNumber', label: 'auth.field.licenseNumber' },
+  { name: 'email', label: 'auth.field.email', type: 'email' },
+  { name: 'phone', label: 'auth.field.phone', type: 'tel' },
 ] as const;
 
 export function ProfileSettingsPage() {
+  const { t } = useTranslation();
   const vm = useProfileSettingsViewModel();
   const { errors, isDirty } = vm.form.formState;
 
   if (vm.isLoading) {
-    return <p className="text-muted-foreground text-sm">Loading your data…</p>;
+    return <p className="text-muted-foreground text-sm">{t('settings.profile.loading')}</p>;
   }
 
   return (
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle>Professional data</CardTitle>
-          <CardDescription>It appears on your prescriptions.</CardDescription>
+          <CardTitle>{t('settings.section.profile')}</CardTitle>
+          <CardDescription>{t('settings.profile.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-4 sm:grid-cols-2" noValidate onSubmit={vm.save}>
@@ -35,7 +37,7 @@ export function ProfileSettingsPage() {
               <FormField
                 key={field.name}
                 id={field.name}
-                label={field.label}
+                label={t(field.label)}
                 error={errors[field.name]?.message}
               >
                 <Input
@@ -48,8 +50,8 @@ export function ProfileSettingsPage() {
             ))}
             <FormField
               id="offices"
-              label="Office addresses"
-              hint="One per line, up to 5"
+              label={t('settings.profile.offices')}
+              hint={t('settings.profile.officesHint')}
               error={errors.offices?.message}
               className="sm:col-span-2"
             >
@@ -62,10 +64,10 @@ export function ProfileSettingsPage() {
             )}
             <div className="flex justify-end gap-2 sm:col-span-2">
               <Button type="button" variant="outline" onClick={vm.discard} disabled={!isDirty}>
-                Cancel
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={vm.isSaving}>
-                Save
+                {t('common.save')}
               </Button>
             </div>
           </form>
@@ -74,28 +76,27 @@ export function ProfileSettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Logo</CardTitle>
-          <CardDescription>
-            Printed on the letterhead of your prescriptions. Without a logo, Mentora uses a default
-            one.
-          </CardDescription>
+          <CardTitle>{t('prescription.logo')}</CardTitle>
+          <CardDescription>{t('settings.profile.logoDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap items-center gap-4">
           <div className="flex size-20 items-center justify-center rounded-md border bg-muted/40">
             {vm.logo.url ? (
               <img
                 src={vm.logo.url}
-                alt="Your logo"
+                alt={t('settings.profile.yourLogo')}
                 className="max-h-full max-w-full object-contain"
               />
             ) : (
-              <span className="text-muted-foreground text-xs">Default</span>
+              <span className="text-muted-foreground text-xs">
+                {t('settings.profile.defaultLogo')}
+              </span>
             )}
           </div>
           <div className="grid gap-2">
             <FormField
               id="logo"
-              label="Upload a new logo"
+              label={t('settings.profile.uploadLogo')}
               hint={vm.logo.hint}
               error={vm.logo.error ?? undefined}
             >
@@ -117,7 +118,7 @@ export function ProfileSettingsPage() {
                 onClick={() => void vm.removeLogo()}
                 disabled={vm.logo.isSaving}
               >
-                Remove logo
+                {t('settings.profile.removeLogo')}
               </Button>
             )}
           </div>

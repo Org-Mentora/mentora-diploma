@@ -1,14 +1,16 @@
 import { ArrowLeft, Download, Printer } from 'lucide-react';
 import { Link } from 'react-router';
+import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { Textarea } from '@/shared/ui/textarea';
 import { usePrescriptionViewModel } from '../viewmodel/usePrescriptionViewModel';
 
 export function PrescriptionPage() {
+  const { t } = useTranslation();
   const vm = usePrescriptionViewModel();
 
   if (vm.isLoading) {
-    return <p className="text-muted-foreground text-sm">Preparing the prescription…</p>;
+    return <p className="text-muted-foreground text-sm">{t('prescription.preparing')}</p>;
   }
   const { letterhead } = vm;
 
@@ -19,17 +21,18 @@ export function PrescriptionPage() {
           to={`/patients/${vm.patientId}`}
           className="flex items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
         >
-          <ArrowLeft className="size-4" /> Back to the patient
+          <ArrowLeft className="size-4" /> {t('clinical.backToPatient')}
         </Link>
         <div className="ml-auto flex gap-2">
           <Button variant="outline" onClick={vm.print} disabled={!vm.canGenerate}>
-            <Printer /> Print
+            <Printer /> {t('prescription.print')}
           </Button>
           <Button
             onClick={() => void vm.downloadPdf()}
             disabled={!vm.canGenerate || vm.isGenerating}
           >
-            <Download /> {vm.isGenerating ? 'Generating…' : 'Download PDF'}
+            <Download />{' '}
+            {vm.isGenerating ? t('prescription.generating') : t('prescription.download')}
           </Button>
         </div>
       </div>
@@ -40,7 +43,7 @@ export function PrescriptionPage() {
             {letterhead.logoDataUrl ? (
               <img
                 src={letterhead.logoDataUrl}
-                alt="Logo"
+                alt={t('prescription.logo')}
                 className="size-16 shrink-0 object-contain"
               />
             ) : (
@@ -65,7 +68,9 @@ export function PrescriptionPage() {
 
         <section className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
-            <p className="font-semibold text-lg">Patient: {vm.patientName}</p>
+            <p className="font-semibold text-lg">
+              {t('prescription.patient', { name: vm.patientName })}
+            </p>
             <p className="text-neutral-600 text-sm">{vm.patientDetail}</p>
           </div>
           <p className="text-sm">{vm.date}</p>
@@ -74,8 +79,8 @@ export function PrescriptionPage() {
         <section className="grid gap-2">
           <p className="font-bold text-lg">Rp/</p>
           <Textarea
-            aria-label="Prescription content"
-            placeholder="Write the prescription: medication, dose, frequency, duration and indications."
+            aria-label={t('prescription.content')}
+            placeholder={t('prescription.placeholder')}
             value={vm.content}
             onChange={(event) => vm.setContent(event.target.value)}
             rows={14}

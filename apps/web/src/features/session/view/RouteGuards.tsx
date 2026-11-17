@@ -1,4 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
+import { useTranslation } from '@/shared/i18n';
 import { PLAN_PATH, useSessionViewModel } from '../viewmodel/useSessionViewModel';
 
 function FullPageMessage({ text }: { text: string }) {
@@ -10,11 +11,12 @@ function FullPageMessage({ text }: { text: string }) {
 }
 
 export function RequireLogin() {
+  const { t } = useTranslation();
   const { state } = useSessionViewModel();
   const location = useLocation();
 
   if (state === 'loading') {
-    return <FullPageMessage text="Loading your session…" />;
+    return <FullPageMessage text={t('session.loading')} />;
   }
   if (state === 'anonymous') {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
@@ -23,11 +25,12 @@ export function RequireLogin() {
 }
 
 export function RequireSession() {
+  const { t } = useTranslation();
   const { state } = useSessionViewModel();
   const location = useLocation();
 
   if (state === 'loading') {
-    return <FullPageMessage text="Loading your session…" />;
+    return <FullPageMessage text={t('session.loading')} />;
   }
   if (state === 'anonymous') {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
@@ -39,10 +42,11 @@ export function RequireSession() {
 }
 
 export function PublicOnly() {
+  const { t } = useTranslation();
   const { state } = useSessionViewModel();
 
   if (state === 'loading') {
-    return <FullPageMessage text="Loading…" />;
+    return <FullPageMessage text={t('common.loading')} />;
   }
   if (state === 'active') {
     return <Navigate to="/patients" replace />;

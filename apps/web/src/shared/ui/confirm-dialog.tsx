@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useTranslation } from '@/shared/i18n';
 import { Button } from './button';
 import {
   Dialog,
@@ -26,12 +27,13 @@ function ConfirmDialog({
   title,
   description,
   confirmLabel,
-  cancelLabel = 'Cancel',
+  cancelLabel,
   destructive = false,
   busy = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation();
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onCancel()}>
       <DialogContent>
@@ -43,7 +45,7 @@ function ConfirmDialog({
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={busy}>
-            {cancelLabel}
+            {cancelLabel ?? t('common.cancel')}
           </Button>
           <Button
             variant={destructive ? 'destructive' : 'default'}

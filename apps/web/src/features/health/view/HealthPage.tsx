@@ -1,28 +1,32 @@
 import { RefreshCw } from 'lucide-react';
+import { useTranslation } from '@/shared/i18n';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { useHealthViewModel } from '../viewmodel/useHealthViewModel';
 
 export function HealthPage() {
+  const { t } = useTranslation();
   const { health, isLoading, isRefreshing, error, refresh } = useHealthViewModel();
 
   return (
     <Card>
       <CardHeader className="flex items-start justify-between">
         <div className="grid gap-1.5">
-          <CardTitle>System status</CardTitle>
+          <CardTitle>{t('health.title')}</CardTitle>
           <CardDescription>
-            {health ? `Uptime ${health.uptime} · checked at ${health.checkedAt}` : 'Checking…'}
+            {health
+              ? t('health.uptime', { uptime: health.uptime, checkedAt: health.checkedAt })
+              : t('health.checking')}
           </CardDescription>
         </div>
         <Button variant="outline" size="sm" onClick={refresh} disabled={isRefreshing}>
           <RefreshCw className={isRefreshing ? 'animate-spin' : undefined} />
-          Refresh
+          {t('health.refresh')}
         </Button>
       </CardHeader>
       <CardContent className="grid gap-4">
-        {isLoading && <p className="text-muted-foreground text-sm">Loading status…</p>}
+        {isLoading && <p className="text-muted-foreground text-sm">{t('health.loading')}</p>}
         {error && (
           <p role="alert" className="text-destructive text-sm">
             {error.message}
@@ -38,7 +42,7 @@ export function HealthPage() {
                   <span className="flex items-center gap-2 text-sm">
                     <span className="text-muted-foreground">{component.detail}</span>
                     <Badge variant={component.isUp ? 'success' : 'danger'}>
-                      {component.isUp ? 'up' : 'down'}
+                      {component.isUp ? t('health.up') : t('health.down')}
                     </Badge>
                   </span>
                 </li>

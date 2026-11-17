@@ -1,20 +1,19 @@
 import { ExternalLink, Video } from 'lucide-react';
+import { useTranslation } from '@/shared/i18n';
 import { Card, CardContent } from '@/shared/ui/card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { useVirtualMeetingHistoryViewModel } from '../viewmodel/useVirtualMeetingHistoryViewModel';
 
 export function VirtualMeetingsPanel({ patientId }: { patientId: string }) {
+  const { t } = useTranslation();
   const { items, isLoading } = useVirtualMeetingHistoryViewModel(patientId);
 
   if (isLoading) {
-    return <p className="text-muted-foreground text-sm">Loading meetings…</p>;
+    return <p className="text-muted-foreground text-sm">{t('meetings.loading')}</p>;
   }
   if (items.length === 0) {
     return (
-      <EmptyState
-        title="No virtual consultations yet"
-        description="Start one from the patient header or from a virtual appointment."
-      />
+      <EmptyState title={t('meetings.emptyTitle')} description={t('meetings.emptyDescription')} />
     );
   }
 
@@ -35,7 +34,7 @@ export function VirtualMeetingsPanel({ patientId }: { patientId: string }) {
               rel="noopener noreferrer"
               className="ml-auto inline-flex items-center gap-1 underline"
             >
-              Open <ExternalLink className="size-3" />
+              {t('meetings.open')} <ExternalLink className="size-3" />
             </a>
           </div>
         ))}

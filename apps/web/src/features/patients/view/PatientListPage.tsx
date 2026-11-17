@@ -1,4 +1,5 @@
 import { Plus, Search } from 'lucide-react';
+import { useTranslation } from '@/shared/i18n';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
@@ -9,18 +10,19 @@ import { usePatientListViewModel } from '../viewmodel/usePatientListViewModel';
 import { PatientFormDialog } from './PatientFormDialog';
 
 export function PatientListPage() {
+  const { t } = useTranslation();
   const vm = usePatientListViewModel();
 
   return (
     <Card>
       <CardHeader className="flex flex-wrap items-center justify-between gap-3">
-        <CardTitle className="text-xl">Patients</CardTitle>
+        <CardTitle className="text-xl">{t('nav.patients')}</CardTitle>
         <div className="flex w-full items-center gap-2 sm:w-auto">
           <div className="relative w-full sm:w-80">
             <Search className="absolute top-2.5 left-2.5 size-4 text-muted-foreground" />
             <Input
-              aria-label="Search patients"
-              placeholder="Search by name, surname or DNI"
+              aria-label={t('patients.list.search')}
+              placeholder={t('patients.list.searchPlaceholder')}
               className="pl-8"
               value={vm.query}
               onChange={(event) => vm.setQuery(event.target.value)}
@@ -28,7 +30,7 @@ export function PatientListPage() {
           </div>
           <Button onClick={() => vm.setCreateOpen(true)}>
             <Plus />
-            New patient
+            {t('patients.list.new')}
           </Button>
         </div>
       </CardHeader>
@@ -39,19 +41,19 @@ export function PatientListPage() {
           </p>
         )}
         {vm.isLoading ? (
-          <p className="text-muted-foreground text-sm">Loading patients…</p>
+          <p className="text-muted-foreground text-sm">{t('patients.list.loading')}</p>
         ) : vm.patients.length === 0 ? (
           <EmptyState title={vm.emptyMessage} />
         ) : (
           <Table aria-busy={vm.isSearching}>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead>{t('patients.list.name')}</TableHead>
                 <TableHead>DNI</TableHead>
-                <TableHead>Age</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Health insurance</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t('patients.list.age')}</TableHead>
+                <TableHead>{t('patients.field.phone')}</TableHead>
+                <TableHead>{t('patients.field.healthInsurance')}</TableHead>
+                <TableHead>{t('patients.list.status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

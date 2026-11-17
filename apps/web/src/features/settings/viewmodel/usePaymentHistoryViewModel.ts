@@ -17,6 +17,7 @@ import {
   SubscriptionForms,
 } from '@/model/domain/subscriptions/subscription.forms';
 import { useUserFeedback } from '@/model/platform/Platform';
+import { useTranslation } from '@/shared/i18n';
 
 export type { ManualPaymentFormValues, PaymentItem };
 
@@ -42,6 +43,7 @@ const FIELDS = new Set<keyof ManualPaymentFormValues>(['amount', 'paidAt']);
 
 // ViewModel
 export function usePaymentHistoryViewModel(planPrice: number | null): PaymentHistoryViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const { data, isLoading } = useListPaymentsQuery();
   const [register, registering] = useRegisterManualPaymentMutation();
@@ -57,7 +59,10 @@ export function usePaymentHistoryViewModel(planPrice: number | null): PaymentHis
     isLoading,
     isManualOpen,
     manualForm,
-    methodOptions: Object.entries(MANUAL_METHOD_LABEL).map(([value, label]) => ({ value, label })),
+    methodOptions: Object.entries(MANUAL_METHOD_LABEL).map(([value, label]) => ({
+      value,
+      label: t(label),
+    })),
     isSaving: registering.isLoading,
     openManual: () => {
       manualForm.reset(SubscriptionForms.manualDefaults(planPrice, today()));
@@ -69,13 +74,13 @@ export function usePaymentHistoryViewModel(planPrice: number | null): PaymentHis
         await register({
           manualPaymentRequestDto: SubscriptionForms.toManualPayment(values),
         }).unwrap();
-        feedback.success('Payment registered. Your access was renewed.');
+        feedback.success(t('settings.payments.registered'));
         setManualOpen(false);
       } catch (caught) {
         const error = ApiErrorAdapter.toUiError(caught);
         const field = error?.field as keyof ManualPaymentFormValues | undefined;
         manualForm.setError(field && FIELDS.has(field) ? field : 'root', {
-          message: error?.message ?? 'The payment could not be registered',
+          message: error?.message ?? t('settings.payments.failed'),
         });
       }
     }),

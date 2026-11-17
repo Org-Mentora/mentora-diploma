@@ -18,6 +18,8 @@ describe('DayAgenda (View, CU-10 step 5)', () => {
             typeLabel: 'First visit',
             modalityLabel: 'Virtual',
             isCancelled: false,
+            isOnline: true,
+            feeLabel: '$ 25.000,00',
             notes: 'Bring lab results',
           },
           {
@@ -27,6 +29,8 @@ describe('DayAgenda (View, CU-10 step 5)', () => {
             typeLabel: 'Control',
             modalityLabel: 'In person',
             isCancelled: true,
+            isOnline: false,
+            feeLabel: null,
             notes: null,
           },
         ]}

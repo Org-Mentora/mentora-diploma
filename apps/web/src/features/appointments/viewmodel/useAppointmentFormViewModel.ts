@@ -9,7 +9,12 @@ import {
   useScheduleAppointmentMutation,
   useSearchPatientsQuery,
 } from '@/model/api/generated/mentoraApi';
-import { APPOINTMENT_TYPE_LABEL, MODALITY_LABEL } from '@/model/domain/appointments/AgendaAdapter';
+import {
+  APPOINTMENT_TYPES,
+  MODALITIES,
+  modalityLabel,
+  typeLabel,
+} from '@/model/domain/appointments/AgendaAdapter';
 import {
   AppointmentForm,
   type AppointmentFormValues,
@@ -17,6 +22,7 @@ import {
 } from '@/model/domain/appointments/appointment.form';
 import { PatientAdapter } from '@/model/domain/patients/PatientAdapter';
 import { useUserFeedback } from '@/model/platform/Platform';
+import { useTranslation } from '@/shared/i18n';
 import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
 
 export type { AppointmentFormValues };
@@ -52,8 +58,8 @@ interface Options {
   onDone: () => void;
 }
 
-const toOptions = (labels: Record<string, string>): Option[] =>
-  Object.entries(labels).map(([value, label]) => ({ value, label }));
+const toOptions = <T extends string>(values: T[], label: (value: T) => string): Option[] =>
+  values.map((value) => ({ value, label: label(value) }));
 
 // ViewModel
 export function useAppointmentFormViewModel({
@@ -61,6 +67,7 @@ export function useAppointmentFormViewModel({
   day,
   onDone,
 }: Options): AppointmentFormViewModel {
+  const { t } = useTranslation();
   const feedback = useUserFeedback();
   const isEdit = Boolean(appointmentId);
   const { data: appointment } = useGetAppointmentQuery(
@@ -115,12 +122,12 @@ export function useAppointmentFormViewModel({
           id: appointmentId,
           rescheduleAppointmentRequestDto: AppointmentForm.toReschedule(values),
         }).unwrap();
-        feedback.success('Appointment updated. The patient will be notified.');
+        feedback.success(t('agenda.updated'));
       } else {
         await schedule({
           scheduleAppointmentRequestDto: AppointmentForm.toSchedule(values),
         }).unwrap();
-        feedback.success('Appointment scheduled. The patient will be notified.');
+        feedback.success(t('agenda.scheduled'));
       }
       onDone();
     } catch (caught) {
@@ -140,8 +147,8 @@ export function useAppointmentFormViewModel({
     patientSearch,
     setPatientSearch,
     patientOptions,
-    typeOptions: toOptions(APPOINTMENT_TYPE_LABEL),
-    modalityOptions: toOptions(MODALITY_LABEL),
+    typeOptions: toOptions(APPOINTMENT_TYPES, typeLabel),
+    modalityOptions: toOptions(MODALITIES, modalityLabel),
     error,
     isSubmitting: scheduling.isLoading || rescheduling.isLoading || cancelling.isLoading,
     submit,
@@ -154,7 +161,7 @@ export function useAppointmentFormViewModel({
       }
       try {
         await cancel({ id: appointmentId }).unwrap();
-        feedback.success('Appointment cancelled. The patient will be notified.');
+        feedback.success(t('agenda.cancelledToast'));
         onDone();
       } catch (caught) {
         fail(caught);
