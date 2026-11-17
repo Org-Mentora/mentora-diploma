@@ -17,8 +17,9 @@ No `express`, `mongoose`, `zod`, DTOs or `#infrastructure` imports (lint will fa
 
 - `MentorSchema.ts`: Mongoose schema with `_id: { type: String }`, plus the model.
 - `MentorMapper.ts`: `implements DataMapper<Mentor, MentorDocument>`.
-- `MongooseMentorRepository.ts`: `extends MongooseRepository<Mentor, MentorDocument>`
-  and implements the custom queries.
+- `MongooseMentorRepository.ts`: `extends MongooseRepository<Mentor, MentorDocument>`,
+  receives the `TransactionContext` and implements the custom queries, each with
+  `.session(this.session)` (ADR-0025).
 
 ## 3. Contracts (`contracts/mentor.contracts.ts`)
 
@@ -59,11 +60,12 @@ export function registerMentorContracts(registry: ContractRegistry): void {
 
 - `MentorModule implements AppModule, MentorPresenterFactory` takes one
   `MentorModuleDependencies` object ([ADR-0024](../adr/0024-injectable-module-adapters.md)):
-  shared collaborators (`guard`, `clock`) are required, Model ports are optional
-  (`repository?: MentorRepository`), and it wires
-  `new MentorService(deps.repository ?? new MongooseMentorRepository(), deps.clock)`.
+  shared collaborators (`guard`, `clock`, `transactions`, `context`) are required, Model ports
+  are optional (`repository?: MentorRepository`), and it wires
+  `new MentorService(deps.repository ?? new MongooseMentorRepository(deps.context), deps.transactions, deps.clock)`
+  ([ADR-0025](../adr/0025-transactions-with-context.md)).
 - `index.ts` exports `MentorModule`, `MentorModuleDependencies` and the DTO types.
-- Add `new MentorModule({ guard, clock })` to `apps/api/src/app/modules.ts`.
+- Add `new MentorModule({ guard, clock, transactions, context })` to `apps/api/src/app/modules.ts`.
 
 ## 7. Tests, codegen and docs
 

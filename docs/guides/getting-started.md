@@ -11,7 +11,7 @@
 ```bash
 pnpm install                 # also installs git hooks (lefthook)
 cp .env.example .env
-docker compose up -d mongo   # only the database
+docker compose up -d mongo mailpit   # database (replica set, ADR-0025) + email inbox :8025
 pnpm dev                     # api :3000 (tsx watch) + web :5173 (Vite, proxies /api)
 ```
 
