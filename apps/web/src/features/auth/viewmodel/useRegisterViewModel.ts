@@ -4,31 +4,45 @@ import { type UseFormReturn, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
-import { useRegisterProfessionalMutation } from '@/model/api/generated/mentoraApi';
+import {
+  useRegisterProfessionalMutation,
+  useUploadLogoMutation,
+} from '@/model/api/generated/mentoraApi';
 import {
   AuthForms,
+  PASSWORD_HINT,
   type RegisterFormValues,
   registerFormDefaults,
   registerFormSchema,
 } from '@/model/domain/session/auth.forms';
+import { LogoFile } from '@/model/domain/session/LogoFile';
+import { readFileAsDataUrl } from '@/shared/lib/readFileAsDataUrl';
+
+export type { RegisterFormValues };
 
 export interface RegisterViewModel {
   form: UseFormReturn<RegisterFormValues>;
   error: UiError | null;
   isSubmitting: boolean;
+  passwordHint: string;
+  logo: { accept: string; hint: string; preview: string | null; error: string | null };
+  selectLogo: (file: File | null) => Promise<void>;
   submit: () => Promise<void>;
 }
 
-const FIELDS = new Set<keyof RegisterFormValues>(['email', 'licenseNumber', 'password']);
+const FIELDS = new Set<keyof RegisterFormValues>(['email', 'licenseNumber', 'password', 'offices']);
 
-/** CU-03 Register professional (starts the free trial). */
+// ViewModel
 export function useRegisterViewModel(): RegisterViewModel {
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerFormSchema),
     defaultValues: registerFormDefaults,
   });
   const [register, { isLoading }] = useRegisterProfessionalMutation();
+  const [uploadLogo, uploading] = useUploadLogoMutation();
   const [error, setError] = useState<UiError | null>(null);
+  const [logo, setLogo] = useState<string | null>(null);
+  const [logoError, setLogoError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const submit = form.handleSubmit(async (values) => {
@@ -37,8 +51,12 @@ export function useRegisterViewModel(): RegisterViewModel {
       const session = await register({
         registerProfessionalRequestDto: AuthForms.toRegisterRequest(values),
       }).unwrap();
-      // CU-03 step 12: tell the professional when the trial ends.
-      toast.success(`Welcome! Your free trial lasts ${session.subscription.daysLeft ?? 0} days.`);
+      if (logo) {
+        await uploadLogo({ uploadLogoRequestDto: { dataUrl: logo } })
+          .unwrap()
+          .catch(() => toast.warning('The logo could not be saved. Upload it from Settings.'));
+      }
+      toast.success(`Welcome! Your free trial lasts ${session.subscription.daysLeft} days.`);
       navigate('/patients', { replace: true });
     } catch (caught) {
       const uiError = ApiErrorAdapter.toUiError(caught);
@@ -51,5 +69,26 @@ export function useRegisterViewModel(): RegisterViewModel {
     }
   });
 
-  return { form, error, isSubmitting: isLoading, submit };
+  return {
+    form,
+    error,
+    isSubmitting: isLoading || uploading.isLoading,
+    passwordHint: PASSWORD_HINT,
+    logo: { accept: LogoFile.ACCEPT, hint: LogoFile.HINT, preview: logo, error: logoError },
+    selectLogo: async (file) => {
+      setLogoError(null);
+      if (!file) {
+        setLogo(null);
+        return;
+      }
+      const problem = LogoFile.problemWith(file);
+      if (problem) {
+        setLogo(null);
+        setLogoError(problem);
+        return;
+      }
+      setLogo(await readFileAsDataUrl(file));
+    },
+    submit,
+  };
 }

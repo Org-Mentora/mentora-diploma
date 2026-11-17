@@ -17,7 +17,7 @@ export interface LoginViewModel {
   submit: () => Promise<void>;
 }
 
-/** CU-01 Log in. */
+// ViewModel
 export function useLoginViewModel(): LoginViewModel {
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -33,7 +33,7 @@ export function useLoginViewModel(): LoginViewModel {
     setError(null);
     try {
       const session = await login({ loginRequestDto: AuthForms.toLoginRequest(values) }).unwrap();
-      navigate(session.subscription.status === 'expired' ? '/plan-expired' : from, {
+      navigate(session.subscription.hasAccess ? from : '/settings/plan', {
         replace: true,
       });
     } catch (caught) {

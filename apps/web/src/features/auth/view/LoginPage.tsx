@@ -5,7 +5,6 @@ import { Input } from '@/shared/ui/input';
 import { useLoginViewModel } from '../viewmodel/useLoginViewModel';
 import { AuthLayout } from './AuthLayout';
 
-/** CU-01 Log in. */
 export function LoginPage() {
   const { form, error, isSubmitting, submit } = useLoginViewModel();
   const { errors } = form.formState;
@@ -42,6 +41,12 @@ export function LoginPage() {
             {...form.register('password')}
           />
         </FormField>
+        <Link
+          to="/forgot-password"
+          className="-mt-2 w-fit text-muted-foreground text-sm underline hover:text-foreground"
+        >
+          Forgot your password?
+        </Link>
         {error && (
           <p role="alert" className="text-destructive text-sm">
             {error.message}
