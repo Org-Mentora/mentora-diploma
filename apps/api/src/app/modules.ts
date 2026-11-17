@@ -106,6 +106,7 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
     clock,
     context,
     whatsapp: options.whatsapp ?? whatsappFrom(env, logger),
+    mail,
   });
   const appointments = new AppointmentsModule({
     guard,

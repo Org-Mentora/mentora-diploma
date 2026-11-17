@@ -93,6 +93,7 @@ export class VirtualConsultationService {
       professionalId,
       patientId: request.patientId,
       phone: patient.phone,
+      email: patient.email,
       body: VirtualConsultationService.invitation(patient, joinUrl, appointment),
     });
     meeting.recordInvitation(outcome.status, outcome.error);

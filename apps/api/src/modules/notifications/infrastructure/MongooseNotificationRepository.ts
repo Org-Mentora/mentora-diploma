@@ -15,7 +15,7 @@ import type { NotificationRepository } from '../model/NotificationRepository';
 interface NotificationDocument extends MongoDocument {
   professionalId: string;
   patientId: string;
-  channel: 'whatsapp';
+  channel: 'whatsapp' | 'email';
   topic: NotificationTopic;
   recipient: string | null;
   body: string;
@@ -31,7 +31,7 @@ const schema = new Schema<NotificationDocument>(
     _id: { type: String, required: true },
     professionalId: { type: String, required: true },
     patientId: { type: String, required: true },
-    channel: { type: String, enum: ['whatsapp'], required: true },
+    channel: { type: String, enum: ['whatsapp', 'email'], required: true },
     topic: {
       type: String,
       enum: [
