@@ -8,11 +8,11 @@ import { z } from 'zod';
 const EXPIRY = /^(0[1-9]|1[0-2])\/(\d{2})$/;
 
 export const cardFormSchema = z.object({
-  holderName: z.string().trim().min(1, 'Required'),
+  holderName: z.string().trim().min(1, 'validation.required'),
   cardNumber: z
     .string()
-    .refine((value) => /^\d{12,19}$/.test(value.replace(/[\s-]/g, '')), 'Enter the card number'),
-  expiry: z.string().trim().regex(EXPIRY, 'Use MM/YY'),
+    .refine((value) => /^\d{12,19}$/.test(value.replace(/[\s-]/g, '')), 'validation.cardNumber'),
+  expiry: z.string().trim().regex(EXPIRY, 'validation.expiry'),
   cvc: z
     .string()
     .trim()
@@ -21,13 +21,13 @@ export const cardFormSchema = z.object({
 });
 
 export const editCardFormSchema = z.object({
-  holderName: z.string().trim().min(1, 'Required'),
-  expiry: z.string().trim().regex(EXPIRY, 'Use MM/YY'),
+  holderName: z.string().trim().min(1, 'validation.required'),
+  expiry: z.string().trim().regex(EXPIRY, 'validation.expiry'),
 });
 
 export const manualPaymentFormSchema = z.object({
-  amount: z.string().refine((value) => Number(value) > 0, 'Enter the amount paid'),
-  paidAt: z.iso.date('Enter the payment date'),
+  amount: z.string().refine((value) => Number(value) > 0, 'validation.amountPaid'),
+  paidAt: z.iso.date('validation.paymentDate'),
   method: z.enum(['bank_transfer', 'cash', 'card', 'other']),
   reference: z.string(),
 });
@@ -45,10 +45,10 @@ export const emptyCardForm: CardFormValues = {
 };
 
 export const MANUAL_METHOD_LABEL: Record<ManualPaymentFormValues['method'], string> = {
-  bank_transfer: 'Bank transfer',
-  cash: 'Cash',
-  card: 'Card (outside the system)',
-  other: 'Other',
+  bank_transfer: 'subscription.manualMethod.bank_transfer',
+  cash: 'subscription.manualMethod.cash',
+  card: 'subscription.manualMethod.card',
+  other: 'subscription.manualMethod.other',
 };
 
 function parseExpiry(expiry: string): { expMonth: number; expYear: number } {

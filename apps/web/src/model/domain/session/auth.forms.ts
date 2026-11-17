@@ -9,31 +9,31 @@ import { z } from 'zod';
 
 export const passwordRules = z
   .string()
-  .min(8, 'At least 8 characters')
-  .regex(/[a-zA-Z]/, 'Include at least one letter')
-  .regex(/\d/, 'Include at least one number');
+  .min(8, 'validation.passwordLength')
+  .regex(/[a-zA-Z]/, 'validation.passwordLetter')
+  .regex(/\d/, 'validation.passwordNumber');
 
-export const PASSWORD_HINT = 'At least 8 characters, with letters and numbers';
+export const PASSWORD_HINT = 'validation.passwordHint';
 
 export const loginFormSchema = z.object({
-  email: z.email('Enter a valid email'),
-  password: z.string().min(1, 'Enter your password'),
+  email: z.email('validation.email'),
+  password: z.string().min(1, 'validation.enterPassword'),
 });
 
 const profileShape = {
-  firstName: z.string().trim().min(1, 'Required'),
-  lastName: z.string().trim().min(1, 'Required'),
-  specialty: z.string().trim().min(1, 'Required'),
-  licenseNumber: z.string().trim().min(1, 'Required'),
-  email: z.email('Enter a valid email'),
-  phone: z.string().trim().min(6, 'Enter a valid phone'),
-  offices: z.string().refine((value) => AuthForms.offices(value).length <= 5, 'Up to 5 offices'),
+  firstName: z.string().trim().min(1, 'validation.required'),
+  lastName: z.string().trim().min(1, 'validation.required'),
+  specialty: z.string().trim().min(1, 'validation.required'),
+  licenseNumber: z.string().trim().min(1, 'validation.required'),
+  email: z.email('validation.email'),
+  phone: z.string().trim().min(6, 'validation.phone'),
+  offices: z.string().refine((value) => AuthForms.offices(value).length <= 5, 'validation.offices'),
 };
 
 export const registerFormSchema = z
   .object({ ...profileShape, password: passwordRules, confirmPassword: z.string() })
   .refine((values) => values.password === values.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'validation.passwordsMatch',
     path: ['confirmPassword'],
   });
 
@@ -41,26 +41,26 @@ export const profileFormSchema = z.object(profileShape);
 
 export const changePasswordFormSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Enter your current password'),
+    currentPassword: z.string().min(1, 'validation.currentPassword'),
     newPassword: passwordRules,
     confirmPassword: z.string(),
   })
   .refine((values) => values.newPassword === values.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'validation.passwordsMatch',
     path: ['confirmPassword'],
   });
 
-export const recoveryEmailSchema = z.object({ email: z.email('Enter a valid email') });
+export const recoveryEmailSchema = z.object({ email: z.email('validation.email') });
 export const recoveryCodeSchema = z.object({
   code: z
     .string()
     .trim()
-    .regex(/^\d{6}$/, 'The code has 6 digits'),
+    .regex(/^\d{6}$/, 'validation.code'),
 });
 export const recoveryPasswordSchema = z
   .object({ newPassword: passwordRules, confirmPassword: z.string() })
   .refine((values) => values.newPassword === values.confirmPassword, {
-    message: 'Passwords do not match',
+    message: 'validation.passwordsMatch',
     path: ['confirmPassword'],
   });
 

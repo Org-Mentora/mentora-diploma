@@ -1,4 +1,6 @@
 import type { NotificationDto } from '@mentora/contracts';
+import { translate as t } from '@/shared/i18n';
+import { Formats } from '../format/Formats';
 
 export type DeliveryTone = 'success' | 'warning' | 'danger' | 'secondary';
 
@@ -14,45 +16,26 @@ export interface NotificationItem {
   detail: string | null;
 }
 
-const TOPIC: Record<NotificationDto['topic'], string> = {
-  appointment_scheduled: 'Appointment confirmed',
-  appointment_rescheduled: 'Appointment rescheduled',
-  appointment_cancelled: 'Appointment cancelled',
-  appointment_reminder: 'Reminder',
-  virtual_meeting: 'Video call link',
+const TONE: Record<NotificationDto['status'], DeliveryTone> = {
+  sent: 'success',
+  failed: 'danger',
+  skipped: 'secondary',
 };
-
-const CHANNEL: Record<NotificationDto['channel'], string> = {
-  whatsapp: 'WhatsApp',
-  email: 'Email',
-};
-
-const STATUS: Record<NotificationDto['status'], { label: string; tone: DeliveryTone }> = {
-  sent: { label: 'Sent', tone: 'success' },
-  failed: { label: 'Failed', tone: 'danger' },
-  skipped: { label: 'Not sent', tone: 'secondary' },
-};
-
-const dateTime = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-});
 
 // Adapter
 export class NotificationAdapter {
   static toItem(dto: NotificationDto): NotificationItem {
-    const attempts = dto.attempts > 1 ? ` (${dto.attempts} attempts)` : '';
+    const attempts =
+      dto.attempts > 1 ? ` (${t('notifications.attempts', { count: dto.attempts })})` : '';
     return {
       id: dto.id,
-      when: dateTime.format(new Date(dto.createdAt)),
-      topicLabel: TOPIC[dto.topic],
-      channelLabel: CHANNEL[dto.channel],
+      when: Formats.date(dto.createdAt, 'shortDateTime'),
+      topicLabel: t(`notifications.topic.${dto.topic}`),
+      channelLabel: t(`notifications.channel.${dto.channel}`),
       body: dto.body,
-      recipient: dto.recipient ?? 'No phone or email',
-      statusLabel: STATUS[dto.status].label,
-      statusTone: STATUS[dto.status].tone,
+      recipient: dto.recipient ?? t('notifications.noRecipient'),
+      statusLabel: t(`notifications.status.${dto.status}`),
+      statusTone: TONE[dto.status],
       detail: dto.error ? `${dto.error}${attempts}` : attempts.trim() || null,
     };
   }

@@ -2,25 +2,22 @@ import type { PatientDto, PatientInputDto } from '@mentora/contracts';
 import { z } from 'zod';
 
 export const patientFormSchema = z.object({
-  firstName: z.string().trim().min(1, 'Required'),
-  lastName: z.string().trim().min(1, 'Required'),
+  firstName: z.string().trim().min(1, 'validation.required'),
+  lastName: z.string().trim().min(1, 'validation.required'),
   dni: z
     .string()
     .trim()
-    .refine(
-      (value) => /^\d{7,8}$/.test(value.replace(/[.\s-]/g, '')),
-      'DNI must have 7 or 8 digits',
-    ),
+    .refine((value) => /^\d{7,8}$/.test(value.replace(/[.\s-]/g, '')), 'validation.dni'),
   birthDate: z.string(),
   gender: z.string(),
   phone: z.string(),
-  email: z.union([z.literal(''), z.email('Enter a valid email')]),
+  email: z.union([z.literal(''), z.email('validation.email')]),
   address: z.string(),
   healthInsurance: z.string(),
   memberNumber: z.string(),
   familyContactName: z.string(),
   familyContactPhone: z.string(),
-  debt: z.string().refine((v) => v === '' || Number(v) >= 0, 'Must be zero or more'),
+  debt: z.string().refine((v) => v === '' || Number(v) >= 0, 'validation.nonNegative'),
   allergies: z.string().meta({ description: 'Comma separated' }),
   observations: z.string(),
 });

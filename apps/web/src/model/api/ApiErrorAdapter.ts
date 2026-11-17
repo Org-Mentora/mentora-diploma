@@ -1,6 +1,7 @@
 import type { ErrorResponseDto } from '@mentora/contracts';
 import type { SerializedError } from '@reduxjs/toolkit';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { localizeServerMessage, translate as t } from '@/shared/i18n';
 
 export interface UiError {
   code: string;
@@ -33,20 +34,20 @@ export class ApiErrorAdapter {
         const field = fieldOf(data.error.details);
         return {
           code: data.error.code,
-          message: data.error.message,
+          message: localizeServerMessage(data.error.message),
           ...(field ? { field } : {}),
           ...(typeof status === 'number' ? { status } : {}),
         };
       }
       if (status === 'FETCH_ERROR') {
-        return { code: 'NETWORK_ERROR', message: 'The server could not be reached' };
+        return { code: 'NETWORK_ERROR', message: t('errors.network') };
       }
-      return { code: String(status), message: 'Unexpected response from the server' };
+      return { code: String(status), message: t('errors.unexpected') };
     }
     const serialized = error as SerializedError;
     return {
       code: serialized.code ?? 'UNKNOWN',
-      message: serialized.message ?? 'Unknown error',
+      message: serialized.message ?? t('errors.unknown'),
     };
   }
 }

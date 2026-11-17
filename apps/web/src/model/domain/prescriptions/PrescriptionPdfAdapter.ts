@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf';
+import { translate as t } from '@/shared/i18n';
 import type { PrescriptionDocument } from './Prescription';
 
 const PAGE = { width: 210, height: 297, margin: 18 };
@@ -16,7 +17,7 @@ export class PrescriptionPdfAdapter {
     y += 8;
 
     pdf.setFont('helvetica', 'bold').setFontSize(12);
-    pdf.text(`Patient: ${prescription.patientName}`, PAGE.margin, y);
+    pdf.text(t('prescription.patient', { name: prescription.patientName }), PAGE.margin, y);
     pdf.setFont('helvetica', 'normal').setFontSize(10);
     pdf.text(prescription.date, PAGE.width - PAGE.margin, y, { align: 'right' });
     y += LINE;

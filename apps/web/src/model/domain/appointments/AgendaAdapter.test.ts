@@ -16,6 +16,8 @@ function appointment(start: Date, overrides: Partial<AppointmentDto> = {}): Appo
     status: 'scheduled',
     notes: null,
     cancelledAt: null,
+    fee: null,
+    source: 'agenda',
     ...overrides,
   };
 }

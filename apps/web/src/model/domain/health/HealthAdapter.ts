@@ -1,4 +1,6 @@
 import type { ComponentHealthDto, HealthDto } from '@mentora/contracts';
+import { translate as t } from '@/shared/i18n';
+import { Formats } from '../format/Formats';
 
 export type HealthTone = 'success' | 'warning' | 'danger';
 
@@ -20,10 +22,10 @@ export interface HealthUiModel {
 export class HealthAdapter {
   static toUiModel(dto: HealthDto): HealthUiModel {
     return {
-      label: dto.status === 'ok' ? 'All systems operational' : 'Degraded performance',
+      label: t(dto.status === 'ok' ? 'health.ok' : 'health.degraded'),
       tone: dto.status === 'ok' ? 'success' : 'warning',
       uptime: HealthAdapter.formatUptime(dto.uptimeSeconds),
-      checkedAt: new Date(dto.checkedAt).toLocaleTimeString(),
+      checkedAt: Formats.date(dto.checkedAt, 'time'),
       components: dto.components.map(HealthAdapter.toComponent),
     };
   }
@@ -42,7 +44,8 @@ export class HealthAdapter {
     return {
       name: dto.name,
       isUp: dto.status === 'up',
-      detail: dto.status === 'up' ? `${dto.latencyMs ?? 0} ms` : (dto.error ?? 'unavailable'),
+      detail:
+        dto.status === 'up' ? `${dto.latencyMs ?? 0} ms` : (dto.error ?? t('health.unavailable')),
     };
   }
 }

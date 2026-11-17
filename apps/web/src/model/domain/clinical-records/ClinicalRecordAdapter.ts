@@ -5,6 +5,7 @@ import type {
   DiagnosisHistoryEntryDto,
 } from '@mentora/contracts';
 import { format } from 'date-fns';
+import { translate as t } from '@/shared/i18n';
 
 export interface TimelineItem {
   id: string;
@@ -38,10 +39,7 @@ export interface DiagnosisOption {
   label: string;
 }
 
-const TYPE_LABEL: Record<ConsultationDto['type'], string> = {
-  in_person: 'In person',
-  virtual: 'Virtual',
-};
+const typeLabel = (type: ConsultationDto['type']) => t(`agenda.modality.${type}`);
 
 const dateTime = (iso: string) => format(new Date(iso), 'dd/MM/yyyy HH:mm');
 const date = (iso: string) => format(new Date(iso), 'dd/MM/yyyy');
@@ -53,24 +51,24 @@ export class ClinicalRecordAdapter {
     return record.consultations.map((c) => ({
       id: c.id,
       dateLabel: dateTime(c.date),
-      typeLabel: TYPE_LABEL[c.type],
+      typeLabel: typeLabel(c.type),
       reason: c.reason,
       diagnosisLabel: c.diagnosis ? diagnosisLabel(c.diagnosis) : null,
       medicationsLabel:
         c.medicationCount === 0
-          ? 'No medication'
-          : `${c.medicationCount} medication${c.medicationCount === 1 ? '' : 's'}`,
+          ? t('clinical.noMedication')
+          : t('clinical.medications', { count: c.medicationCount }),
     }));
   }
 
   static toDetail(dto: ConsultationDto): ConsultationDetail {
     return {
-      title: `Consultation of ${dateTime(dto.date)}`,
-      typeLabel: TYPE_LABEL[dto.type],
+      title: t('clinical.consultationOf', { date: dateTime(dto.date) }),
+      typeLabel: typeLabel(dto.type),
       reason: dto.reason,
       observations: dto.observations,
-      evolution: dto.evolution ?? 'No evolution recorded',
-      diagnosisLabel: dto.diagnosis ? diagnosisLabel(dto.diagnosis) : 'No diagnosis assigned',
+      evolution: dto.evolution ?? t('clinical.noEvolution'),
+      diagnosisLabel: dto.diagnosis ? diagnosisLabel(dto.diagnosis) : t('clinical.noDiagnosis'),
       medications: dto.medications.map((m, index) => ({
         key: `${m.name}-${index}`,
         name: m.name,
@@ -84,7 +82,10 @@ export class ClinicalRecordAdapter {
     return entries.map((entry) => ({
       key: `${entry.consultationId}-${entry.diagnosis.code}`,
       label: diagnosisLabel(entry.diagnosis),
-      dateLabel: `Assigned ${date(entry.diagnosis.assignedAt)} · consultation of ${date(entry.consultationDate)}`,
+      dateLabel: t('clinical.assigned', {
+        assigned: date(entry.diagnosis.assignedAt),
+        consultation: date(entry.consultationDate),
+      }),
     }));
   }
 

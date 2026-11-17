@@ -39,7 +39,7 @@ describe('SubscriptionAdapter (CU-18)', () => {
       ['Monthly', false],
       ['Annual', true],
     ]);
-    expect(plans[1]?.priceLabel).toMatch(/250\.000 \/ 12 months$/);
+    expect(plans[1]?.priceLabel).toMatch(/250[.,]000 \/ 12 months$/);
   });
 
   it('asks for action without access and explains cancellations', () => {

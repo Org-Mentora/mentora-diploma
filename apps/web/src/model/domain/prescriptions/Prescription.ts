@@ -1,4 +1,5 @@
 import type { LogoDto, PatientDto, SessionDto } from '@mentora/contracts';
+import { intlLocale, translate as t } from '@/shared/i18n';
 
 export interface Letterhead {
   professionalName: string;
@@ -36,7 +37,7 @@ export class PrescriptionBuilder {
     return {
       professionalName: p.fullName,
       specialty: p.specialty,
-      license: `License ${p.licenseNumber}`,
+      license: t('prescription.license', { number: p.licenseNumber }),
       contact: [p.email, p.phone].filter(Boolean).join(' · '),
       offices: p.offices,
       logoDataUrl: logo?.dataUrl ?? null,
@@ -60,9 +61,9 @@ export class PrescriptionBuilder {
       letterhead,
       patientName: patient.fullName,
       patientDetail: `DNI ${formatDni(patient.dni)}${insurance}`,
-      date: at.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }),
+      date: at.toLocaleDateString(intlLocale(), { day: 'numeric', month: 'long', year: 'numeric' }),
       content: content.trim(),
-      fileName: `prescription-${slug(patient.fullName)}-${isoDay}.pdf`,
+      fileName: `${t('prescription.fileName')}-${slug(patient.fullName)}-${isoDay}.pdf`,
     };
   }
 }

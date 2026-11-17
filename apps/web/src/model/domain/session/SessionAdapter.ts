@@ -1,4 +1,5 @@
 import type { SessionDto } from '@mentora/contracts';
+import { translate as t } from '@/shared/i18n';
 
 export type SubscriptionTone = 'success' | 'warning' | 'danger';
 export type SubscriptionStatus = SessionDto['subscription']['status'];
@@ -12,8 +13,6 @@ export interface SessionUiModel {
   subscriptionLabel: string;
   subscriptionTone: SubscriptionTone;
 }
-
-const plural = (days: number) => `${days} day${days === 1 ? '' : 's'}`;
 
 // Adapter
 export class SessionAdapter {
@@ -36,21 +35,24 @@ export class SessionAdapter {
     switch (subscription.status) {
       case 'trial':
         return {
-          subscriptionLabel: `Free trial · ${plural(days)} left`,
+          subscriptionLabel: t('session.trial', { count: days }),
           subscriptionTone: days <= 3 ? 'warning' : 'success',
         };
       case 'active':
-        return { subscriptionLabel: 'Active plan', subscriptionTone: 'success' };
+        return { subscriptionLabel: t('session.active'), subscriptionTone: 'success' };
       case 'cancelled':
         return subscription.hasAccess
-          ? { subscriptionLabel: `Cancelled · ${plural(days)} left`, subscriptionTone: 'warning' }
-          : { subscriptionLabel: 'Subscription cancelled', subscriptionTone: 'danger' };
+          ? {
+              subscriptionLabel: t('session.cancelledLeft', { count: days }),
+              subscriptionTone: 'warning',
+            }
+          : { subscriptionLabel: t('session.cancelled'), subscriptionTone: 'danger' };
       case 'pending_payment':
-        return { subscriptionLabel: 'Payment pending', subscriptionTone: 'danger' };
+        return { subscriptionLabel: t('session.pending'), subscriptionTone: 'danger' };
       case 'suspended':
-        return { subscriptionLabel: 'Subscription suspended', subscriptionTone: 'danger' };
+        return { subscriptionLabel: t('session.suspended'), subscriptionTone: 'danger' };
       default:
-        return { subscriptionLabel: 'Subscription expired', subscriptionTone: 'danger' };
+        return { subscriptionLabel: t('session.expired'), subscriptionTone: 'danger' };
     }
   }
 }

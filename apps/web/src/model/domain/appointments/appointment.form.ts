@@ -7,15 +7,16 @@ import { format } from 'date-fns';
 import { z } from 'zod';
 
 export const appointmentFormSchema = z.object({
-  patientId: z.string().min(1, 'Select a patient'),
-  date: z.string().min(1, 'Required'),
-  time: z.string().regex(/^\d{2}:\d{2}$/, 'Required'),
+  patientId: z.string().min(1, 'validation.selectPatient'),
+  date: z.string().min(1, 'validation.required'),
+  time: z.string().regex(/^\d{2}:\d{2}$/, 'validation.required'),
   durationMinutes: z
     .string()
-    .refine((v) => Number(v) >= 10 && Number(v) <= 240, 'Between 10 and 240 minutes'),
+    .refine((v) => Number(v) >= 10 && Number(v) <= 240, 'validation.duration'),
   type: z.enum(['first_visit', 'control', 'follow_up', 'medication', 'other']),
   modality: z.enum(['in_person', 'virtual']),
   notes: z.string(),
+  fee: z.string().refine((v) => v.trim() === '' || Number(v) >= 0, 'validation.fee'),
 });
 
 export type AppointmentFormValues = z.infer<typeof appointmentFormSchema>;
@@ -30,6 +31,7 @@ export class AppointmentForm {
       type: 'control',
       modality: 'in_person',
       notes: '',
+      fee: '',
     };
   }
 
@@ -43,6 +45,7 @@ export class AppointmentForm {
       type: dto.type,
       modality: dto.modality,
       notes: dto.notes ?? '',
+      fee: dto.fee === null ? '' : String(dto.fee),
     };
   }
 
@@ -53,10 +56,12 @@ export class AppointmentForm {
       type: values.type,
       modality: values.modality,
       notes: values.notes.trim() || null,
+      fee: values.fee.trim() === '' ? null : Number(values.fee),
     };
   }
 
   static toSchedule(values: AppointmentFormValues): ScheduleAppointmentRequestDto {
-    return { patientId: values.patientId, ...AppointmentForm.toReschedule(values) };
+    const { fee, ...slot } = AppointmentForm.toReschedule(values);
+    return { patientId: values.patientId, ...slot, ...(fee === null ? {} : { fee }) };
   }
 }

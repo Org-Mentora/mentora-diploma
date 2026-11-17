@@ -1,4 +1,6 @@
 import type { PaymentDto, PlanDto, SubscriptionDetailDto } from '@mentora/contracts';
+import { translate as t } from '@/shared/i18n';
+import { Formats } from '../format/Formats';
 
 export type Tone = 'success' | 'warning' | 'danger' | 'secondary';
 
@@ -45,55 +47,39 @@ export interface PaymentItem {
   detail: string;
 }
 
-const STATUS: Record<SubscriptionDetailDto['status'], { label: string; tone: Tone }> = {
-  trial: { label: 'Free trial', tone: 'success' },
-  active: { label: 'Active', tone: 'success' },
-  pending_payment: { label: 'Pending payment', tone: 'danger' },
-  suspended: { label: 'Suspended', tone: 'danger' },
-  cancelled: { label: 'Cancelled', tone: 'warning' },
-  expired: { label: 'Expired', tone: 'danger' },
+const STATUS_TONE: Record<SubscriptionDetailDto['status'], Tone> = {
+  trial: 'success',
+  active: 'success',
+  pending_payment: 'danger',
+  suspended: 'danger',
+  cancelled: 'warning',
+  expired: 'danger',
 };
 
-const KIND: Record<PaymentDto['kind'], string> = {
-  automatic: 'Automatic debit',
-  plan_change: 'Plan change',
-  manual: 'Manual payment',
+const PAYMENT_TONE: Record<PaymentDto['status'], Tone> = {
+  approved: 'success',
+  declined: 'danger',
+  failed: 'warning',
 };
-
-const PAYMENT_STATUS: Record<PaymentDto['status'], { label: string; tone: Tone }> = {
-  approved: { label: 'Approved', tone: 'success' },
-  declined: { label: 'Declined', tone: 'danger' },
-  failed: { label: 'Failed', tone: 'warning' },
-};
-
-const PLAN_NAME: Record<PlanDto['id'], string> = { monthly: 'Monthly', annual: 'Annual' };
-
-const dateFormat = new Intl.DateTimeFormat('en-GB', {
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-});
 
 // Adapter
 export class SubscriptionAdapter {
   static money(amount: number, currency = 'ARS'): string {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-    }).format(amount);
+    return Formats.money(amount, currency);
   }
 
   static date(iso: string): string {
-    return dateFormat.format(new Date(iso));
+    return Formats.date(iso);
   }
 
   static toOverview(dto: SubscriptionDetailDto): SubscriptionOverview {
     return {
-      statusLabel: STATUS[dto.status].label,
-      statusTone: STATUS[dto.status].tone,
+      statusLabel: t(`subscription.status.${dto.status}`),
+      statusTone: STATUS_TONE[dto.status],
       hasAccess: dto.hasAccess,
-      planName: dto.plan ? `${dto.plan.name} plan` : 'No plan chosen yet',
+      planName: dto.plan
+        ? t('subscription.planName', { name: SubscriptionAdapter.planName(dto.plan.id) })
+        : t('subscription.noPlan'),
       periodLabel: SubscriptionAdapter.period(dto),
       autoDebit: dto.autoDebit,
       isCancelled: dto.status === 'cancelled',
@@ -106,11 +92,12 @@ export class SubscriptionAdapter {
   static toPlanOptions(dto: SubscriptionDetailDto): PlanOption[] {
     return dto.availablePlans.map((plan) => ({
       id: plan.id,
-      name: plan.name,
-      description: plan.description,
-      priceLabel: `${SubscriptionAdapter.money(plan.price, plan.currency)} / ${
-        plan.months === 1 ? 'month' : `${plan.months} months`
-      }`,
+      name: SubscriptionAdapter.planName(plan.id),
+      description: t(`subscription.planDescription.${plan.id}`, { defaultValue: plan.description }),
+      priceLabel: `${SubscriptionAdapter.money(plan.price, plan.currency)} / ${t(
+        'subscription.months',
+        { count: plan.months },
+      )}`,
       isCurrent: dto.plan?.id === plan.id,
     }));
   }
@@ -132,27 +119,33 @@ export class SubscriptionAdapter {
       id: dto.id,
       date: SubscriptionAdapter.date(dto.paidAt),
       amount: SubscriptionAdapter.money(dto.amount, dto.currency),
-      planName: PLAN_NAME[dto.planId],
-      kindLabel: KIND[dto.kind],
+      planName: SubscriptionAdapter.planName(dto.planId),
+      kindLabel: t(`subscription.paymentKind.${dto.kind}`),
       methodLabel: dto.methodLabel,
-      statusLabel: PAYMENT_STATUS[dto.status].label,
-      statusTone: PAYMENT_STATUS[dto.status].tone,
+      statusLabel: t(`subscription.paymentStatus.${dto.status}`),
+      statusTone: PAYMENT_TONE[dto.status],
       detail: dto.failureReason ?? dto.reference ?? '',
     };
+  }
+
+  private static planName(id: PlanDto['id']): string {
+    return t(`subscription.plan.${id}`);
   }
 
   private static period(dto: SubscriptionDetailDto): string {
     const date = SubscriptionAdapter.date(dto.currentPeriodEndsAt);
     if (!dto.hasAccess) {
-      return `Access ended on ${date}`;
+      return t('subscription.period.ended', { date });
     }
     switch (dto.status) {
       case 'trial':
-        return `Trial ends on ${date} (${dto.daysLeft} days left)`;
+        return t('subscription.period.trial', { date, count: dto.daysLeft });
       case 'cancelled':
-        return `Access until ${date}; it will not renew`;
+        return t('subscription.period.cancelled', { date });
       default:
-        return dto.autoDebit ? `Renews automatically on ${date}` : `Paid until ${date}`;
+        return dto.autoDebit
+          ? t('subscription.period.renews', { date })
+          : t('subscription.period.paidUntil', { date });
     }
   }
 }

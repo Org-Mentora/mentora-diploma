@@ -3,17 +3,17 @@ import { format } from 'date-fns';
 import { z } from 'zod';
 
 const medicationSchema = z.object({
-  name: z.string().trim().min(1, 'Required'),
-  dose: z.string().trim().min(1, 'Required'),
-  frequency: z.string().trim().min(1, 'Required'),
-  duration: z.string().trim().min(1, 'Required'),
+  name: z.string().trim().min(1, 'validation.required'),
+  dose: z.string().trim().min(1, 'validation.required'),
+  frequency: z.string().trim().min(1, 'validation.required'),
+  duration: z.string().trim().min(1, 'validation.required'),
   indications: z.string(),
 });
 
 export const consultationFormSchema = z.object({
-  date: z.string().min(1, 'Required'),
+  date: z.string().min(1, 'validation.required'),
   type: z.enum(['in_person', 'virtual']),
-  reason: z.string().trim().min(1, 'Required'),
+  reason: z.string().trim().min(1, 'validation.required'),
   observations: z.string(),
   evolution: z.string(),
   diagnosis: z.object({ code: z.string(), name: z.string() }).nullable(),

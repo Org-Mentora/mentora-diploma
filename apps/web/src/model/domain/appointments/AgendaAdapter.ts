@@ -10,6 +10,8 @@ import {
   startOfMonth,
   startOfWeek,
 } from 'date-fns';
+import { dateLocale, translate as t } from '@/shared/i18n';
+import { Formats } from '../format/Formats';
 
 export type AppointmentType = AppointmentDto['type'];
 export type AppointmentModality = AppointmentDto['modality'];
@@ -31,21 +33,24 @@ export interface AgendaItem {
   typeLabel: string;
   modalityLabel: string;
   isCancelled: boolean;
+  isOnline: boolean;
+  feeLabel: string | null;
   notes: string | null;
 }
 
-export const APPOINTMENT_TYPE_LABEL: Record<AppointmentType, string> = {
-  first_visit: 'First visit',
-  control: 'Control',
-  follow_up: 'Follow-up',
-  medication: 'Medication',
-  other: 'Other',
-};
+export const APPOINTMENT_TYPES: AppointmentType[] = [
+  'first_visit',
+  'control',
+  'follow_up',
+  'medication',
+  'other',
+];
 
-export const MODALITY_LABEL: Record<AppointmentModality, string> = {
-  in_person: 'In person',
-  virtual: 'Virtual',
-};
+export const MODALITIES: AppointmentModality[] = ['in_person', 'virtual'];
+
+export const typeLabel = (type: AppointmentType): string => t(`agenda.type.${type}`);
+export const modalityLabel = (modality: AppointmentModality): string =>
+  t(`agenda.modality.${modality}`);
 
 const WEEK = { weekStartsOn: 1 } as const;
 
@@ -58,11 +63,14 @@ export class AgendaAdapter {
   }
 
   static monthTitle(month: Date): string {
-    return format(month, 'MMMM yyyy');
+    return format(month, 'LLLL yyyy', { locale: dateLocale() });
   }
 
   static weekdayLabels(): string[] {
-    return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const monday = startOfWeek(new Date(), WEEK);
+    return Array.from({ length: 7 }, (_, i) =>
+      format(addDays(monday, i), 'EEEEEE', { locale: dateLocale() }),
+    );
   }
 
   static calendar(
@@ -98,14 +106,16 @@ export class AgendaAdapter {
         id: a.id,
         timeRange: `${format(new Date(a.startsAt), 'HH:mm')} – ${format(new Date(a.endsAt), 'HH:mm')}`,
         patientName: a.patientName,
-        typeLabel: APPOINTMENT_TYPE_LABEL[a.type],
-        modalityLabel: MODALITY_LABEL[a.modality],
+        typeLabel: typeLabel(a.type),
+        modalityLabel: modalityLabel(a.modality),
         isCancelled: a.status === 'cancelled',
+        isOnline: a.source === 'online',
+        feeLabel: a.fee === null ? null : Formats.money(a.fee),
         notes: a.notes,
       }));
   }
 
   static dayTitle(day: Date): string {
-    return format(day, 'EEEE d MMMM');
+    return format(day, t('agenda.dayTitleFormat'), { locale: dateLocale() });
   }
 }

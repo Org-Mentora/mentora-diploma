@@ -3,14 +3,14 @@ const MAX_BYTES = 512 * 1024;
 
 export class LogoFile {
   static readonly ACCEPT = ACCEPTED.join(',');
-  static readonly HINT = 'PNG or JPEG, up to 512 KB';
+  static readonly HINT = 'validation.logoHint';
 
   static problemWith(file: { type: string; size: number }): string | null {
     if (!ACCEPTED.includes(file.type)) {
-      return `Unsupported format. Accepted: ${LogoFile.HINT}`;
+      return 'validation.logoFormat';
     }
     if (file.size > MAX_BYTES) {
-      return `The logo is too large. Accepted: ${LogoFile.HINT}`;
+      return 'validation.logoSize';
     }
     return null;
   }

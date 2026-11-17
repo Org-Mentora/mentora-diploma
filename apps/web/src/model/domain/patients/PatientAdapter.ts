@@ -1,4 +1,6 @@
 import type { PatientDto, PatientSummaryDto } from '@mentora/contracts';
+import { translate as t } from '@/shared/i18n';
+import { Formats } from '../format/Formats';
 
 export type PatientStatus = PatientDto['status'];
 export type StatusTone = 'success' | 'secondary' | 'warning';
@@ -27,19 +29,18 @@ export interface PatientProfile {
   observations: string | null;
 }
 
-const STATUS: Record<PatientStatus, { label: string; tone: StatusTone }> = {
-  active: { label: 'Active', tone: 'success' },
-  discharged: { label: 'Discharged', tone: 'secondary' },
-  inactive: { label: 'Inactive', tone: 'warning' },
+const TONE: Record<PatientStatus, StatusTone> = {
+  active: 'success',
+  discharged: 'secondary',
+  inactive: 'warning',
 };
 
 const EMPTY = '—';
-const money = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 
 // Adapter
 export class PatientAdapter {
   static statusLabel(status: PatientStatus): string {
-    return STATUS[status].label;
+    return t(`patients.status.${status}`);
   }
 
   static formatDni(dni: string): string {
@@ -54,51 +55,54 @@ export class PatientAdapter {
       age: dto.age === null ? EMPTY : `${dto.age}`,
       phone: dto.phone ?? EMPTY,
       healthInsurance: dto.healthInsurance ?? EMPTY,
-      statusLabel: STATUS[dto.status].label,
-      statusTone: STATUS[dto.status].tone,
+      statusLabel: PatientAdapter.statusLabel(dto.status),
+      statusTone: TONE[dto.status],
     };
   }
 
   static toProfile(dto: PatientDto): PatientProfile {
-    const age = dto.age === null ? null : `${dto.age} years`;
-    const origin =
-      dto.statusOrigin === 'automatic'
-        ? 'automatically, 3 months without consultations'
-        : 'manually';
+    const age = dto.age === null ? null : t('patients.age', { count: dto.age });
+    const origin = t(`patients.origin.${dto.statusOrigin}`);
     return {
       id: dto.id,
       fullName: dto.fullName,
       headline: [`DNI ${PatientAdapter.formatDni(dto.dni)}`, age].filter(Boolean).join(' · '),
       status: dto.status,
-      statusLabel: STATUS[dto.status].label,
-      statusTone: STATUS[dto.status].tone,
-      statusChange: `Since ${new Date(dto.statusChangedAt).toLocaleDateString()} (${origin})`,
+      statusLabel: PatientAdapter.statusLabel(dto.status),
+      statusTone: TONE[dto.status],
+      statusChange: t('patients.since', {
+        date: Formats.date(dto.statusChangedAt, 'shortDate'),
+        origin,
+      }),
       allergies: dto.allergies,
       observations: dto.observations,
       details: [
-        { label: 'Birth date', value: PatientAdapter.date(dto.birthDate) },
-        { label: 'Gender', value: dto.gender ?? EMPTY },
-        { label: 'Phone', value: dto.phone ?? EMPTY },
-        { label: 'Email', value: dto.email ?? EMPTY },
-        { label: 'Address', value: dto.address ?? EMPTY },
+        { label: t('patients.field.birthDate'), value: PatientAdapter.date(dto.birthDate) },
+        { label: t('patients.field.gender'), value: dto.gender ?? EMPTY },
+        { label: t('patients.field.phone'), value: dto.phone ?? EMPTY },
+        { label: t('patients.field.email'), value: dto.email ?? EMPTY },
+        { label: t('patients.field.address'), value: dto.address ?? EMPTY },
         {
-          label: 'Health insurance',
+          label: t('patients.field.healthInsurance'),
           value: dto.healthInsurance
             ? `${dto.healthInsurance}${dto.memberNumber ? ` · #${dto.memberNumber}` : ''}`
             : EMPTY,
         },
         {
-          label: 'Family contact',
+          label: t('patients.field.familyContact'),
           value: dto.familyContact
             ? `${dto.familyContact.name} (${dto.familyContact.phone})`
             : EMPTY,
         },
-        { label: 'Debt', value: dto.debt > 0 ? money.format(dto.debt) : 'No debt' },
         {
-          label: 'Last consultation',
+          label: t('patients.field.debt'),
+          value: dto.debt > 0 ? Formats.money(dto.debt) : t('patients.noDebt'),
+        },
+        {
+          label: t('patients.field.lastConsultation'),
           value: dto.lastConsultationAt
-            ? new Date(dto.lastConsultationAt).toLocaleDateString()
-            : 'None yet',
+            ? Formats.date(dto.lastConsultationAt, 'shortDate')
+            : t('patients.noneYet'),
         },
       ],
     };
