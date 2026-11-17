@@ -56,3 +56,7 @@ We record every architecturally significant decision as an ADR using the
 | [0041](0041-pluggable-token-signing-algorithm.md) | Pluggable token signing algorithm | Accepted | backend, security |
 | [0042](0042-dependency-inversion-for-platform-services.md) | Dependency inversion for platform services | Accepted | backend, frontend, patterns |
 | [0043](0043-demo-data-seed.md) | Demo data seed through the public API | Accepted | tooling, ops, testing |
+| [0044](0044-user-audit-trail.md) | User audit trail | Accepted | backend, security, data |
+| [0045](0045-patient-online-booking.md) | Patient online booking | Accepted | backend, frontend, domain |
+| [0046](0046-consultation-fees-and-earnings.md) | Consultation fees and earnings report | Accepted | backend, frontend, data |
+| [0047](0047-web-internationalization.md) | Web internationalization with i18next | Accepted | frontend, tooling |

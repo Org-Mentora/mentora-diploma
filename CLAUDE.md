@@ -76,6 +76,9 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | API/Web | [0032](docs/adr/0032-logo-storage-and-client-pdf.md) | Logo as PNG/JPEG in `professional_logos`; prescriptions printed or rendered with jsPDF in the browser | Accepted |
 | Backend | [0033](docs/adr/0033-cross-module-commands.md) | Cross-module command services called inside the caller's transaction | Accepted |
 | Backend | [0040](docs/adr/0040-concurrency-and-audit-hardening.md) | Agenda lock per professional, rate limits in Mongo (`MongoRateLimitStore`), append-only clinical record access log, email fallback in `NotificationCenter.send` | Accepted |
+| Backend | [0044](docs/adr/0044-user-audit-trail.md) | Core `AuditTrail` port recorded inside each use case's transaction; `audit` module + `AppModule.requestHandlers` origin context; `/settings/activity` | Accepted |
+| Backend | [0045](docs/adr/0045-patient-online-booking.md) | `booking` module: public `/book/:slug` requests for free slots; professional accepts (creates patient + online appointment) or rejects | Accepted |
+| API/Web | [0046](docs/adr/0046-consultation-fees-and-earnings.md) | Fee copied onto each appointment from `ConsultationFees`; monthly earned/projected report in `APP_TIMEZONE`; HTML/CSS chart | Accepted |
 | Patterns | [0006](docs/adr/0006-singleton-pattern.md) | Singleton: AppConfig, Logger, MongoConnection, OpenApiRegistry, AppStore | Accepted |
 | Patterns | [0042](docs/adr/0042-dependency-inversion-for-platform-services.md) | DIP for platform services: API `IdGenerator` + `DateFormatter`; web `UserFeedback` + `BrowserActions` via `PlatformContext` | Accepted |
 | Patterns | [0007](docs/adr/0007-adapter-pattern.md) | Adapter at every technology boundary (Mongoose, pino, Express, zod-to-openapi, DTO→UI) | Accepted |
@@ -84,6 +87,7 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | API/Web | [0010](docs/adr/0010-frontend-codegen.md) | `pnpm codegen` → `@mentora/contracts` DTOs + RTK Query hooks; committed and CI-checked | Accepted |
 | Frontend | [0011](docs/adr/0011-frontend-mvvm.md) | MVVM: View → `useXxxViewModel` → model (generated API + adapters) | Accepted |
 | Frontend | [0021](docs/adr/0021-forms-in-viewmodels.md) | Forms: react-hook-form + zod schemas in `model/domain`, `useForm` owned by the ViewModel | Accepted |
+| Frontend | [0047](docs/adr/0047-web-internationalization.md) | i18next behind `@/shared/i18n`; es (default) / en, language in `/settings/preferences`; zod messages are keys | Accepted |
 | Frontend | [0012](docs/adr/0012-tailwind-shadcn.md) | Tailwind v4 CSS-first + shadcn/ui in `src/shared/ui` | Accepted |
 | Ops | [0014](docs/adr/0014-containerization.md) | Multi-stage Dockerfiles (dev/build/runtime), Compose + dev watch overlay (~~root nginx :80~~ → 0038) | Amended |
 | Ops | [0036](docs/adr/0036-ci-cd-quality-gates.md) | CI gates (lint, types, tests, build, codegen + class diagram, audit, e2e smoke + restore drill), CodeQL, GHCR release with SBOM; actions pinned by SHA | Accepted |

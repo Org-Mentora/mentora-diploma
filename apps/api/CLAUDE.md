@@ -2,7 +2,8 @@
 
 ADRs: 0004 (MVP), 0005 (OOP), 0006 (Singleton), 0007 (Adapter), 0008 (Mongo), 0009 (OpenAPI),
 0024 (module dependencies), 0025 (transactions), 0026 (jobs), 0027 (email), 0029 (subscriptions), 0030 (WhatsApp),
-0031 (video calls), 0033 (cross-module commands), 0040 (agenda lock, rate-limit store, access log), 0041 (JWT signing Strategy), 0042 (IdGenerator, DateFormatter).
+0031 (video calls), 0033 (cross-module commands), 0040 (agenda lock, rate-limit store, access log), 0041 (JWT signing Strategy), 0042 (IdGenerator, DateFormatter),
+0044 (audit trail), 0045 (online booking), 0046 (fees and earnings).
 Reference slice to copy: `src/modules/health`. Recipe: `.claude/skills/new-backend-module`.
 
 ## Layout
@@ -50,6 +51,8 @@ test/                unit/ integration/ support/ (fakes: SpyView, FixedClock, ..
   notifications go after `run`. Every repository query calls `.session(this.session)`.
 - **External calls (ADR-0029..0031):** gateways, email and WhatsApp never run inside `run`; decide in one
   transaction, call outside, store the result in another. Retried transactions must not repeat side effects.
+- **Audit (ADR-0044):** write use cases call `audit.record({ professionalId, action: '<category>.<verb>', … })`
+  inside their `transactions.run`. `AuditTrail` is a required module dependency (from `auditing.trail`).
 - **Jobs (ADR-0026):** `scheduledJobs()` in the module root; idempotent, one transaction per item.
 - **Readiness (ADR-0037, ADR-0040):** public auth routes add `limiter.limit(RULE)` (429, counted in `MongoRateLimitStore`);
   one-off data fixes are `migrations()` of the module root, named `'<yyyy-mm>-<name>'`, run once per

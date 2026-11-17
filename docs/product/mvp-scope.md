@@ -28,6 +28,15 @@ configuration (see [External services](#external-services)).
 | CU-17 | Change password | `PUT /auth/password` | `/settings/password` |
 | CU-18 | Subscription and payments | `/subscription/*`, job `subscriptions.process-renewals` | `/settings/plan` |
 
+## Additional requirements
+
+| Requirement | Backend | Frontend | ADR |
+| --- | --- | --- | --- |
+| User audit trail | `GET /audit/events`, `AuditTrail` port in every write use case | `/settings/activity` | [0044](../adr/0044-user-audit-trail.md) |
+| Patients create appointments (online booking) | `/booking/settings`, `/booking/requests[/{id}/accept\|reject]`, public `/booking/public/{slug}[/slots\|/requests]`, job `booking.expire-requests` | `/book/:slug` (public), `/settings/booking`, request panel in `/agenda` | [0045](../adr/0045-patient-online-booking.md) |
+| Earnings chart by consultation fee | `GET/PUT /appointments/fees`, `GET /appointments/earnings` | `/reports`, `/settings/fees`, fee field in the appointment dialog | [0046](../adr/0046-consultation-fees-and-earnings.md) |
+| Language setting (es / en) | — (API messages are localized in the web) | `/settings/preferences`, header switcher | [0047](../adr/0047-web-internationalization.md) |
+
 ## External services
 
 | Need | Local default | Production option | Switch | ADR |

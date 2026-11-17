@@ -1,6 +1,7 @@
 # Web (apps/web): MVVM + RTK Query + Tailwind/shadcn
 
-ADRs: 0010 (codegen), 0011 (MVVM), 0012 (Tailwind/shadcn), 0006 (AppStore singleton), 0042 (platform ports).
+ADRs: 0010 (codegen), 0011 (MVVM), 0012 (Tailwind/shadcn), 0006 (AppStore singleton), 0042 (platform ports),
+0047 (i18n).
 Reference slice to copy: `src/features/health`. Recipe: `.claude/skills/new-frontend-feature`.
 
 ## Layout
@@ -14,6 +15,7 @@ src/features/<f>/viewmodel/ use<Name>ViewModel.ts → { state, commands }
 src/features/<f>/view/      <Name>Page.tsx + feature components (JSX only)
 src/features/<f>/index.ts   public API (pages)
 src/shared/ui | lib         shadcn components, cn()
+src/shared/i18n/            i18next adapter, locales/en.ts + es.ts (es typed as `typeof en`)
 ```
 
 ## Layer rules (lint-enforced)
@@ -38,6 +40,14 @@ src/shared/ui | lib         shadcn components, cn()
 - Toasts, printing and the clipboard (ADR-0042): ViewModels call `useUserFeedback()` / `useBrowserActions()`
   from `@/model/platform/Platform`, never `sonner`, `window` or `navigator`. `AppProviders` provides the
   browser implementation; tests wrap the hook in `<PlatformContext value={fake}>`.
+
+## Texts (ADR-0047)
+
+- Never hard-code user-facing text. Views and ViewModels use `useTranslation()` from `@/shared/i18n`;
+  Model adapters use `translate` and `Formats` (dates, money in the selected language).
+- Add every key to `locales/en.ts` **and** `locales/es.ts` (the typecheck fails otherwise). Plurals use
+  `_one` / `_other`. zod messages are keys (`'validation.required'`); `FormField` translates them.
+- New fixed API error messages: add the Spanish text to `shared/i18n/serverMessages.ts`.
 
 ## Workflow
 
