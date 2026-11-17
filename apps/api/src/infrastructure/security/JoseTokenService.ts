@@ -1,19 +1,16 @@
 import { jwtVerify, SignJWT } from 'jose';
 import { type SessionClaims, TokenService } from '#core/security/TokenService';
+import type { TokenSigningAlgorithm } from './TokenSigningAlgorithm';
 
 const ISSUER = 'mentora-api';
-const ALGORITHM = 'HS256';
 
 // Adapter
 export class JoseTokenService extends TokenService {
-  readonly #key: Uint8Array;
-
   constructor(
-    secret: string,
-    readonly ttlSeconds: number,
+    private readonly algorithm: TokenSigningAlgorithm,
+    private readonly ttlSeconds: number,
   ) {
     super();
-    this.#key = new TextEncoder().encode(secret);
   }
 
   issue(claims: SessionClaims): Promise<string> {
@@ -21,19 +18,19 @@ export class JoseTokenService extends TokenService {
       aex: claims.accessEndsAt?.getTime() ?? null,
       cv: claims.credentialsVersion,
     })
-      .setProtectedHeader({ alg: ALGORITHM })
+      .setProtectedHeader({ alg: this.algorithm.name })
       .setSubject(claims.professionalId)
       .setIssuer(ISSUER)
       .setIssuedAt()
       .setExpirationTime(`${this.ttlSeconds}s`)
-      .sign(this.#key);
+      .sign(this.algorithm.signingKey);
   }
 
   async verify(token: string): Promise<SessionClaims | null> {
     try {
-      const { payload } = await jwtVerify(token, this.#key, {
+      const { payload } = await jwtVerify(token, this.algorithm.verificationKey, {
         issuer: ISSUER,
-        algorithms: [ALGORITHM],
+        algorithms: [this.algorithm.name],
       });
       if (!payload.sub) {
         return null;

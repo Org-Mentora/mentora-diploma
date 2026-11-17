@@ -1,6 +1,9 @@
+import { generateKeyPairSync, type KeyObject } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+import { HmacSha256SigningAlgorithm } from '#infrastructure/security/HmacSha256SigningAlgorithm';
 import { JoseTokenService } from '#infrastructure/security/JoseTokenService';
 import { ScryptPasswordHasher } from '#infrastructure/security/ScryptPasswordHasher';
+import { TokenSigningAlgorithm } from '#infrastructure/security/TokenSigningAlgorithm';
 import { PasswordPolicy } from '../../src/modules/auth/model/PasswordPolicy';
 import { PasswordRecovery } from '../../src/modules/auth/model/PasswordRecovery';
 import { Professional } from '../../src/modules/auth/model/Professional';
@@ -111,6 +114,21 @@ describe('PasswordPolicy', () => {
   });
 });
 
+class Ed25519SigningAlgorithm extends TokenSigningAlgorithm {
+  readonly name = 'EdDSA';
+  readonly signingKey: KeyObject;
+  readonly verificationKey: KeyObject;
+
+  constructor() {
+    super();
+    const { privateKey, publicKey } = generateKeyPairSync('ed25519');
+    this.signingKey = privateKey;
+    this.verificationKey = publicKey;
+  }
+}
+
+const hs256 = (secret: string) => new JoseTokenService(new HmacSha256SigningAlgorithm(secret), 60);
+
 describe('Security adapters', () => {
   it('ScryptPasswordHasher verifies the original password only', async () => {
     const hasher = new ScryptPasswordHasher();
@@ -123,12 +141,24 @@ describe('Security adapters', () => {
   });
 
   it('JoseTokenService round-trips claims and rejects tampered tokens', async () => {
-    const tokens = new JoseTokenService('x'.repeat(40), 60);
+    const tokens = hs256('x'.repeat(40));
     const claims = { professionalId: 'p-1', accessEndsAt: days(14), credentialsVersion: 7 };
     const token = await tokens.issue(claims);
 
     expect(await tokens.verify(token)).toEqual(claims);
     expect(await tokens.verify(`${token}x`)).toBeNull();
-    expect(await new JoseTokenService('y'.repeat(40), 60).verify(token)).toBeNull();
+    expect(await hs256('y'.repeat(40)).verify(token)).toBeNull();
+  });
+
+  it('JoseTokenService signs with whichever algorithm it is given and accepts only that one', async () => {
+    const eddsa = new JoseTokenService(new Ed25519SigningAlgorithm(), 60);
+    const claims = { professionalId: 'p-1', accessEndsAt: null, credentialsVersion: 1 };
+    const token = await eddsa.issue(claims);
+
+    expect(JSON.parse(Buffer.from(token.split('.')[0] ?? '', 'base64url').toString()).alg).toBe(
+      'EdDSA',
+    );
+    expect(await eddsa.verify(token)).toEqual(claims);
+    expect(await eddsa.verify(await hs256('x'.repeat(40)).issue(claims))).toBeNull();
   });
 });

@@ -181,7 +181,7 @@ classDiagram
 
 ## API infrastructure
 
-26 classes.
+28 classes.
 
 ```mermaid
 classDiagram
@@ -223,6 +223,12 @@ classDiagram
     -options: ExpressServerOptions
     +listen(port) Promise~Server~
   }
+  class HmacSha256SigningAlgorithm {
+    <<Strategy>>
+    +name
+    +signingKey: KeyObject
+    +verificationKey: KeyObject
+  }
   class HttpErrorHandler {
     -logger: AppLogger
     +notFound: RequestHandler
@@ -237,7 +243,8 @@ classDiagram
   }
   class JoseTokenService {
     <<Adapter>>
-    +ttlSeconds: number
+    -algorithm: TokenSigningAlgorithm
+    -ttlSeconds: number
     +issue(claims) Promise~string~
     +verify(token) Promise~SessionClaims | null~
   }
@@ -338,6 +345,12 @@ classDiagram
     -from: string
     +send(message) Promise~void~
   }
+  class TokenSigningAlgorithm {
+    <<abstract · Strategy>>
+    +name: string
+    +signingKey: KeyObject
+    +verificationKey: KeyObject
+  }
   class TransactionContext {
     +session: ClientSession | null
     +isActive: boolean
@@ -369,6 +382,7 @@ classDiagram
   HttpView <|-- ErrorHttpView
   IntervalJobScheduler --> JobLock
   JobLock <|-- MongoJobLock
+  JoseTokenService --> TokenSigningAlgorithm
   MailTransport <|-- SmtpMailTransport
   MigrationLog --> MongoConnection
   MongoJobLock --> MongoConnection
@@ -381,6 +395,7 @@ classDiagram
   RateLimiter --> RateLimitStore
   Repository <|-- MongooseRepository
   TokenService <|-- JoseTokenService
+  TokenSigningAlgorithm <|-- HmacSha256SigningAlgorithm
   TransactionManager <|-- MongoTransactionManager
 ```
 
