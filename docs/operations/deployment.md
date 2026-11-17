@@ -83,8 +83,15 @@ mentora.example.com {
 }
 ```
 
-Set `APP_URL=https://mentora.example.com`. The API trusts one proxy hop (`TRUST_PROXY=1`, the web
-nginx), which forwards the client address it receives in `X-Forwarded-For`.
+Set `APP_URL=https://mentora.example.com`. Requests go through two proxies: Caddy and the web
+nginx. The API trusts both hops (`TRUST_PROXY=2`, the default of `docker-compose.prod.yml`), so
+`req.ip` is the client address that Caddy wrote in `X-Forwarded-For`. Rate limits are counted
+per client IP, so this value must match the number of proxies.
+
+- The web port binds to `127.0.0.1` (`PUBLIC_BIND`), so only the local Caddy can reach it and
+  nobody can forge `X-Forwarded-For` by calling nginx directly.
+- Without a TLS proxy (for example a private network test), set `PUBLIC_BIND=0.0.0.0` and
+  `TRUST_PROXY=1`.
 
 ## Upgrade
 

@@ -25,7 +25,7 @@ message instead of failing later.
 | `TRIAL_DAYS` | `14` | same | Free trial for new professionals (CU-03) |
 | `SCHEDULER_ENABLED` | `true` | `true` | Runs reminders, inactivation and renewals (ADR-0026) |
 | `RATE_LIMIT_ENABLED` | `true` | `true` | Limits on login, register and recovery (ADR-0037) |
-| `TRUST_PROXY` | `0` | `1` | Number of proxies in front of the API, used to read the client IP |
+| `TRUST_PROXY` | `0` | `2` | Number of proxies in front of the API (TLS proxy + web nginx), used to read the client IP for rate limits |
 | `SHUTDOWN_TIMEOUT_MS` | `10000` | same | Time to finish requests and jobs on `SIGTERM`. Keep it below the compose `stop_grace_period` (20 s) |
 | `SMTP_URL` | `smtp://localhost:1025` | **required** | SMTP relay. Locally Mailpit (ADR-0027) |
 | `MAIL_FROM` | `Mentora <no-reply@mentora.local>` | **required** | Sender of every email |
@@ -46,6 +46,7 @@ message instead of failing later.
 | --- | --- | --- |
 | `MENTORA_VERSION` | `latest` | Image tag to run (`1.4.0`, `sha-1a2b3c4`). Pin a version in production |
 | `PUBLIC_PORT` | `8080` | Host port of the web container; the TLS proxy forwards to it |
+| `PUBLIC_BIND` | `127.0.0.1` | Host address the web port binds to; keep it local so only the TLS proxy reaches it |
 | `MONGO_ROOT_USER` | `root` | MongoDB administrator (used only for maintenance) |
 | `MONGO_ROOT_PASSWORD` | **required** | Administrator password |
 | `MONGO_APP_PASSWORD` | **required** | Password of `mentora` (`readWrite` on `mentora`), used by the API |
