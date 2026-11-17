@@ -15,7 +15,7 @@ export type ReduxStore = ReturnType<typeof createStore>;
 export type RootState = ReturnType<ReduxStore['getState']>;
 export type AppDispatch = ReduxStore['dispatch'];
 
-/** Singleton (ADR-0006): the single Redux store of the SPA. Tests use `AppStore.create()`. */
+// Singleton
 export class AppStore {
   static #instance: ReduxStore | undefined;
 
@@ -26,7 +26,6 @@ export class AppStore {
     return AppStore.#instance;
   }
 
-  /** Fresh, isolated store (tests, storybook). */
   static create(): ReduxStore {
     return createStore();
   }
