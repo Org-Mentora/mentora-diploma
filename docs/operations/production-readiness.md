@@ -52,6 +52,8 @@ Each gap says what to do next. Review this page before every major release.
 | Database failover | ❌ | Single node. Move to a 3-member replica set or MongoDB Atlas |
 | Host failover | ❌ | Single host. RTO 1 h by restore ([backup-and-restore.md](backup-and-restore.md)) |
 | Double booking of the same slot under concurrency | ✅ | Agenda lock per professional inside the booking transaction (ADR-0040) |
+| Data migrations run once even when several API instances start together | ✅ | `MongoJobLock` around `runMigrations()` in `main.ts` |
+| Clinical record size | ⚠️ | Consultations are embedded (ADR-0020); about 500 maximum-size consultations reach the 16 MB document limit. Move consultations to their own collection before a patient gets close |
 | Load test | ❌ | Run k6 against staging before launch to size the host |
 
 ## Observability
