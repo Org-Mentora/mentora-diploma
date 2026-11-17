@@ -39,6 +39,16 @@ describe('Patients API (CU-04..CU-07)', () => {
     expect(missing.status).toBe(400);
   });
 
+  it('CU-04 answers 409, not 500, when the same DNI is registered concurrently', async () => {
+    const responses = await Promise.all(
+      Array.from({ length: 4 }, (_, i) =>
+        create({ firstName: 'Race', lastName: `N${i}`, dni: '37888999' }),
+      ),
+    );
+
+    expect(responses.map((r) => r.status).sort()).toEqual([201, 409, 409, 409]);
+  });
+
   it('CU-05 searches by name, surname or DNI ignoring accents; empty lists all', async () => {
     await create({ firstName: 'Martín', lastName: 'Gómez', dni: '40111222' }).expect(201);
 
