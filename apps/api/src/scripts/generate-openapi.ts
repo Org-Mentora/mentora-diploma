@@ -1,7 +1,3 @@
-/**
- * Writes the OpenAPI document to `packages/contracts/openapi.json` without starting the
- * server or connecting to MongoDB. Run through `pnpm codegen` (ADR-0010).
- */
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { Application } from '../app/Application';

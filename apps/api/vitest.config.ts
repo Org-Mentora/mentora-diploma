@@ -5,6 +5,11 @@ export default defineConfig({
     environment: 'node',
     include: ['test/**/*.test.ts', 'src/**/*.test.ts'],
     hookTimeout: 120_000,
-    env: { NODE_ENV: 'test', LOG_LEVEL: 'silent' },
+    env: {
+      NODE_ENV: 'test',
+      LOG_LEVEL: 'silent',
+      SCHEDULER_ENABLED: 'false',
+      RATE_LIMIT_ENABLED: 'false',
+    },
   },
 });
