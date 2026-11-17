@@ -14,6 +14,7 @@ function slot(startsAt: string, durationMinutes = 45): AppointmentSlot {
     type: 'control',
     modality: 'in_person',
     notes: null,
+    fee: null,
   };
 }
 

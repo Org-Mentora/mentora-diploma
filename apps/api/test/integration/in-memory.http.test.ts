@@ -28,6 +28,7 @@ import { CapturingMailTransport, RecordingWhatsApp } from '../support/fakes';
 import {
   InMemoryAppointmentRepository,
   InMemoryClinicalRecordRepository,
+  InMemoryConsultationFeesRepository,
   InMemoryDiagnosisCatalogRepository,
   InMemoryLogoRepository,
   InMemoryNotificationRepository,
@@ -40,6 +41,7 @@ import {
   InMemorySubscriptionRepository,
   InMemoryTransactionManager,
   InMemoryVirtualMeetingRepository,
+  RecordingAuditTrail,
   SpyAgendaLock,
   SpyNotifier,
   SpySeeder,
@@ -71,6 +73,7 @@ function buildApplication(fakes: Fakes): Application {
   const dates = new IntlDateFormatter('America/Argentina/Buenos_Aires');
   const mail = new CapturingMailTransport();
   const { transactions } = fakes;
+  const audit = new RecordingAuditTrail();
 
   const subscriptions = new SubscriptionsModule({
     guard,
@@ -87,6 +90,7 @@ function buildApplication(fakes: Fakes): Application {
     planUrl: 'http://localhost/settings/plan',
     subscriptions: new InMemorySubscriptionRepository(),
     payments: new InMemoryPaymentRepository(),
+    audit,
   });
   const patients = new PatientsModule({
     guard,
@@ -96,6 +100,7 @@ function buildApplication(fakes: Fakes): Application {
     context,
     logger,
     repository: new InMemoryPatientRepository(),
+    audit,
   });
   const diagnoses = new DiagnosisCatalogModule({
     guard,
@@ -128,6 +133,9 @@ function buildApplication(fakes: Fakes): Application {
     repository: new InMemoryAppointmentRepository(),
     notifier: fakes.notifier,
     lock: fakes.lock,
+    audit,
+    timezone: 'UTC',
+    fees: new InMemoryConsultationFeesRepository(),
   });
 
   return new Application([
@@ -148,6 +156,7 @@ function buildApplication(fakes: Fakes): Application {
       limiter: new RateLimiter(false, new InMemoryRateLimitStore()),
       professionals: new InMemoryProfessionalRepository(),
       recoveries: new InMemoryPasswordRecoveryRepository(),
+      audit,
       logos: new InMemoryLogoRepository(),
     }),
     subscriptions,
@@ -164,6 +173,7 @@ function buildApplication(fakes: Fakes): Application {
       context,
       repository: new InMemoryClinicalRecordRepository(),
       accessLog: new InMemoryRecordAccessLog(),
+      audit,
     }),
     appointments,
     notifications,
@@ -178,6 +188,7 @@ function buildApplication(fakes: Fakes): Application {
       appointments: appointments.directory,
       notifications: notifications.center,
       repository: new InMemoryVirtualMeetingRepository(),
+      audit,
     }),
   ]);
 }

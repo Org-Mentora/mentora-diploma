@@ -1,3 +1,4 @@
+import { type AuditRecord, AuditTrail } from '#core/model/AuditTrail';
 import type { Entity } from '#core/model/Entity';
 import { TransactionManager } from '#core/model/TransactionManager';
 import { RateLimitStore, type RateLimitWindow } from '#infrastructure/http/RateLimitStore';
@@ -8,6 +9,9 @@ import {
   AppointmentNotifier,
 } from '../../src/modules/appointments/model/AppointmentNotifier';
 import { AppointmentRepository } from '../../src/modules/appointments/model/AppointmentRepository';
+import type { ConsultationFees } from '../../src/modules/appointments/model/ConsultationFees';
+import { ConsultationFeesRepository } from '../../src/modules/appointments/model/ConsultationFeesRepository';
+import type { EarningsRow } from '../../src/modules/appointments/model/EarningsReport';
 import { LogoRepository } from '../../src/modules/auth/model/LogoRepository';
 import type { PasswordRecovery } from '../../src/modules/auth/model/PasswordRecovery';
 import { PasswordRecoveryRepository } from '../../src/modules/auth/model/PasswordRecoveryRepository';
@@ -285,8 +289,50 @@ export class InMemoryAppointmentRepository extends AppointmentRepository {
       .slice(0, limit);
   }
 
+  async earnings(professionalId: string, from: Date, to: Date, now: Date): Promise<EarningsRow[]> {
+    const rows = new Map<string, EarningsRow>();
+    for (const a of this.owned(professionalId)) {
+      if (!a.isScheduled || a.startsAt < from || a.startsAt >= to) {
+        continue;
+      }
+      const month = a.startsAt.toISOString().slice(0, 7);
+      const held = a.startsAt < now;
+      const key = `${month}|${a.type}|${held}`;
+      const row = rows.get(key) ?? { month, type: a.type, held, total: 0, count: 0, unpriced: 0 };
+      row.total += a.fee ?? 0;
+      row.count += 1;
+      row.unpriced += a.fee === null ? 1 : 0;
+      rows.set(key, row);
+    }
+    return [...rows.values()];
+  }
+
   private owned(professionalId: string): Appointment[] {
     return this.#store.all().filter((appointment) => appointment.professionalId === professionalId);
+  }
+}
+
+export class InMemoryConsultationFeesRepository extends ConsultationFeesRepository {
+  readonly #store = new EntityStore<ConsultationFees>();
+
+  async findById(id: string): Promise<ConsultationFees | null> {
+    return this.#store.get(id);
+  }
+
+  async save(fees: ConsultationFees): Promise<void> {
+    this.#store.put(fees);
+  }
+}
+
+export class RecordingAuditTrail extends AuditTrail {
+  readonly entries: AuditRecord[] = [];
+
+  async record(entry: AuditRecord): Promise<void> {
+    this.entries.push(entry);
+  }
+
+  actions(): string[] {
+    return this.entries.map((entry) => entry.action);
   }
 }
 

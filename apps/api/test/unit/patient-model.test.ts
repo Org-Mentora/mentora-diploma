@@ -4,7 +4,11 @@ import { Patient, type PatientDetails } from '../../src/modules/patients/model/P
 import { PatientSearch } from '../../src/modules/patients/model/PatientSearch';
 import { PatientService } from '../../src/modules/patients/model/PatientService';
 import { FixedClock, SequentialIds } from '../support/fakes';
-import { InMemoryPatientRepository, InMemoryTransactionManager } from '../support/inMemory';
+import {
+  InMemoryPatientRepository,
+  InMemoryTransactionManager,
+  RecordingAuditTrail,
+} from '../support/inMemory';
 
 const now = new Date('2030-06-15T10:00:00.000Z');
 const later = new Date('2030-06-20T10:00:00.000Z');
@@ -92,6 +96,7 @@ describe('PatientService identity (DIP)', () => {
       new InMemoryTransactionManager(),
       new FixedClock(now),
       new SequentialIds('patient'),
+      new RecordingAuditTrail(),
     );
 
     const first = await service.register('prof-1', details());

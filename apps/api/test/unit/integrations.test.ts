@@ -21,6 +21,7 @@ import {
 import { VirtualConsultationService } from '../../src/modules/virtual-consultations/model/VirtualConsultationService';
 import type { VirtualMeeting } from '../../src/modules/virtual-consultations/model/VirtualMeeting';
 import { CapturingMailTransport, FixedClock, RecordingWhatsApp } from '../support/fakes';
+import { RecordingAuditTrail } from '../support/inMemory';
 
 const now = new Date('2030-01-01T12:00:00.000Z');
 const clock = new FixedClock(now);
@@ -247,6 +248,7 @@ describe('VirtualConsultationService (CU-15 step 2 alternative)', () => {
       noTransaction,
       clock,
       new UuidIdGenerator(),
+      new RecordingAuditTrail(),
     );
 
     await expect(service.start('p', { patientId: 'x', appointmentId: null })).rejects.toMatchObject(
