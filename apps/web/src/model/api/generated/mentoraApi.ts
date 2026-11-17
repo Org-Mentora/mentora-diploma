@@ -2,10 +2,13 @@ import { baseApi as api } from "../baseApi";
 export const addTagTypes = [
   "Health",
   "Auth",
+  "Subscription",
   "Patients",
   "Diagnoses",
   "ClinicalRecords",
   "Appointments",
+  "Notifications",
+  "VirtualConsultations",
 ] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
@@ -15,6 +18,14 @@ const injectedRtkApi = api
     endpoints: (build) => ({
       getHealth: build.query<GetHealthApiResponse, GetHealthApiArg>({
         query: () => ({ url: `/health` }),
+        providesTags: ["Health"],
+      }),
+      getLiveness: build.query<GetLivenessApiResponse, GetLivenessApiArg>({
+        query: () => ({ url: `/health/live` }),
+        providesTags: ["Health"],
+      }),
+      getReadiness: build.query<GetReadinessApiResponse, GetReadinessApiArg>({
+        query: () => ({ url: `/health/ready` }),
         providesTags: ["Health"],
       }),
       registerProfessional: build.mutation<
@@ -46,6 +57,159 @@ const injectedRtkApi = api
       >({
         query: () => ({ url: `/auth/me` }),
         providesTags: ["Auth"],
+      }),
+      requestPasswordRecovery: build.mutation<
+        RequestPasswordRecoveryApiResponse,
+        RequestPasswordRecoveryApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/auth/password-recovery`,
+          method: "POST",
+          body: queryArg.passwordRecoveryRequestDto,
+        }),
+        invalidatesTags: ["Auth"],
+      }),
+      verifyRecoveryCode: build.mutation<
+        VerifyRecoveryCodeApiResponse,
+        VerifyRecoveryCodeApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/auth/password-recovery/verify`,
+          method: "POST",
+          body: queryArg.verifyRecoveryCodeRequestDto,
+        }),
+        invalidatesTags: ["Auth"],
+      }),
+      resetPassword: build.mutation<
+        ResetPasswordApiResponse,
+        ResetPasswordApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/auth/password-recovery/reset`,
+          method: "POST",
+          body: queryArg.resetPasswordRequestDto,
+        }),
+        invalidatesTags: ["Auth"],
+      }),
+      changePassword: build.mutation<
+        ChangePasswordApiResponse,
+        ChangePasswordApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/auth/password`,
+          method: "PUT",
+          body: queryArg.changePasswordRequestDto,
+        }),
+        invalidatesTags: ["Auth"],
+      }),
+      updateProfile: build.mutation<
+        UpdateProfileApiResponse,
+        UpdateProfileApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/auth/profile`,
+          method: "PUT",
+          body: queryArg.updateProfileRequestDto,
+        }),
+        invalidatesTags: ["Auth"],
+      }),
+      getLogo: build.query<GetLogoApiResponse, GetLogoApiArg>({
+        query: () => ({ url: `/auth/logo` }),
+        providesTags: ["Auth"],
+      }),
+      uploadLogo: build.mutation<UploadLogoApiResponse, UploadLogoApiArg>({
+        query: (queryArg) => ({
+          url: `/auth/logo`,
+          method: "PUT",
+          body: queryArg.uploadLogoRequestDto,
+        }),
+        invalidatesTags: ["Auth"],
+      }),
+      removeLogo: build.mutation<RemoveLogoApiResponse, RemoveLogoApiArg>({
+        query: () => ({ url: `/auth/logo`, method: "DELETE" }),
+        invalidatesTags: ["Auth"],
+      }),
+      getSubscription: build.query<
+        GetSubscriptionApiResponse,
+        GetSubscriptionApiArg
+      >({
+        query: () => ({ url: `/subscription` }),
+        providesTags: ["Subscription"],
+      }),
+      choosePlan: build.mutation<ChoosePlanApiResponse, ChoosePlanApiArg>({
+        query: (queryArg) => ({
+          url: `/subscription/plan`,
+          method: "PUT",
+          body: queryArg.choosePlanRequestDto,
+        }),
+        invalidatesTags: ["Subscription", "Auth"],
+      }),
+      addPaymentMethod: build.mutation<
+        AddPaymentMethodApiResponse,
+        AddPaymentMethodApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/subscription/payment-methods`,
+          method: "POST",
+          body: queryArg.addPaymentMethodRequestDto,
+        }),
+        invalidatesTags: ["Subscription", "Auth"],
+      }),
+      updatePaymentMethod: build.mutation<
+        UpdatePaymentMethodApiResponse,
+        UpdatePaymentMethodApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/subscription/payment-methods/${queryArg.id}`,
+          method: "PATCH",
+          body: queryArg.updatePaymentMethodRequestDto,
+        }),
+        invalidatesTags: ["Subscription", "Auth"],
+      }),
+      removePaymentMethod: build.mutation<
+        RemovePaymentMethodApiResponse,
+        RemovePaymentMethodApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/subscription/payment-methods/${queryArg.id}`,
+          method: "DELETE",
+          params: {
+            confirm: queryArg.confirm,
+          },
+        }),
+        invalidatesTags: ["Subscription", "Auth"],
+      }),
+      setAutoDebit: build.mutation<SetAutoDebitApiResponse, SetAutoDebitApiArg>(
+        {
+          query: (queryArg) => ({
+            url: `/subscription/auto-debit`,
+            method: "PUT",
+            body: queryArg.autoDebitRequestDto,
+          }),
+          invalidatesTags: ["Subscription", "Auth"],
+        },
+      ),
+      cancelSubscription: build.mutation<
+        CancelSubscriptionApiResponse,
+        CancelSubscriptionApiArg
+      >({
+        query: () => ({ url: `/subscription/cancel`, method: "POST" }),
+        invalidatesTags: ["Subscription", "Auth"],
+      }),
+      listPayments: build.query<ListPaymentsApiResponse, ListPaymentsApiArg>({
+        query: () => ({ url: `/subscription/payments` }),
+        providesTags: ["Subscription"],
+      }),
+      registerManualPayment: build.mutation<
+        RegisterManualPaymentApiResponse,
+        RegisterManualPaymentApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/subscription/payments`,
+          method: "POST",
+          body: queryArg.manualPaymentRequestDto,
+        }),
+        invalidatesTags: ["Subscription", "Auth"],
       }),
       createPatient: build.mutation<
         CreatePatientApiResponse,
@@ -199,12 +363,54 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ["Appointments"],
       }),
+      listNotifications: build.query<
+        ListNotificationsApiResponse,
+        ListNotificationsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/notifications`,
+          params: {
+            patientId: queryArg.patientId,
+          },
+        }),
+        providesTags: ["Notifications"],
+      }),
+      startVirtualMeeting: build.mutation<
+        StartVirtualMeetingApiResponse,
+        StartVirtualMeetingApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/virtual-meetings`,
+          method: "POST",
+          body: queryArg.startVirtualMeetingRequestDto,
+        }),
+        invalidatesTags: ["VirtualConsultations"],
+      }),
+      listVirtualMeetings: build.query<
+        ListVirtualMeetingsApiResponse,
+        ListVirtualMeetingsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/virtual-meetings`,
+          params: {
+            patientId: queryArg.patientId,
+            appointmentId: queryArg.appointmentId,
+          },
+        }),
+        providesTags: ["VirtualConsultations"],
+      }),
     }),
     overrideExisting: false,
   });
 export { injectedRtkApi as mentoraApi };
 export type GetHealthApiResponse = /** status 200 Health report */ HealthDto;
 export type GetHealthApiArg = void;
+export type GetLivenessApiResponse =
+  /** status 200 The process is alive */ HealthDto;
+export type GetLivenessApiArg = void;
+export type GetReadinessApiResponse =
+  /** status 200 Ready to serve traffic */ HealthDto;
+export type GetReadinessApiArg = void;
 export type RegisterProfessionalApiResponse =
   /** status 201 Account created and logged in */ SessionDto;
 export type RegisterProfessionalApiArg = {
@@ -219,6 +425,78 @@ export type LogoutApiArg = void;
 export type GetCurrentProfessionalApiResponse =
   /** status 200 Current session */ SessionDto;
 export type GetCurrentProfessionalApiArg = void;
+export type RequestPasswordRecoveryApiResponse =
+  /** status 202 Code sent if the account exists */ RecoveryRequestedDto;
+export type RequestPasswordRecoveryApiArg = {
+  passwordRecoveryRequestDto: PasswordRecoveryRequestDto;
+};
+export type VerifyRecoveryCodeApiResponse = unknown;
+export type VerifyRecoveryCodeApiArg = {
+  verifyRecoveryCodeRequestDto: VerifyRecoveryCodeRequestDto;
+};
+export type ResetPasswordApiResponse = unknown;
+export type ResetPasswordApiArg = {
+  resetPasswordRequestDto: ResetPasswordRequestDto;
+};
+export type ChangePasswordApiResponse =
+  /** status 200 Password changed; the session cookie is re-issued */ SessionDto;
+export type ChangePasswordApiArg = {
+  changePasswordRequestDto: ChangePasswordRequestDto;
+};
+export type UpdateProfileApiResponse =
+  /** status 200 Profile updated */ SessionDto;
+export type UpdateProfileApiArg = {
+  updateProfileRequestDto: UpdateProfileRequestDto;
+};
+export type GetLogoApiResponse = /** status 200 Logo */ LogoDto;
+export type GetLogoApiArg = void;
+export type UploadLogoApiResponse = unknown;
+export type UploadLogoApiArg = {
+  uploadLogoRequestDto: UploadLogoRequestDto;
+};
+export type RemoveLogoApiResponse = unknown;
+export type RemoveLogoApiArg = void;
+export type GetSubscriptionApiResponse =
+  /** status 200 Subscription */ SubscriptionDetailDto;
+export type GetSubscriptionApiArg = void;
+export type ChoosePlanApiResponse =
+  /** status 200 Plan applied */ SubscriptionDetailDto;
+export type ChoosePlanApiArg = {
+  choosePlanRequestDto: ChoosePlanRequestDto;
+};
+export type AddPaymentMethodApiResponse =
+  /** status 201 Card registered */ SubscriptionDetailDto;
+export type AddPaymentMethodApiArg = {
+  addPaymentMethodRequestDto: AddPaymentMethodRequestDto;
+};
+export type UpdatePaymentMethodApiResponse =
+  /** status 200 Card updated */ SubscriptionDetailDto;
+export type UpdatePaymentMethodApiArg = {
+  id: string;
+  updatePaymentMethodRequestDto: UpdatePaymentMethodRequestDto;
+};
+export type RemovePaymentMethodApiResponse =
+  /** status 200 Card removed */ SubscriptionDetailDto;
+export type RemovePaymentMethodApiArg = {
+  id: string;
+  /** Required to remove the only card used for automatic debit */
+  confirm?: "true" | "false";
+};
+export type SetAutoDebitApiResponse =
+  /** status 200 Automatic debit updated */ SubscriptionDetailDto;
+export type SetAutoDebitApiArg = {
+  autoDebitRequestDto: AutoDebitRequestDto;
+};
+export type CancelSubscriptionApiResponse =
+  /** status 200 Subscription cancelled */ SubscriptionDetailDto;
+export type CancelSubscriptionApiArg = void;
+export type ListPaymentsApiResponse = /** status 200 Payments */ PaymentDto[];
+export type ListPaymentsApiArg = void;
+export type RegisterManualPaymentApiResponse =
+  /** status 201 Payment registered */ PaymentDto;
+export type RegisterManualPaymentApiArg = {
+  manualPaymentRequestDto: ManualPaymentRequestDto;
+};
 export type CreatePatientApiResponse =
   /** status 201 Patient registered */ PatientDto;
 export type CreatePatientApiArg = {
@@ -304,6 +582,22 @@ export type CancelAppointmentApiResponse =
 export type CancelAppointmentApiArg = {
   id: string;
 };
+export type ListNotificationsApiResponse =
+  /** status 200 Newest first */ NotificationDto[];
+export type ListNotificationsApiArg = {
+  patientId: string;
+};
+export type StartVirtualMeetingApiResponse =
+  /** status 201 Meeting created (or the existing one of the appointment) */ VirtualMeetingDto;
+export type StartVirtualMeetingApiArg = {
+  startVirtualMeetingRequestDto: StartVirtualMeetingRequestDto;
+};
+export type ListVirtualMeetingsApiResponse =
+  /** status 200 Newest first */ VirtualMeetingDto[];
+export type ListVirtualMeetingsApiArg = {
+  patientId?: string;
+  appointmentId?: string;
+};
 export type ComponentHealthDto = {
   name: string;
   status: "up" | "down";
@@ -332,11 +626,21 @@ export type ProfessionalDto = {
   phone: string;
   specialty: string;
   licenseNumber: string;
+  offices: string[];
+  hasLogo: boolean;
 };
 export type SubscriptionDto = {
-  status: "trial" | "active" | "expired";
-  accessEndsAt: string | null;
-  daysLeft: number | null;
+  status:
+    | "trial"
+    | "active"
+    | "pending_payment"
+    | "suspended"
+    | "cancelled"
+    | "expired";
+  /** false: only the plan page is available */
+  hasAccess: boolean;
+  accessEndsAt: string;
+  daysLeft: number;
 };
 export type SessionDto = {
   professional: ProfessionalDto;
@@ -350,10 +654,121 @@ export type RegisterProfessionalRequestDto = {
   specialty: string;
   licenseNumber: string;
   password: string;
+  offices?: string[];
 };
 export type LoginRequestDto = {
   email: string;
   password: string;
+};
+export type RecoveryRequestedDto = {
+  message: string;
+};
+export type PasswordRecoveryRequestDto = {
+  email: string;
+};
+export type VerifyRecoveryCodeRequestDto = {
+  email: string;
+  code: string;
+};
+export type ResetPasswordRequestDto = {
+  email: string;
+  code: string;
+  newPassword: string;
+};
+export type ChangePasswordRequestDto = {
+  currentPassword: string;
+  newPassword: string;
+};
+export type UpdateProfileRequestDto = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  specialty: string;
+  licenseNumber: string;
+  offices: string[];
+};
+export type LogoDto = {
+  /** PNG or JPEG data URL; null when the default logo is used */
+  dataUrl: string | null;
+};
+export type UploadLogoRequestDto = {
+  /** data:image/png;base64,... or data:image/jpeg;base64,... (512 KB) */
+  dataUrl: string;
+};
+export type PlanDto = {
+  id: "monthly" | "annual";
+  name: string;
+  description: string;
+  months: number;
+  price: number;
+  currency: string;
+};
+export type PaymentMethodDto = {
+  id: string;
+  brand: "visa" | "mastercard" | "amex" | "other";
+  label: string;
+  last4: string;
+  expMonth: number;
+  expYear: number;
+  holderName: string;
+  isDefault: boolean;
+};
+export type SubscriptionDetailDto = {
+  status:
+    | "trial"
+    | "active"
+    | "pending_payment"
+    | "suspended"
+    | "cancelled"
+    | "expired";
+  hasAccess: boolean;
+  plan: PlanDto | null;
+  currentPeriodEndsAt: string;
+  daysLeft: number;
+  autoDebit: boolean;
+  paymentMethods: PaymentMethodDto[];
+  cancelledAt: string | null;
+  availablePlans: PlanDto[];
+};
+export type ChoosePlanRequestDto = {
+  planId: "monthly" | "annual";
+};
+export type AddPaymentMethodRequestDto = {
+  holderName: string;
+  cardNumber: string;
+  expMonth: number;
+  expYear: number;
+  cvc: string;
+  makeDefault?: boolean;
+};
+export type UpdatePaymentMethodRequestDto = {
+  holderName?: string;
+  expMonth?: number;
+  expYear?: number;
+  makeDefault?: boolean;
+};
+export type AutoDebitRequestDto = {
+  enabled: boolean;
+};
+export type PaymentDto = {
+  id: string;
+  planId: "monthly" | "annual";
+  amount: number;
+  currency: string;
+  kind: "automatic" | "plan_change" | "manual";
+  status: "approved" | "declined" | "failed";
+  methodLabel: string;
+  reference: string | null;
+  failureReason: string | null;
+  paidAt: string;
+};
+export type ManualPaymentRequestDto = {
+  amount: number;
+  /** Day the payment was made */
+  paidAt: string;
+  method: "bank_transfer" | "cash" | "card" | "other";
+  reference?: string | null;
 };
 export type FamilyContactDto = {
   name: string;
@@ -381,6 +796,7 @@ export type PatientDto = {
   statusChangedAt: string;
   statusOrigin: "manual" | "automatic";
   registeredAt: string;
+  lastConsultationAt: string | null;
 };
 export type PatientInputDto = {
   firstName: string;
@@ -502,12 +918,63 @@ export type RescheduleAppointmentRequestDto = {
   modality: "in_person" | "virtual";
   notes?: string | null;
 };
+export type NotificationDto = {
+  id: string;
+  patientId: string;
+  channel: "whatsapp";
+  topic:
+    | "appointment_scheduled"
+    | "appointment_rescheduled"
+    | "appointment_cancelled"
+    | "appointment_reminder"
+    | "virtual_meeting";
+  recipient: string | null;
+  body: string;
+  status: "sent" | "failed" | "skipped";
+  attempts: number;
+  error: string | null;
+  createdAt: string;
+};
+export type VirtualMeetingDto = {
+  id: string;
+  patientId: string;
+  appointmentId: string | null;
+  provider: "jitsi" | "google_meet";
+  joinUrl: string;
+  invitationStatus: "pending" | "sent" | "failed" | "skipped";
+  invitationError: string | null;
+  createdAt: string;
+};
+export type StartVirtualMeetingRequestDto = {
+  patientId: string;
+  /** Virtual appointment the call belongs to; omit from the patient file */
+  appointmentId?: string | null;
+};
 export const {
   useGetHealthQuery,
+  useGetLivenessQuery,
+  useGetReadinessQuery,
   useRegisterProfessionalMutation,
   useLoginMutation,
   useLogoutMutation,
   useGetCurrentProfessionalQuery,
+  useRequestPasswordRecoveryMutation,
+  useVerifyRecoveryCodeMutation,
+  useResetPasswordMutation,
+  useChangePasswordMutation,
+  useUpdateProfileMutation,
+  useGetLogoQuery,
+  useUploadLogoMutation,
+  useRemoveLogoMutation,
+  useGetSubscriptionQuery,
+  useChoosePlanMutation,
+  useAddPaymentMethodMutation,
+  useUpdatePaymentMethodMutation,
+  useRemovePaymentMethodMutation,
+  useSetAutoDebitMutation,
+  useCancelSubscriptionMutation,
+  useListPaymentsQuery,
+  useRegisterManualPaymentMutation,
   useCreatePatientMutation,
   useSearchPatientsQuery,
   useGetPatientQuery,
@@ -523,4 +990,7 @@ export const {
   useGetAppointmentQuery,
   useRescheduleAppointmentMutation,
   useCancelAppointmentMutation,
+  useListNotificationsQuery,
+  useStartVirtualMeetingMutation,
+  useListVirtualMeetingsQuery,
 } = injectedRtkApi;

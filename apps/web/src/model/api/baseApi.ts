@@ -1,15 +1,36 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import {
+  type BaseQueryFn,
+  createApi,
+  type FetchArgs,
+  type FetchBaseQueryError,
+  fetchBaseQuery,
+} from '@reduxjs/toolkit/query/react';
 
-/**
- * Empty RTK Query API. Endpoints are injected by the generated `generated/mentoraApi.ts`
- * (run `pnpm codegen`), so this file only holds transport configuration.
- */
+const rawBaseQuery = fetchBaseQuery({
+  baseUrl: import.meta.env.VITE_API_URL ?? '/api',
+  credentials: 'include',
+});
+
+function isSubscriptionInactive(error: FetchBaseQueryError | undefined): boolean {
+  const data = error?.data as { error?: { code?: string } } | undefined;
+  return error?.status === 403 && data?.error?.code === 'SUBSCRIPTION_INACTIVE';
+}
+
+const baseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
+  args,
+  api,
+  extraOptions,
+) => {
+  const result = await rawBaseQuery(args, api, extraOptions);
+  if (isSubscriptionInactive(result.error)) {
+    api.dispatch(baseApi.util.invalidateTags(['Auth']));
+  }
+  return result;
+};
+
 export const baseApi = createApi({
   reducerPath: 'api',
-  // `include` sends the httpOnly session cookie (ADR-0018).
-  baseQuery: fetchBaseQuery({
-    baseUrl: import.meta.env.VITE_API_URL ?? '/api',
-    credentials: 'include',
-  }),
+  baseQuery,
+  tagTypes: ['Auth'],
   endpoints: () => ({}),
 });
