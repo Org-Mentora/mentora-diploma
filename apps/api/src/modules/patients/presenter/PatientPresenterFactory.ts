@@ -6,6 +6,7 @@ import type { GetPatientPresenter } from './GetPatientPresenter';
 import type { SearchPatientsPresenter } from './SearchPatientsPresenter';
 import type { UpdatePatientPresenter } from './UpdatePatientPresenter';
 
+// Abstract Factory
 export interface PatientPresenterFactory {
   createPatient(view: View<PatientDto>): CreatePatientPresenter;
   searchPatients(view: View<PatientSummaryDto[]>): SearchPatientsPresenter;

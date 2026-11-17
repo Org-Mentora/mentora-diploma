@@ -32,6 +32,7 @@ export const PatientSchema = z
     statusChangedAt: z.iso.datetime(),
     statusOrigin: z.enum(['manual', 'automatic']),
     registeredAt: z.iso.datetime(),
+    lastConsultationAt: z.iso.datetime().nullable(),
   })
   .meta({ id: 'PatientDto' });
 
@@ -49,7 +50,6 @@ export const PatientSummarySchema = z
 
 const optionalText = (max: number) => z.string().trim().max(max).nullable().optional();
 
-/** Body of CU-04 (create: only names and DNI are required) and CU-06 (update). */
 export const PatientInputSchema = z
   .object({
     firstName: z.string().trim().min(1).max(80),

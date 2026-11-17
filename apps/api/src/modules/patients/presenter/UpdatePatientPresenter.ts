@@ -5,7 +5,7 @@ import type { PatientService } from '../model/PatientService';
 import type { PatientRef } from './GetPatientPresenter';
 import { PatientViewModel } from './PatientViewModel';
 
-/** CU-06 Update patient. */
+// Presenter
 export class UpdatePatientPresenter extends Presenter<
   PatientRef & { data: PatientInputDto },
   PatientDto

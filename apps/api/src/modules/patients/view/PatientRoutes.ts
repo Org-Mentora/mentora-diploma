@@ -14,7 +14,6 @@ import {
 } from '../contracts/patients.contracts';
 import type { PatientPresenterFactory } from '../presenter/PatientPresenterFactory';
 
-/** HTTP entry points of CU-04..CU-07. Every route requires an active subscription. */
 export class PatientRoutes {
   constructor(
     private readonly presenters: PatientPresenterFactory,

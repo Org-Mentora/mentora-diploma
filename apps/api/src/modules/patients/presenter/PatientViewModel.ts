@@ -6,7 +6,6 @@ import type {
 import { FamilyContact } from '../model/FamilyContact';
 import type { Patient, PatientDetails } from '../model/Patient';
 
-/** Translations between the patient contracts and the Model, shared by the presenters. */
 export class PatientViewModel {
   static toDto(patient: Patient, now: Date): PatientDto {
     return {
@@ -33,6 +32,7 @@ export class PatientViewModel {
       statusChangedAt: patient.statusChangedAt.toISOString(),
       statusOrigin: patient.statusOrigin,
       registeredAt: patient.registeredAt.toISOString(),
+      lastConsultationAt: patient.lastClinicalActivityAt?.toISOString() ?? null,
     };
   }
 

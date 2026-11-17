@@ -1,7 +1,3 @@
-/**
- * Search semantics of CU-05: case- and accent-insensitive, every term must match the name,
- * surname or DNI. Persistence adapters index `PatientSearch.indexText(...)`.
- */
 export class PatientSearch {
   static normalize(text: string): string {
     return text

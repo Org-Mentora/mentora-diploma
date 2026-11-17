@@ -1,13 +1,12 @@
 import { ValidationError } from '#core/errors/ApplicationError';
+import { CalendarMonths } from '#core/model/CalendarMonths';
 import { Person, type PersonProps } from '#core/model/Person';
 import type { FamilyContact } from './FamilyContact';
 
-/** CU-07: `discharged` is the clinical "alta"; `inactive` is set automatically. */
 export type PatientStatus = 'active' | 'discharged' | 'inactive';
 export type ManualPatientStatus = Exclude<PatientStatus, 'inactive'>;
 export type StatusOrigin = 'manual' | 'automatic';
 
-/** Editable data of CU-04 (only names and DNI are required) and CU-06. */
 export interface PatientDetails {
   firstName: string;
   lastName: string;
@@ -39,13 +38,18 @@ export interface PatientProps extends PersonProps {
   statusOrigin: StatusOrigin;
   registeredAt: Date;
   updatedAt: Date;
+  lastClinicalActivityAt: Date | null;
 }
 
-/** A patient of one professional (`Paciente` in the class diagram). */
+// Aggregate Root
 export class Patient extends Person<PatientProps> {
   static readonly DNI_PATTERN = /^\d{7,8}$/;
+  static readonly DORMANT_AFTER_MONTHS = 3;
 
-  /** CU-04: new patients start as `active`. */
+  static dormancyCutoff(now: Date): Date {
+    return CalendarMonths.add(now, -Patient.DORMANT_AFTER_MONTHS);
+  }
+
   static register(professionalId: string, details: PatientDetails, now: Date): Patient {
     return new Patient(crypto.randomUUID(), {
       ...Patient.validate(details),
@@ -55,6 +59,7 @@ export class Patient extends Person<PatientProps> {
       statusOrigin: 'manual',
       registeredAt: now,
       updatedAt: now,
+      lastClinicalActivityAt: null,
     });
   }
 
@@ -62,7 +67,6 @@ export class Patient extends Person<PatientProps> {
     return new Patient(id, props);
   }
 
-  /** Strips dots and spaces so "30.123.456" and "30123456" are the same DNI. */
   static normalizeDni(dni: string): string {
     return dni.replace(/[.\s-]/g, '');
   }
@@ -84,12 +88,10 @@ export class Patient extends Person<PatientProps> {
     return { ...details, firstName, lastName, dni, allergies };
   }
 
-  /** CU-06: replaces the editable data. */
   updateDetails(details: PatientDetails, now: Date): void {
     this.props = { ...this.props, ...Patient.validate(details), updatedAt: now };
   }
 
-  /** CU-07 manual flow: the professional discharges or (re)activates the patient. */
   changeStatus(status: ManualPatientStatus, now: Date): void {
     if (status === this.props.status) {
       throw new ValidationError(`Patient is already ${status}`, { field: 'status' });
@@ -97,10 +99,28 @@ export class Patient extends Person<PatientProps> {
     this.setStatus(status, now, 'manual');
   }
 
-  /** CU-07 automatic flow: no consultations for three months. */
   markInactive(now: Date): void {
     if (this.props.status === 'active') {
       this.setStatus('inactive', now, 'automatic');
+    }
+  }
+
+  isDormantAt(now: Date): boolean {
+    if (this.props.status !== 'active') {
+      return false;
+    }
+    const lastActivity = Math.max(
+      this.props.lastClinicalActivityAt?.getTime() ?? 0,
+      this.props.registeredAt.getTime(),
+      this.props.statusChangedAt.getTime(),
+    );
+    return lastActivity < Patient.dormancyCutoff(now).getTime();
+  }
+
+  recordClinicalActivity(at: Date): void {
+    const current = this.props.lastClinicalActivityAt;
+    if (!current || at.getTime() > current.getTime()) {
+      this.props = { ...this.props, lastClinicalActivityAt: at };
     }
   }
 
@@ -164,5 +184,9 @@ export class Patient extends Person<PatientProps> {
 
   get updatedAt(): Date {
     return this.props.updatedAt;
+  }
+
+  get lastClinicalActivityAt(): Date | null {
+    return this.props.lastClinicalActivityAt;
   }
 }

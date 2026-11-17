@@ -10,7 +10,7 @@ export interface PatientRef {
   patientId: string;
 }
 
-/** Patient profile (end of CU-05). */
+// Presenter
 export class GetPatientPresenter extends Presenter<PatientRef, PatientDto> {
   constructor(
     view: View<PatientDto>,
