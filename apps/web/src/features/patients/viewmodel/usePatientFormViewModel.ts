@@ -24,11 +24,11 @@ export interface PatientFormViewModel {
 }
 
 interface Options {
-  /** Edit this patient (CU-06); create a new one when absent (CU-04). */
   patientId?: string | undefined;
   onSaved: (patientId: string) => void;
 }
 
+// ViewModel
 export function usePatientFormViewModel({ patientId, onSaved }: Options): PatientFormViewModel {
   const isEdit = Boolean(patientId);
   const { data: patient } = useGetPatientQuery({ id: patientId ?? '' }, { skip: !patientId });
@@ -40,7 +40,6 @@ export function usePatientFormViewModel({ patientId, onSaved }: Options): Patien
     defaultValues: emptyPatientForm,
   });
 
-  // CU-06 step 2: the edit form starts with the current data.
   useEffect(() => {
     if (patient) {
       form.reset(PatientForm.fromDto(patient));

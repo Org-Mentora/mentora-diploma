@@ -39,6 +39,7 @@ function patient(status: 'active' | 'discharged' | 'inactive') {
     statusChangedAt: '2030-01-01T00:00:00.000Z',
     statusOrigin: status === 'inactive' ? 'automatic' : 'manual',
     registeredAt: '2030-01-01T00:00:00.000Z',
+    lastConsultationAt: null,
   };
 }
 

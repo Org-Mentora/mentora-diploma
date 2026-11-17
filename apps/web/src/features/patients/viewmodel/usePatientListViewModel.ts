@@ -18,7 +18,7 @@ export interface PatientListViewModel {
   openPatient: (patientId: string) => void;
 }
 
-/** CU-05 Search patients (+ entry point of CU-04). */
+// ViewModel
 export function usePatientListViewModel(): PatientListViewModel {
   const [query, setQuery] = useState('');
   const [isCreateOpen, setCreateOpen] = useState(false);

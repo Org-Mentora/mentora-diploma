@@ -35,7 +35,6 @@ export interface PatientProfileViewModel {
   confirmStatusChange: () => Promise<void>;
 }
 
-/** CU-07 manual transitions available from each status. */
 function actionFor(status: PatientStatus, fullName: string): StatusAction {
   return status === 'active'
     ? {
@@ -50,7 +49,7 @@ function actionFor(status: PatientStatus, fullName: string): StatusAction {
       };
 }
 
-/** Patient profile: overview, CU-06 edit dialog and CU-07 status management. */
+// ViewModel
 export function usePatientProfileViewModel(): PatientProfileViewModel {
   const { patientId = '' } = useParams();
   const { data, isLoading, error } = useGetPatientQuery({ id: patientId });
@@ -71,7 +70,6 @@ export function usePatientProfileViewModel(): PatientProfileViewModel {
     statusAction,
     pendingStatus,
     isChangingStatus,
-    // CU-07 step 4: ask for confirmation before changing the status.
     requestStatusChange: () => setPendingStatus(statusAction),
     cancelStatusChange: () => setPendingStatus(null),
     confirmStatusChange: async () => {
