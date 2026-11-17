@@ -5,7 +5,6 @@ import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 export interface UiError {
   code: string;
   message: string;
-  /** Form field the API blamed (e.g. `dni` on a duplicated patient), when known. */
   field?: string;
   status?: number;
 }
@@ -22,10 +21,7 @@ function fieldOf(details: unknown): string | undefined {
   return undefined;
 }
 
-/**
- * Adapter (ADR-0007): turns the different RTK Query error shapes (including what
- * `.unwrap()` throws) into one `UiError` that ViewModels can expose.
- */
+// Adapter
 export class ApiErrorAdapter {
   static toUiError(error: unknown): UiError | null {
     if (!error || typeof error !== 'object') {
