@@ -11,6 +11,8 @@ const rawBaseQuery = fetchBaseQuery({
   credentials: 'include',
 });
 
+const SESSION_ENDPOINTS = new Set(['getCurrentProfessional', 'login']);
+
 function isSubscriptionInactive(error: FetchBaseQueryError | undefined): boolean {
   const data = error?.data as { error?: { code?: string } } | undefined;
   return error?.status === 403 && data?.error?.code === 'SUBSCRIPTION_INACTIVE';
@@ -22,7 +24,8 @@ const baseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> =
   extraOptions,
 ) => {
   const result = await rawBaseQuery(args, api, extraOptions);
-  if (isSubscriptionInactive(result.error)) {
+  const sessionEnded = result.error?.status === 401 && !SESSION_ENDPOINTS.has(api.endpoint);
+  if (sessionEnded || isSubscriptionInactive(result.error)) {
     api.dispatch(baseApi.util.invalidateTags(['Auth']));
   }
   return result;
