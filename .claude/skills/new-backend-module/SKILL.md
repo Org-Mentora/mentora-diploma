@@ -18,10 +18,14 @@ Read first: `apps/api/CLAUDE.md`, `docs/guides/add-backend-module.md`. Copy patt
    - `abstract class <X>Repository extends Repository<X>` with custom query signatures.
    - `<X>Service` receives abstractions in its constructor and throws `ApplicationError`
      subclasses (`ValidationError`, `NotFoundError`, `ConflictError`, ...).
+   - Write use cases run inside `this.transactions.run(async () => …)` (`TransactionManager`,
+     ADR-0025). Notifications and other side effects go after `run` resolves.
 3. **Infrastructure** (`modules/<m>/infrastructure/`)
    - Mongoose schema (`_id: { type: String, required: true }`, UUID ids).
    - `<X>Mapper implements DataMapper<X, XDocument>`.
-   - `Mongoose<X>Repository extends MongooseRepository<X, XDocument>`.
+   - `Mongoose<X>Repository extends MongooseRepository<X, XDocument>`; its constructor takes the
+     `TransactionContext` and passes it to `super`. Every custom query calls
+     `.session(this.session)` so it joins the running transaction (ADR-0025).
 4. **Contracts** (`modules/<m>/contracts/<m>.contracts.ts`)
    - zod schemas `.meta({ id: '<Name>Dto' })` for responses and `<Action><Name>RequestDto` for inputs.
    - `register<M>Contracts(registry)` with one `registerRoute` per endpoint.
@@ -36,7 +40,7 @@ Read first: `apps/api/CLAUDE.md`, `docs/guides/add-backend-module.md`. Copy patt
      `InputParser.parse(Schema, req.body|params|query)`, then `factory.useCase(view).present(input)`.
 7. **Composition root** `<M>Module implements AppModule, <M>PresenterFactory`, plus `index.ts`
    exporting the module, its `<M>ModuleDependencies` and DTO types. Model ports are optional
-   dependencies defaulting to the Mongoose adapter (`deps.repository ?? new Mongoose<X>Repository()`);
+   dependencies defaulting to the Mongoose adapter (`deps.repository ?? new Mongoose<X>Repository(deps.context)`);
    Singletons and the clock come from `src/app/modules.ts` (ADR-0024). Register it there.
 8. **Tests**: presenter unit test with `SpyView` (`test/support/fakes.ts`), HTTP test with
    supertest, repository test with `mongodb-memory-server`, and an in-memory repository in
