@@ -30,7 +30,7 @@ COPY apps/web apps/web
 RUN pnpm --filter @mentora/web build
 
 # --- runtime: static files on unprivileged nginx (port 8080, non-root) ---
-FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
+FROM nginxinc/nginx-unprivileged:1.31-alpine AS runtime
 ARG VERSION=dev
 ARG REVISION=unknown
 LABEL org.opencontainers.image.title="mentora-web"       org.opencontainers.image.description="Mentora web (React SPA served by nginx)"       org.opencontainers.image.source="https://github.com/Org-Mentora/mentora-diploma"       org.opencontainers.image.version=$VERSION       org.opencontainers.image.revision=$REVISION
