@@ -1,5 +1,9 @@
 # Design patterns in use
 
+Every class that applies a pattern says so in a one-line comment (`// Adapter`, ADR-0035); search
+for it to list them all. The generated [class diagram](class-diagram.md) shows the same names as
+`<<stereotypes>>`.
+
 ## Singleton — [ADR-0006](../adr/0006-singleton-pattern.md)
 
 | Class | File |
@@ -28,16 +32,39 @@ instance injected.
 | `TokenService` | `JoseTokenService` | `jose` (JWT HS256) |
 | `PatientLookup` / `PatientNames` | `PatientDirectoryLookup` / `PatientDirectoryNames` | patients module query service |
 | `DiagnosisResolver` | `CatalogDiagnosisResolver` | DSM-5 catalog module |
-| `AppointmentNotifier` | `LoggingAppointmentNotifier` | logger (WhatsApp in CU-14) |
+| `AppointmentNotifier` | `WhatsAppAppointmentNotifier` | notifications module (CU-14) |
+| `TransactionManager` | `MongoTransactionManager` | Mongoose `connection.transaction` + `TransactionContext` |
+| `MailTransport` | `SmtpMailTransport` | nodemailer (Mailpit locally) |
+| `PasswordRecoveryNotifier` / `BillingNotifier` | `EmailPasswordRecoveryNotifier` / `EmailBillingNotifier` | `MailTransport` |
+| `RecoveryCodeGenerator` | `CryptoRecoveryCodeGenerator` | `node:crypto` randomInt |
+| `ProfessionalAccess` | `SubscriptionAccessAdapter` | subscriptions module |
+| `PaymentGateway` | `SimulatedPaymentGateway` | local sandbox (test cards) |
+| `WhatsAppGateway` | `LocalWhatsAppOutbox` / `WhatsAppCloudApiGateway` | log / Meta Graph API |
+| `MeetingLinkProvider` | `JitsiMeetingLinkProvider` / `GoogleMeetLinkProvider` | Jitsi URL / Google Calendar API |
+| `ClinicalActivityRecorder` | `PatientActivityRecorder` | patients module (command, ADR-0033) |
+| `LogoRepository` | `MongooseLogoRepository` | Mongoose (binary) |
+| PDF document | `PrescriptionPdfAdapter` | jsPDF (web) |
 | UI model | `HealthAdapter` | generated `HealthDto` |
 | `UiError` | `ApiErrorAdapter` | RTK Query error union |
 
 ## Other patterns that appear by design
 
+Every class or function that applies a pattern carries a `// <Pattern>` comment with the exact
+names below ([ADR-0035](../adr/0035-comments-name-design-patterns.md)); `grep -rn "// Strategy"`
+lists them.
+
 | Pattern | Where |
 | --- | --- |
 | **Template Method** | `Presenter.present()` calls the abstract `execute()`; `HttpView.render()` calls `serialize()` |
-| **Factory** | `<Name>PresenterFactory` (implemented by each module) builds a presenter per request |
-| **Data Mapper** | `DataMapper<Entity, Document>` used by repositories |
-| **Composition Root** | `<Name>Module.ts`, `Application.ts`, `main.ts` |
-| **Observer** | RTK Query subscriptions that drive ViewModel re-renders |
+| **Abstract Factory** | `<Name>PresenterFactory` interfaces, implemented by each `<Name>Module` |
+| **Presenter / Passive View** | MVP: one `Presenter` per use case, `*HttpView` classes and the `View` interface (ADR-0004) |
+| **ViewModel** | MVVM: every `use<Name>ViewModel` hook in the web (ADR-0011) |
+| **Repository** | `Repository<T>` and the per-aggregate abstract repositories in each `model/` |
+| **Data Mapper** | `DataMapper<Entity, Document>` and every `*Mapper` |
+| **Composition Root** | `<Name>Module.ts`, `Application.ts`, `createModules`, `main.ts` |
+| **Unit of Work** | `TransactionManager.run` + `TransactionContext` (ADR-0025) |
+| **Strategy** | `PaymentGateway`, `WhatsAppGateway`, `MeetingLinkProvider`: implementation picked by configuration |
+| **Facade** | `NotificationCenter`: delivery, retry and log behind one call (ADR-0030) |
+| **Command** | `ScheduledJob` (ADR-0026) |
+| **State** | `Subscription` phases and `statusAt` (ADR-0029) |
+| **Entity / Aggregate Root / Value Object** | `Entity`, `ValueObject` and their subclasses; aggregates are the entities with a repository |

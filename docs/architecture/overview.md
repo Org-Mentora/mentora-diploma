@@ -6,9 +6,35 @@
 flowchart LR
   user([User browser]) -->|HTTPS| web[web · nginx + React SPA]
   web -->|/api proxy| api[api · Express 5, MVP]
-  api -->|Mongoose| mongo[(MongoDB 8)]
+  api -->|Mongoose, transactions| mongo[(MongoDB 8 replica set)]
   api -.->|/api/docs| swagger[Swagger UI]
+  api -->|SMTP| mail[Mailpit / SMTP server]
+  api -->|PaymentGateway| pay[Simulated gateway / payment provider]
+  api -->|WhatsAppGateway| wa[Local outbox / WhatsApp Cloud API]
+  api -->|MeetingLinkProvider| meet[Jitsi / Google Meet]
+  web -.->|join link| meet
 ```
+
+External services are reached through Model-owned ports and adapters (ADR-0007); the local
+adapters are the default (ADR-0027, 0029, 0030, 0031).
+
+## Backend modules
+
+```mermaid
+flowchart LR
+  auth --> subscriptions
+  clinical[clinical-records] --> patients
+  clinical --> catalog[diagnosis-catalog]
+  appointments --> patients
+  appointments --> notifications
+  virtual[virtual-consultations] --> patients
+  virtual --> appointments
+  virtual --> notifications
+```
+
+Arrows are calls through query or command services exported by `index.ts` (ADR-0022, ADR-0033),
+wired in `apps/api/src/app/modules.ts`. Modules with periodic work declare scheduled jobs
+(ADR-0026).
 
 ## Monorepo
 
@@ -19,12 +45,19 @@ apps/
 packages/
   contracts/           openapi.json + generated DTO types          (ADR-0009, ADR-0010)
   tsconfig/            shared tsconfig presets                     (ADR-0003)
-docker/                Dockerfiles + nginx template                (ADR-0014)
-docs/                  ADRs, architecture, guides
+docker/                Dockerfiles, nginx, Mongo users, backup     (ADR-0014, ADR-0038, ADR-0039)
+docs/                  ADRs, architecture, guides, operations
 tools/biome/           GritQL architecture plugins                 (ADR-0013)
+tools/comments/        comment rule checker                        (ADR-0035)
+tools/docs/            class diagram generator                     (ADR-0036)
+tools/smoke/ tools/ops/ tools/db/   smoke test, restore drill, dev backups (ADR-0036, ADR-0039)
+.github/               CI, CodeQL, release, Dependabot             (ADR-0036)
 ```
 
 ## End-to-end flow of one use case
+
+More flows (login, payments, jobs, backups) are in [sequence-diagrams.md](sequence-diagrams.md);
+every class is in the generated [class-diagram.md](class-diagram.md).
 
 ```mermaid
 sequenceDiagram
