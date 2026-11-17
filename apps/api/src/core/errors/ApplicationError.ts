@@ -1,8 +1,12 @@
-/**
- * Transport-agnostic error categories. Views decide how each kind is rendered
- * (the HTTP view maps `not_found` to 404); the Model never knows about status codes.
- */
-export type ErrorKind = 'validation' | 'not_found' | 'conflict' | 'unauthorized' | 'forbidden';
+export type ErrorKind =
+  | 'validation'
+  | 'not_found'
+  | 'conflict'
+  | 'unauthorized'
+  | 'forbidden'
+  | 'payment_required'
+  | 'unavailable'
+  | 'too_many_requests';
 
 export abstract class ApplicationError extends Error {
   abstract readonly kind: ErrorKind;
@@ -20,8 +24,8 @@ export abstract class ApplicationError extends Error {
 export class ValidationError extends ApplicationError {
   readonly kind = 'validation';
 
-  constructor(message: string, details?: unknown) {
-    super(message, 'VALIDATION_ERROR', details);
+  constructor(message: string, details?: unknown, code = 'VALIDATION_ERROR') {
+    super(message, code, details);
   }
 }
 
@@ -36,8 +40,8 @@ export class NotFoundError extends ApplicationError {
 export class ConflictError extends ApplicationError {
   readonly kind = 'conflict';
 
-  constructor(message: string, details?: unknown) {
-    super(message, 'CONFLICT', details);
+  constructor(message: string, details?: unknown, code = 'CONFLICT') {
+    super(message, code, details);
   }
 }
 
@@ -57,9 +61,34 @@ export class ForbiddenError extends ApplicationError {
   }
 }
 
-/** The professional's trial or subscription no longer grants access (CU-01 step 7). */
 export class SubscriptionInactiveError extends ForbiddenError {
   constructor() {
     super('Your subscription is not active. Choose a plan to continue.', 'SUBSCRIPTION_INACTIVE');
+  }
+}
+
+export class PaymentDeclinedError extends ApplicationError {
+  readonly kind = 'payment_required';
+
+  constructor(message: string, details?: unknown) {
+    super(message, 'PAYMENT_DECLINED', details);
+  }
+}
+
+export class ServiceUnavailableError extends ApplicationError {
+  readonly kind = 'unavailable';
+
+  constructor(message: string, code = 'SERVICE_UNAVAILABLE') {
+    super(message, code);
+  }
+}
+
+export class TooManyRequestsError extends ApplicationError {
+  readonly kind = 'too_many_requests';
+
+  constructor(readonly retryAfterSeconds: number) {
+    super('Too many attempts. Wait a few minutes and try again.', 'TOO_MANY_REQUESTS', {
+      retryAfterSeconds,
+    });
   }
 }
