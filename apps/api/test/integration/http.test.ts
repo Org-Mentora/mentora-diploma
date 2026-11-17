@@ -56,6 +56,22 @@ describe('HTTP API', () => {
     expect(response.body.error.code).toBe('ROUTE_NOT_FOUND');
   });
 
+  it('answers body parser errors with 4xx instead of 500', async () => {
+    const tooLarge = await request(app)
+      .post('/api/nope')
+      .set('Content-Type', 'application/json')
+      .send(JSON.stringify({ text: 'x'.repeat(1_100_000) }))
+      .expect(413);
+    const malformed = await request(app)
+      .post('/api/nope')
+      .set('Content-Type', 'application/json')
+      .send('{"oops"')
+      .expect(400);
+
+    expect(tooLarge.body.error.code).toBe('PAYLOAD_TOO_LARGE');
+    expect(malformed.body.error.code).toBe('MALFORMED_JSON');
+  });
+
   it('serves the OpenAPI document that feeds the frontend codegen', async () => {
     const response = await request(app).get('/api/openapi.json').expect(200);
 

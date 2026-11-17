@@ -37,10 +37,29 @@ export class HttpErrorHandler {
       return;
     }
 
+    const clientStatus = HttpErrorHandler.clientStatusOf(error);
+    if (clientStatus) {
+      const body: ErrorResponseDto = {
+        error: {
+          code: clientStatus === 413 ? 'PAYLOAD_TOO_LARGE' : 'BAD_REQUEST',
+          message: clientStatus === 413 ? 'Request body is too large' : 'Request was rejected',
+        },
+      };
+      res.status(clientStatus).json(body);
+      return;
+    }
+
     this.logger.error('Unhandled error', { err: error });
     const body: ErrorResponseDto = {
       error: { code: 'INTERNAL_ERROR', message: 'Unexpected server error' },
     };
     res.status(500).json(body);
   };
+
+  private static clientStatusOf(error: unknown): number | null {
+    const { status, expose } = (error ?? {}) as { status?: unknown; expose?: unknown };
+    return expose === true && typeof status === 'number' && status >= 400 && status < 500
+      ? status
+      : null;
+  }
 }
