@@ -9,6 +9,7 @@ import { Consultation, type ConsultationType } from './Consultation';
 import type { DiagnosisResolver } from './DiagnosisResolver';
 import { Medication, type MedicationData } from './Medication';
 import type { PatientLookup } from './PatientLookup';
+import type { RecordAccess, RecordAccessAction, RecordAccessLog } from './RecordAccessLog';
 
 export interface RegisterConsultationData {
   date: Date;
@@ -20,6 +21,8 @@ export interface RegisterConsultationData {
   medications: MedicationData[];
 }
 
+const ACCESS_LOG_LIMIT = 100;
+
 export class ClinicalRecordService {
   constructor(
     private readonly records: ClinicalRecordRepository,
@@ -28,12 +31,18 @@ export class ClinicalRecordService {
     private readonly activity: ClinicalActivityRecorder,
     private readonly diagnoses: DiagnosisResolver,
     private readonly clock: Clock,
+    private readonly accesses: RecordAccessLog,
   ) {}
 
   async getRecord(professionalId: string, patientId: string): Promise<ClinicalRecord> {
+    const record = await this.loadRecord(professionalId, patientId);
+    await this.audit(professionalId, patientId, 'view_record');
+    return record;
+  }
+
+  async accessLog(professionalId: string, patientId: string): Promise<RecordAccess[]> {
     await this.assertPatient(professionalId, patientId);
-    const record = await this.records.findByPatient(professionalId, patientId);
-    return record ?? ClinicalRecord.open(professionalId, patientId, this.clock.now());
+    return this.accesses.findByPatient(professionalId, patientId, ACCESS_LOG_LIMIT);
   }
 
   registerConsultation(
@@ -71,6 +80,7 @@ export class ClinicalRecordService {
     record.addConsultation(consultation, now);
     await this.records.save(record);
     await this.activity.record(professionalId, patientId, consultation.date);
+    await this.audit(professionalId, patientId, 'register_consultation', consultation.id);
     return consultation;
   }
 
@@ -79,11 +89,12 @@ export class ClinicalRecordService {
     patientId: string,
     consultationId: string,
   ): Promise<Consultation> {
-    const record = await this.getRecord(professionalId, patientId);
+    const record = await this.loadRecord(professionalId, patientId);
     const consultation = record.findConsultation(consultationId);
     if (!consultation) {
       throw new NotFoundError('Consultation', consultationId);
     }
+    await this.audit(professionalId, patientId, 'view_consultation', consultation.id);
     return consultation;
   }
 
@@ -91,7 +102,9 @@ export class ClinicalRecordService {
     professionalId: string,
     patientId: string,
   ): Promise<DiagnosisHistoryEntry[]> {
-    return (await this.getRecord(professionalId, patientId)).diagnosisHistory();
+    const record = await this.loadRecord(professionalId, patientId);
+    await this.audit(professionalId, patientId, 'view_diagnoses');
+    return record.diagnosisHistory();
   }
 
   private async assignDiagnosis(code: string | null, now: Date): Promise<AssignedDiagnosis | null> {
@@ -105,6 +118,27 @@ export class ClinicalRecordService {
       });
     }
     return AssignedDiagnosis.assign(diagnosis.code, diagnosis.name, now);
+  }
+
+  private async loadRecord(professionalId: string, patientId: string): Promise<ClinicalRecord> {
+    await this.assertPatient(professionalId, patientId);
+    const record = await this.records.findByPatient(professionalId, patientId);
+    return record ?? ClinicalRecord.open(professionalId, patientId, this.clock.now());
+  }
+
+  private audit(
+    professionalId: string,
+    patientId: string,
+    action: RecordAccessAction,
+    consultationId: string | null = null,
+  ): Promise<void> {
+    return this.accesses.append({
+      professionalId,
+      patientId,
+      action,
+      consultationId,
+      at: this.clock.now(),
+    });
   }
 
   private async assertPatient(professionalId: string, patientId: string): Promise<void> {

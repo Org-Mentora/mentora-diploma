@@ -13,19 +13,23 @@ import {
   type ClinicalRecordDto,
   type ConsultationDto,
   type DiagnosisHistoryEntryDto,
+  type RecordAccessDto,
   registerClinicalRecordContracts,
 } from './contracts/clinical-records.contracts';
 import { CatalogDiagnosisResolver } from './infrastructure/CatalogDiagnosisResolver';
 import { ClinicalActivityBackfill } from './infrastructure/ClinicalActivityBackfill';
 import { MongooseClinicalRecordRepository } from './infrastructure/MongooseClinicalRecordRepository';
+import { MongooseRecordAccessLog } from './infrastructure/MongooseRecordAccessLog';
 import { PatientActivityRecorder } from './infrastructure/PatientActivityRecorder';
 import { PatientDirectoryLookup } from './infrastructure/PatientDirectoryLookup';
 import type { ClinicalRecordRepository } from './model/ClinicalRecordRepository';
 import { ClinicalRecordService } from './model/ClinicalRecordService';
+import type { RecordAccessLog } from './model/RecordAccessLog';
 import type { ClinicalRecordPresenterFactory } from './presenter/ClinicalRecordPresenterFactory';
 import { GetClinicalRecordPresenter } from './presenter/GetClinicalRecordPresenter';
 import { GetConsultationPresenter } from './presenter/GetConsultationPresenter';
 import { GetDiagnosisHistoryPresenter } from './presenter/GetDiagnosisHistoryPresenter';
+import { ListRecordAccessPresenter } from './presenter/ListRecordAccessPresenter';
 import { RegisterConsultationPresenter } from './presenter/RegisterConsultationPresenter';
 import { ClinicalRecordRoutes } from './view/ClinicalRecordRoutes';
 
@@ -38,6 +42,7 @@ export interface ClinicalRecordsModuleDependencies {
   transactions: TransactionManager;
   context: TransactionContext;
   repository?: ClinicalRecordRepository;
+  accessLog?: RecordAccessLog;
 }
 
 // Composition Root, Abstract Factory
@@ -56,6 +61,7 @@ export class ClinicalRecordsModule implements AppModule, ClinicalRecordPresenter
       activity,
       new CatalogDiagnosisResolver(deps.catalog),
       deps.clock,
+      deps.accessLog ?? new MongooseRecordAccessLog(deps.context),
     );
   }
 
@@ -85,5 +91,9 @@ export class ClinicalRecordsModule implements AppModule, ClinicalRecordPresenter
 
   getDiagnosisHistory(view: View<DiagnosisHistoryEntryDto[]>): GetDiagnosisHistoryPresenter {
     return new GetDiagnosisHistoryPresenter(view, this.#service);
+  }
+
+  listRecordAccess(view: View<RecordAccessDto[]>): ListRecordAccessPresenter {
+    return new ListRecordAccessPresenter(view, this.#service);
   }
 }

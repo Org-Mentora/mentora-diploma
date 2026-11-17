@@ -66,6 +66,14 @@ export const DiagnosisHistoryEntrySchema = z
   })
   .meta({ id: 'DiagnosisHistoryEntryDto' });
 
+export const RecordAccessSchema = z
+  .object({
+    action: z.enum(['view_record', 'view_consultation', 'view_diagnoses', 'register_consultation']),
+    consultationId: z.uuid().nullable(),
+    at: z.iso.datetime(),
+  })
+  .meta({ id: 'RecordAccessDto' });
+
 export const MedicationInputSchema = z
   .object({
     name: z.string().trim().min(1).max(120),
@@ -98,6 +106,7 @@ export type ConsultationDto = z.infer<typeof ConsultationSchema>;
 export type ConsultationSummaryDto = z.infer<typeof ConsultationSummarySchema>;
 export type ClinicalRecordDto = z.infer<typeof ClinicalRecordSchema>;
 export type DiagnosisHistoryEntryDto = z.infer<typeof DiagnosisHistoryEntrySchema>;
+export type RecordAccessDto = z.infer<typeof RecordAccessSchema>;
 export type RegisterConsultationRequestDto = z.infer<typeof RegisterConsultationRequestSchema>;
 
 export function registerClinicalRecordContracts(registry: ContractRegistry): void {
@@ -155,6 +164,20 @@ export function registerClinicalRecordContracts(registry: ContractRegistry): voi
     request: { params: PatientRecordParamsSchema },
     responses: {
       200: { description: 'Diagnosis history', schema: z.array(DiagnosisHistoryEntrySchema) },
+      404: notFound,
+    },
+  });
+  registry.registerRoute({
+    method: 'get',
+    path: '/patients/{patientId}/clinical-record/access-log',
+    operationId: 'getRecordAccessLog',
+    summary:
+      'Append-only log of reads and writes of the clinical record (latest 100, newest first)',
+    tags,
+    auth: true,
+    request: { params: PatientRecordParamsSchema },
+    responses: {
+      200: { description: 'Access log', schema: z.array(RecordAccessSchema) },
       404: notFound,
     },
   });

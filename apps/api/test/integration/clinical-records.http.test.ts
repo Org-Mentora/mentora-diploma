@@ -132,6 +132,35 @@ describe('Clinical record API (CU-08, CU-09, CU-11, CU-12)', () => {
       .expect(404);
   });
 
+  it('logs every read and write of the record, newest first, only for its owner', async () => {
+    const { body: patient } = await agent
+      .post('/api/patients')
+      .send({ firstName: 'Inés', lastName: 'Sosa', dni: '30999888' })
+      .expect(201);
+    const url = `/api/patients/${patient.id}/clinical-record`;
+
+    const { body: consultation } = await agent
+      .post(`${url}/consultations`)
+      .send({ date: '2030-01-05T15:00:00.000Z', type: 'in_person', reason: 'First visit' })
+      .expect(201);
+    for (const read of [url, `${url}/consultations/${consultation.id}`, `${url}/diagnoses`]) {
+      t.clock.advanceMinutes(1);
+      await agent.get(read).expect(200);
+    }
+    const log = await agent.get(`${url}/access-log`).expect(200);
+    t.clock.set(TestApp.START);
+
+    expect(log.body.map((a: { action: string }) => a.action)).toEqual([
+      'view_diagnoses',
+      'view_consultation',
+      'view_record',
+      'register_consultation',
+    ]);
+    expect(log.body[1].consultationId).toBe(consultation.id);
+    const other = await t.loggedInAgent();
+    await other.get(`${url}/access-log`).expect(404);
+  });
+
   it('CU-09 keeps every consultation registered concurrently (ADR-0025)', async () => {
     const { body: patient } = await agent
       .post('/api/patients')

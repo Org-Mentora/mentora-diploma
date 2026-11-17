@@ -1468,6 +1468,36 @@
           "diagnosis"
         ]
       },
+      "RecordAccessDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "view_record",
+              "view_consultation",
+              "view_diagnoses",
+              "register_consultation"
+            ]
+          },
+          "consultationId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "action",
+          "consultationId",
+          "at"
+        ]
+      },
       "AppointmentDto": {
         "type": "object",
         "properties": {
@@ -3747,6 +3777,76 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/DiagnosisHistoryEntryDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subscription inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Patient or consultation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/patients/{patientId}/clinical-record/access-log": {
+      "get": {
+        "operationId": "getRecordAccessLog",
+        "summary": "Append-only log of reads and writes of the clinical record (latest 100, newest first)",
+        "tags": [
+          "ClinicalRecords"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "patientId",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Access log",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RecordAccessDto"
                   }
                 }
               }
