@@ -1,11 +1,16 @@
 import type { Entity } from '#core/model/Entity';
+import { TransactionManager } from '#core/model/TransactionManager';
 import type { Appointment } from '../../src/modules/appointments/model/Appointment';
 import {
   type AppointmentEvent,
   AppointmentNotifier,
 } from '../../src/modules/appointments/model/AppointmentNotifier';
 import { AppointmentRepository } from '../../src/modules/appointments/model/AppointmentRepository';
+import { LogoRepository } from '../../src/modules/auth/model/LogoRepository';
+import type { PasswordRecovery } from '../../src/modules/auth/model/PasswordRecovery';
+import { PasswordRecoveryRepository } from '../../src/modules/auth/model/PasswordRecoveryRepository';
 import type { Professional } from '../../src/modules/auth/model/Professional';
+import type { ProfessionalLogo } from '../../src/modules/auth/model/ProfessionalLogo';
 import { ProfessionalRepository } from '../../src/modules/auth/model/ProfessionalRepository';
 import type { ClinicalRecord } from '../../src/modules/clinical-records/model/ClinicalRecord';
 import { ClinicalRecordRepository } from '../../src/modules/clinical-records/model/ClinicalRecordRepository';
@@ -15,11 +20,21 @@ import {
   type DiagnosisSearchCriteria,
 } from '../../src/modules/diagnosis-catalog/model/DiagnosisCatalogRepository';
 import { DiagnosisCatalogSeeder } from '../../src/modules/diagnosis-catalog/model/DiagnosisCatalogSeeder';
+import type { Notification } from '../../src/modules/notifications/model/Notification';
+import { NotificationRepository } from '../../src/modules/notifications/model/NotificationRepository';
 import type { Patient } from '../../src/modules/patients/model/Patient';
 import { PatientRepository } from '../../src/modules/patients/model/PatientRepository';
 import { PatientSearch } from '../../src/modules/patients/model/PatientSearch';
+import type { Payment } from '../../src/modules/subscriptions/model/Payment';
+import { PaymentRepository } from '../../src/modules/subscriptions/model/PaymentRepository';
+import type { Subscription } from '../../src/modules/subscriptions/model/Subscription';
+import { SubscriptionRepository } from '../../src/modules/subscriptions/model/SubscriptionRepository';
+import { VirtualMeetingRepository } from '../../src/modules/virtual-consultations/model/ports';
+import type { VirtualMeeting } from '../../src/modules/virtual-consultations/model/VirtualMeeting';
 
-/** Map-backed storage shared by the in-memory repositories below. */
+const newestFirst = <T extends { createdAt: Date }>(a: T, b: T) =>
+  b.createdAt.getTime() - a.createdAt.getTime();
+
 class EntityStore<TEntity extends Entity<object>> {
   readonly #items = new Map<string, TEntity>();
 
@@ -37,6 +52,16 @@ class EntityStore<TEntity extends Entity<object>> {
 
   remove(id: string): boolean {
     return this.#items.delete(id);
+  }
+}
+
+// Unit of Work
+export class InMemoryTransactionManager extends TransactionManager {
+  runs = 0;
+
+  run<T>(work: () => Promise<T>): Promise<T> {
+    this.runs += 1;
+    return work();
   }
 }
 
@@ -67,6 +92,51 @@ export class InMemoryProfessionalRepository extends ProfessionalRepository {
     return (
       this.#store.all().find((professional) => professional.licenseNumber === licenseNumber) ?? null
     );
+  }
+}
+
+export class InMemoryPasswordRecoveryRepository extends PasswordRecoveryRepository {
+  readonly #store = new EntityStore<PasswordRecovery>();
+
+  async findById(id: string): Promise<PasswordRecovery | null> {
+    return this.#store.get(id);
+  }
+
+  async findAll(): Promise<PasswordRecovery[]> {
+    return this.#store.all();
+  }
+
+  async save(recovery: PasswordRecovery): Promise<void> {
+    this.#store.put(recovery);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    return this.#store.remove(id);
+  }
+
+  async findLatestUnused(professionalId: string): Promise<PasswordRecovery | null> {
+    return (
+      this.#store
+        .all()
+        .filter((recovery) => recovery.professionalId === professionalId && !recovery.usedAt)
+        .sort(newestFirst)[0] ?? null
+    );
+  }
+}
+
+export class InMemoryLogoRepository extends LogoRepository {
+  readonly #logos = new Map<string, ProfessionalLogo>();
+
+  async find(professionalId: string): Promise<ProfessionalLogo | null> {
+    return this.#logos.get(professionalId) ?? null;
+  }
+
+  async save(professionalId: string, logo: ProfessionalLogo): Promise<void> {
+    this.#logos.set(professionalId, logo);
+  }
+
+  async delete(professionalId: string): Promise<void> {
+    this.#logos.delete(professionalId);
   }
 }
 
@@ -107,6 +177,19 @@ export class InMemoryPatientRepository extends PatientRepository {
       const text = PatientSearch.indexText(patient.firstName, patient.lastName, patient.dni);
       return terms.every((term) => text.includes(term));
     });
+  }
+
+  async findDormant(cutoff: Date, limit: number): Promise<Patient[]> {
+    return this.#store
+      .all()
+      .filter(
+        (patient) =>
+          patient.status === 'active' &&
+          patient.statusChangedAt < cutoff &&
+          patient.registeredAt < cutoff &&
+          (!patient.lastClinicalActivityAt || patient.lastClinicalActivityAt < cutoff),
+      )
+      .slice(0, limit);
   }
 
   private owned(professionalId: string): Patient[] {
@@ -185,8 +268,171 @@ export class InMemoryAppointmentRepository extends AppointmentRepository {
     );
   }
 
+  async findNeedingReminder(from: Date, to: Date, limit: number): Promise<Appointment[]> {
+    return this.#store
+      .all()
+      .filter(
+        (appointment) =>
+          appointment.isScheduled &&
+          !appointment.reminderSentAt &&
+          appointment.startsAt > from &&
+          appointment.startsAt <= to,
+      )
+      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())
+      .slice(0, limit);
+  }
+
   private owned(professionalId: string): Appointment[] {
     return this.#store.all().filter((appointment) => appointment.professionalId === professionalId);
+  }
+}
+
+export class InMemorySubscriptionRepository extends SubscriptionRepository {
+  readonly #store = new EntityStore<Subscription>();
+
+  async findById(id: string): Promise<Subscription | null> {
+    return this.#store.get(id);
+  }
+
+  async findAll(): Promise<Subscription[]> {
+    return this.#store.all();
+  }
+
+  async save(subscription: Subscription): Promise<void> {
+    this.#store.put(subscription);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    return this.#store.remove(id);
+  }
+
+  async findDue(now: Date, limit: number): Promise<Subscription[]> {
+    return this.#store
+      .all()
+      .filter(
+        (subscription) =>
+          (subscription.phase === 'trial' || subscription.phase === 'active') &&
+          !subscription.cancelledAt &&
+          subscription.periodEndsAt <= now,
+      )
+      .sort((a, b) => a.periodEndsAt.getTime() - b.periodEndsAt.getTime())
+      .slice(0, limit);
+  }
+}
+
+export class InMemoryPaymentRepository extends PaymentRepository {
+  readonly #store = new EntityStore<Payment>();
+
+  async findById(id: string): Promise<Payment | null> {
+    return this.#store.get(id);
+  }
+
+  async findAll(): Promise<Payment[]> {
+    return this.#store.all();
+  }
+
+  async save(payment: Payment): Promise<void> {
+    this.#store.put(payment);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    return this.#store.remove(id);
+  }
+
+  async findByProfessional(professionalId: string): Promise<Payment[]> {
+    return this.of(professionalId).sort(newestFirst);
+  }
+
+  async countByProfessional(professionalId: string): Promise<number> {
+    return this.of(professionalId).length;
+  }
+
+  async hasManualReference(professionalId: string, reference: string): Promise<boolean> {
+    return this.of(professionalId).some(
+      (payment) => payment.kind === 'manual' && payment.reference === reference,
+    );
+  }
+
+  private of(professionalId: string): Payment[] {
+    return this.#store.all().filter((payment) => payment.professionalId === professionalId);
+  }
+}
+
+export class InMemoryNotificationRepository extends NotificationRepository {
+  readonly #store = new EntityStore<Notification>();
+
+  async findById(id: string): Promise<Notification | null> {
+    return this.#store.get(id);
+  }
+
+  async findAll(): Promise<Notification[]> {
+    return this.#store.all();
+  }
+
+  async save(notification: Notification): Promise<void> {
+    this.#store.put(notification);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    return this.#store.remove(id);
+  }
+
+  async findByPatient(professionalId: string, patientId: string): Promise<Notification[]> {
+    return this.#store
+      .all()
+      .filter((n) => n.professionalId === professionalId && n.patientId === patientId)
+      .sort(newestFirst)
+      .slice(0, 200);
+  }
+}
+
+export class InMemoryVirtualMeetingRepository extends VirtualMeetingRepository {
+  readonly #store = new EntityStore<VirtualMeeting>();
+
+  async findById(id: string): Promise<VirtualMeeting | null> {
+    return this.#store.get(id);
+  }
+
+  async findAll(): Promise<VirtualMeeting[]> {
+    return this.#store.all();
+  }
+
+  async save(meeting: VirtualMeeting): Promise<void> {
+    this.#store.put(meeting);
+  }
+
+  async delete(id: string): Promise<boolean> {
+    return this.#store.remove(id);
+  }
+
+  async insertIfFirstForAppointment(meeting: VirtualMeeting): Promise<boolean> {
+    const taken =
+      meeting.appointmentId !== null &&
+      this.#store.all().some((other) => other.appointmentId === meeting.appointmentId);
+    if (taken) {
+      return false;
+    }
+    this.#store.put(meeting);
+    return true;
+  }
+
+  async findByPatient(professionalId: string, patientId: string): Promise<VirtualMeeting[]> {
+    return this.#store
+      .all()
+      .filter((m) => m.professionalId === professionalId && m.patientId === patientId)
+      .sort(newestFirst);
+  }
+
+  async findByAppointment(
+    professionalId: string,
+    appointmentId: string,
+  ): Promise<VirtualMeeting | null> {
+    return (
+      this.#store
+        .all()
+        .find((m) => m.professionalId === professionalId && m.appointmentId === appointmentId) ??
+      null
+    );
   }
 }
 
@@ -224,7 +470,6 @@ export class InMemoryDiagnosisCatalogRepository extends DiagnosisCatalogReposito
   }
 }
 
-/** Counts how many times the module asked to preload the catalog. */
 export class SpySeeder extends DiagnosisCatalogSeeder {
   runs = 0;
 
@@ -234,7 +479,6 @@ export class SpySeeder extends DiagnosisCatalogSeeder {
   }
 }
 
-/** Records every agenda notification instead of sending it. */
 export class SpyNotifier extends AppointmentNotifier {
   readonly sent: { event: AppointmentEvent; appointmentId: string }[] = [];
 
