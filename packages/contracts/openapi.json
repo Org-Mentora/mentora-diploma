@@ -454,6 +454,111 @@
           "dataUrl"
         ]
       },
+      "AuditEventPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEventDto"
+            }
+          },
+          "nextBefore": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass it as `before` to load the next (older) page; null on the last page"
+          }
+        },
+        "required": [
+          "items",
+          "nextBefore"
+        ]
+      },
+      "AuditEventDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "action": {
+            "type": "string",
+            "description": "`<category>.<verb>`, e.g. `patient.created`"
+          },
+          "category": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string",
+            "enum": [
+              "professional",
+              "patient",
+              "system"
+            ]
+          },
+          "targetType": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "targetId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "ip": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "userAgent": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "category",
+          "actor",
+          "targetType",
+          "targetId",
+          "details",
+          "ip",
+          "userAgent",
+          "occurredAt"
+        ]
+      },
       "SubscriptionDetailDto": {
         "type": "object",
         "properties": {
@@ -1555,6 +1660,21 @@
               "null"
             ]
           },
+          "fee": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "description": "Consultation fee (ARS); null = no fee"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "agenda",
+              "online"
+            ],
+            "description": "`online`: requested by the patient"
+          },
           "cancelledAt": {
             "type": [
               "string",
@@ -1574,7 +1694,246 @@
           "modality",
           "status",
           "notes",
+          "fee",
+          "source",
           "cancelledAt"
+        ]
+      },
+      "ConsultationFeesDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "amounts": {
+            "type": "object",
+            "properties": {
+              "first_visit": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100000000
+              },
+              "control": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100000000
+              },
+              "follow_up": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100000000
+              },
+              "medication": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100000000
+              },
+              "other": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100000000
+              }
+            },
+            "required": [
+              "first_visit",
+              "control",
+              "follow_up",
+              "medication",
+              "other"
+            ]
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "currency",
+          "amounts",
+          "updatedAt"
+        ]
+      },
+      "UpdateConsultationFeesRequestDto": {
+        "type": "object",
+        "properties": {
+          "amounts": {
+            "type": "object",
+            "properties": {
+              "first_visit": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100000000
+              },
+              "control": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100000000
+              },
+              "follow_up": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100000000
+              },
+              "medication": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100000000
+              },
+              "other": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100000000
+              }
+            },
+            "required": [
+              "first_visit",
+              "control",
+              "follow_up",
+              "medication",
+              "other"
+            ]
+          }
+        },
+        "required": [
+          "amounts"
+        ]
+      },
+      "EarningsReportDto": {
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "from": {
+            "type": "string"
+          },
+          "to": {
+            "type": "string"
+          },
+          "months": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "month": {
+                  "type": "string"
+                },
+                "earned": {
+                  "type": "number"
+                },
+                "projected": {
+                  "type": "number"
+                },
+                "appointments": {
+                  "type": "integer"
+                },
+                "unpriced": {
+                  "type": "integer"
+                },
+                "byType": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "first_visit",
+                          "control",
+                          "follow_up",
+                          "medication",
+                          "other"
+                        ]
+                      },
+                      "earned": {
+                        "type": "number"
+                      },
+                      "projected": {
+                        "type": "number"
+                      },
+                      "appointments": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "earned",
+                      "projected",
+                      "appointments"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "month",
+                "earned",
+                "projected",
+                "appointments",
+                "unpriced",
+                "byType"
+              ]
+            }
+          },
+          "totals": {
+            "type": "object",
+            "properties": {
+              "earned": {
+                "type": "number"
+              },
+              "projected": {
+                "type": "number"
+              },
+              "appointments": {
+                "type": "integer"
+              },
+              "unpriced": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "earned",
+              "projected",
+              "appointments",
+              "unpriced"
+            ]
+          }
+        },
+        "required": [
+          "currency",
+          "from",
+          "to",
+          "months",
+          "totals"
         ]
       },
       "ScheduleAppointmentRequestDto": {
@@ -1616,6 +1975,15 @@
               "null"
             ],
             "maxLength": 1000
+          },
+          "fee": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000000,
+            "description": "Omit to use the fee configured for the type; null for no fee"
           }
         },
         "required": [
@@ -1661,6 +2029,15 @@
               "null"
             ],
             "maxLength": 1000
+          },
+          "fee": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0,
+            "maximum": 100000000,
+            "description": "Omit to use the fee configured for the type; null for no fee"
           }
         },
         "required": [
@@ -1820,6 +2197,542 @@
         },
         "required": [
           "patientId"
+        ]
+      },
+      "BookingSettingsDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "slotMinutes": {
+            "type": "integer",
+            "minimum": 15,
+            "maximum": 240
+          },
+          "minNoticeHours": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 168
+          },
+          "horizonDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90
+          },
+          "modalities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "in_person",
+                "virtual"
+              ]
+            },
+            "minItems": 1
+          },
+          "weeklyHours": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "weekday": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 7,
+                  "description": "ISO weekday: 1 Monday … 7 Sunday"
+                },
+                "start": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                },
+                "end": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                }
+              },
+              "required": [
+                "weekday",
+                "start",
+                "end"
+              ]
+            },
+            "maxItems": 21
+          },
+          "instructions": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "slug",
+          "timezone",
+          "enabled",
+          "slotMinutes",
+          "minNoticeHours",
+          "horizonDays",
+          "modalities",
+          "weeklyHours",
+          "instructions"
+        ]
+      },
+      "UpdateBookingSettingsRequestDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "slotMinutes": {
+            "type": "integer",
+            "minimum": 15,
+            "maximum": 240
+          },
+          "minNoticeHours": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 168
+          },
+          "horizonDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90
+          },
+          "modalities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "in_person",
+                "virtual"
+              ]
+            },
+            "minItems": 1
+          },
+          "weeklyHours": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "weekday": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 7,
+                  "description": "ISO weekday: 1 Monday … 7 Sunday"
+                },
+                "start": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                },
+                "end": {
+                  "type": "string",
+                  "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                }
+              },
+              "required": [
+                "weekday",
+                "start",
+                "end"
+              ]
+            },
+            "maxItems": 21
+          },
+          "instructions": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "enabled",
+          "slotMinutes",
+          "minNoticeHours",
+          "horizonDays",
+          "modalities",
+          "weeklyHours",
+          "instructions"
+        ]
+      },
+      "BookingRequestDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requester": {
+            "type": "object",
+            "properties": {
+              "firstName": {
+                "type": "string"
+              },
+              "lastName": {
+                "type": "string"
+              },
+              "dni": {
+                "type": "string"
+              },
+              "birthDate": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date"
+              },
+              "phone": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "email": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "firstName",
+              "lastName",
+              "dni",
+              "birthDate",
+              "phone",
+              "email"
+            ]
+          },
+          "existingPatientId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid",
+            "description": "Patient with the same DNI, if the requester is already a patient"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durationMinutes": {
+            "type": "integer"
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "in_person",
+              "virtual"
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected",
+              "expired"
+            ]
+          },
+          "appointmentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "rejectionReason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "requester",
+          "existingPatientId",
+          "startsAt",
+          "endsAt",
+          "durationMinutes",
+          "modality",
+          "reason",
+          "status",
+          "appointmentId",
+          "rejectionReason",
+          "createdAt",
+          "decidedAt"
+        ]
+      },
+      "AcceptBookingRequestDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "first_visit",
+              "control",
+              "follow_up",
+              "medication",
+              "other"
+            ]
+          },
+          "notes": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "type"
+        ]
+      },
+      "RejectBookingRequestDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          }
+        }
+      },
+      "PublicBookingPageDto": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string"
+          },
+          "professional": {
+            "type": "object",
+            "properties": {
+              "fullName": {
+                "type": "string"
+              },
+              "specialty": {
+                "type": "string"
+              },
+              "offices": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "fullName",
+              "specialty",
+              "offices"
+            ]
+          },
+          "slotMinutes": {
+            "type": "integer"
+          },
+          "horizonDays": {
+            "type": "integer"
+          },
+          "modalities": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "in_person",
+                "virtual"
+              ]
+            }
+          },
+          "instructions": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "timezone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "slug",
+          "professional",
+          "slotMinutes",
+          "horizonDays",
+          "modalities",
+          "instructions",
+          "timezone"
+        ]
+      },
+      "AvailableSlotsDto": {
+        "type": "object",
+        "properties": {
+          "timezone": {
+            "type": "string"
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string"
+                },
+                "slots": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "required": [
+                "date",
+                "slots"
+              ]
+            }
+          }
+        },
+        "required": [
+          "timezone",
+          "days"
+        ]
+      },
+      "BookingReceiptDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "durationMinutes": {
+            "type": "integer"
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "in_person",
+              "virtual"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "startsAt",
+          "durationMinutes",
+          "modality",
+          "status"
+        ]
+      },
+      "CreateBookingRequestDto": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "lastName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "dni": {
+            "type": "string",
+            "minLength": 7,
+            "maxLength": 12
+          },
+          "birthDate": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 40
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "email"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "in_person",
+              "virtual"
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "website": {
+            "type": "string",
+            "maxLength": 0,
+            "description": "Honeypot: must stay empty"
+          }
+        },
+        "required": [
+          "firstName",
+          "lastName",
+          "dni",
+          "startsAt",
+          "modality"
         ]
       }
     },
@@ -2430,6 +3343,114 @@
         "responses": {
           "204": {
             "description": "Logo removed"
+          },
+          "401": {
+            "description": "Missing or invalid session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subscription inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/audit/events": {
+      "get": {
+        "operationId": "listAuditEvents",
+        "summary": "User audit trail: what was done in the account, when and from where (newest first)",
+        "tags": [
+          "Audit"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z_]+$",
+              "description": "session, account, patient, consultation, appointment, booking, …"
+            },
+            "required": false,
+            "description": "session, account, patient, consultation, appointment, booking, …",
+            "name": "category",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "required": false,
+            "name": "to",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[^_]+_[0-9a-f-]{36}$",
+              "description": "Cursor: the `nextBefore` of the previous page"
+            },
+            "required": false,
+            "description": "Cursor: the `nextBefore` of the previous page",
+            "name": "before",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            },
+            "required": false,
+            "name": "limit",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "One page of audit events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEventPageDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid filter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Missing or invalid session",
@@ -4053,6 +5074,195 @@
         }
       }
     },
+    "/appointments/fees": {
+      "get": {
+        "operationId": "getConsultationFees",
+        "summary": "Consultation fees per appointment type (default fee of new appointments)",
+        "tags": [
+          "Appointments"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fee table",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsultationFeesDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subscription inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateConsultationFees",
+        "summary": "Set the consultation fee of each appointment type",
+        "tags": [
+          "Appointments"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateConsultationFeesRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Fee table saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsultationFeesDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subscription inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/appointments/earnings": {
+      "get": {
+        "operationId": "getEarningsReport",
+        "summary": "Earnings per month from the fees of held (earned) and upcoming (projected) appointments",
+        "tags": [
+          "Appointments"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "description": "First month (YYYY-MM)"
+            },
+            "required": true,
+            "description": "First month (YYYY-MM)",
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+              "description": "Last month, inclusive (YYYY-MM). Max 24 months"
+            },
+            "required": true,
+            "description": "Last month, inclusive (YYYY-MM). Max 24 months",
+            "name": "to",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Monthly earnings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EarningsReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subscription inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/appointments/{id}": {
       "get": {
         "operationId": "getAppointment",
@@ -4502,6 +5712,561 @@
           },
           "403": {
             "description": "Subscription inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking/settings": {
+      "get": {
+        "operationId": "getBookingSettings",
+        "summary": "Online booking settings and public link of the professional",
+        "tags": [
+          "Online booking"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingSettingsDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subscription inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateBookingSettings",
+        "summary": "Enable online booking and set office hours, slot length and notice",
+        "tags": [
+          "Online booking"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateBookingSettingsRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingSettingsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subscription inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking/requests": {
+      "get": {
+        "operationId": "listBookingRequests",
+        "summary": "Appointment requests sent by patients (pending first by date)",
+        "tags": [
+          "Online booking"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "pending",
+                "accepted",
+                "rejected",
+                "expired"
+              ]
+            },
+            "required": false,
+            "name": "status",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingRequestDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subscription inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking/requests/{id}/accept": {
+      "post": {
+        "operationId": "acceptBookingRequest",
+        "summary": "Accept a request: registers the patient if new and schedules the appointment",
+        "tags": [
+          "Online booking",
+          "Appointments",
+          "Patients"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptBookingRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingRequestDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subscription inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Time taken or request already decided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking/requests/{id}/reject": {
+      "post": {
+        "operationId": "rejectBookingRequest",
+        "summary": "Reject a request (the patient is told by email when possible)",
+        "tags": [
+          "Online booking"
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "required": true,
+            "name": "id",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectBookingRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingRequestDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Subscription inactive",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Time taken or request already decided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking/public/{slug}": {
+      "get": {
+        "operationId": "getPublicBookingPage",
+        "summary": "Public: booking page of a professional",
+        "tags": [
+          "Online booking"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]{3,60}$"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicBookingPageDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking/public/{slug}/slots": {
+      "get": {
+        "operationId": "getAvailableSlots",
+        "summary": "Public: free slots per day",
+        "tags": [
+          "Online booking"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]{3,60}$"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "description": "First day (YYYY-MM-DD); default today"
+            },
+            "required": false,
+            "description": "First day (YYYY-MM-DD); default today",
+            "name": "from",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 14,
+              "default": 7
+            },
+            "required": false,
+            "name": "days",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Free slots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailableSlotsDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/booking/public/{slug}/requests": {
+      "post": {
+        "operationId": "createBookingRequest",
+        "summary": "Public: a patient asks for an appointment; the professional accepts or rejects it",
+        "tags": [
+          "Online booking"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]{3,60}$"
+            },
+            "required": true,
+            "name": "slug",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookingRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Request received",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingReceiptDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Time taken or request already decided",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests",
             "content": {
               "application/json": {
                 "schema": {

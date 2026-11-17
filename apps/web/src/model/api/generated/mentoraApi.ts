@@ -2,6 +2,7 @@ import { baseApi as api } from "../baseApi";
 export const addTagTypes = [
   "Health",
   "Auth",
+  "Audit",
   "Subscription",
   "Patients",
   "Diagnoses",
@@ -9,6 +10,7 @@ export const addTagTypes = [
   "Appointments",
   "Notifications",
   "VirtualConsultations",
+  "Online booking",
 ] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
@@ -128,6 +130,22 @@ const injectedRtkApi = api
       removeLogo: build.mutation<RemoveLogoApiResponse, RemoveLogoApiArg>({
         query: () => ({ url: `/auth/logo`, method: "DELETE" }),
         invalidatesTags: ["Auth"],
+      }),
+      listAuditEvents: build.query<
+        ListAuditEventsApiResponse,
+        ListAuditEventsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/audit/events`,
+          params: {
+            category: queryArg.category,
+            from: queryArg["from"],
+            to: queryArg.to,
+            before: queryArg.before,
+            limit: queryArg.limit,
+          },
+        }),
+        providesTags: ["Audit"],
       }),
       getSubscription: build.query<
         GetSubscriptionApiResponse,
@@ -344,6 +362,37 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ["Appointments"],
       }),
+      getConsultationFees: build.query<
+        GetConsultationFeesApiResponse,
+        GetConsultationFeesApiArg
+      >({
+        query: () => ({ url: `/appointments/fees` }),
+        providesTags: ["Appointments"],
+      }),
+      updateConsultationFees: build.mutation<
+        UpdateConsultationFeesApiResponse,
+        UpdateConsultationFeesApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/appointments/fees`,
+          method: "PUT",
+          body: queryArg.updateConsultationFeesRequestDto,
+        }),
+        invalidatesTags: ["Appointments"],
+      }),
+      getEarningsReport: build.query<
+        GetEarningsReportApiResponse,
+        GetEarningsReportApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/appointments/earnings`,
+          params: {
+            from: queryArg["from"],
+            to: queryArg.to,
+          },
+        }),
+        providesTags: ["Appointments"],
+      }),
       getAppointment: build.query<
         GetAppointmentApiResponse,
         GetAppointmentApiArg
@@ -408,6 +457,89 @@ const injectedRtkApi = api
         }),
         providesTags: ["VirtualConsultations"],
       }),
+      getBookingSettings: build.query<
+        GetBookingSettingsApiResponse,
+        GetBookingSettingsApiArg
+      >({
+        query: () => ({ url: `/booking/settings` }),
+        providesTags: ["Online booking"],
+      }),
+      updateBookingSettings: build.mutation<
+        UpdateBookingSettingsApiResponse,
+        UpdateBookingSettingsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/booking/settings`,
+          method: "PUT",
+          body: queryArg.updateBookingSettingsRequestDto,
+        }),
+        invalidatesTags: ["Online booking"],
+      }),
+      listBookingRequests: build.query<
+        ListBookingRequestsApiResponse,
+        ListBookingRequestsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/booking/requests`,
+          params: {
+            status: queryArg.status,
+          },
+        }),
+        providesTags: ["Online booking"],
+      }),
+      acceptBookingRequest: build.mutation<
+        AcceptBookingRequestApiResponse,
+        AcceptBookingRequestApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/booking/requests/${queryArg.id}/accept`,
+          method: "POST",
+          body: queryArg.acceptBookingRequestDto,
+        }),
+        invalidatesTags: ["Online booking", "Appointments", "Patients"],
+      }),
+      rejectBookingRequest: build.mutation<
+        RejectBookingRequestApiResponse,
+        RejectBookingRequestApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/booking/requests/${queryArg.id}/reject`,
+          method: "POST",
+          body: queryArg.rejectBookingRequestDto,
+        }),
+        invalidatesTags: ["Online booking"],
+      }),
+      getPublicBookingPage: build.query<
+        GetPublicBookingPageApiResponse,
+        GetPublicBookingPageApiArg
+      >({
+        query: (queryArg) => ({ url: `/booking/public/${queryArg.slug}` }),
+        providesTags: ["Online booking"],
+      }),
+      getAvailableSlots: build.query<
+        GetAvailableSlotsApiResponse,
+        GetAvailableSlotsApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/booking/public/${queryArg.slug}/slots`,
+          params: {
+            from: queryArg["from"],
+            days: queryArg.days,
+          },
+        }),
+        providesTags: ["Online booking"],
+      }),
+      createBookingRequest: build.mutation<
+        CreateBookingRequestApiResponse,
+        CreateBookingRequestApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/booking/public/${queryArg.slug}/requests`,
+          method: "POST",
+          body: queryArg.createBookingRequestDto,
+        }),
+        invalidatesTags: ["Online booking"],
+      }),
     }),
     overrideExisting: false,
   });
@@ -465,6 +597,17 @@ export type UploadLogoApiArg = {
 };
 export type RemoveLogoApiResponse = unknown;
 export type RemoveLogoApiArg = void;
+export type ListAuditEventsApiResponse =
+  /** status 200 One page of audit events */ AuditEventPageDto;
+export type ListAuditEventsApiArg = {
+  /** session, account, patient, consultation, appointment, booking, … */
+  category?: string;
+  from?: string;
+  to?: string;
+  /** Cursor: the `nextBefore` of the previous page */
+  before?: string;
+  limit?: number;
+};
 export type GetSubscriptionApiResponse =
   /** status 200 Subscription */ SubscriptionDetailDto;
 export type GetSubscriptionApiArg = void;
@@ -580,6 +723,22 @@ export type ScheduleAppointmentApiResponse =
 export type ScheduleAppointmentApiArg = {
   scheduleAppointmentRequestDto: ScheduleAppointmentRequestDto;
 };
+export type GetConsultationFeesApiResponse =
+  /** status 200 Fee table */ ConsultationFeesDto;
+export type GetConsultationFeesApiArg = void;
+export type UpdateConsultationFeesApiResponse =
+  /** status 200 Fee table saved */ ConsultationFeesDto;
+export type UpdateConsultationFeesApiArg = {
+  updateConsultationFeesRequestDto: UpdateConsultationFeesRequestDto;
+};
+export type GetEarningsReportApiResponse =
+  /** status 200 Monthly earnings */ EarningsReportDto;
+export type GetEarningsReportApiArg = {
+  /** First month (YYYY-MM) */
+  from: string;
+  /** Last month, inclusive (YYYY-MM). Max 24 months */
+  to: string;
+};
 export type GetAppointmentApiResponse =
   /** status 200 Appointment */ AppointmentDto;
 export type GetAppointmentApiArg = {
@@ -611,6 +770,50 @@ export type ListVirtualMeetingsApiResponse =
 export type ListVirtualMeetingsApiArg = {
   patientId?: string;
   appointmentId?: string;
+};
+export type GetBookingSettingsApiResponse =
+  /** status 200 Settings */ BookingSettingsDto;
+export type GetBookingSettingsApiArg = void;
+export type UpdateBookingSettingsApiResponse =
+  /** status 200 Saved */ BookingSettingsDto;
+export type UpdateBookingSettingsApiArg = {
+  updateBookingSettingsRequestDto: UpdateBookingSettingsRequestDto;
+};
+export type ListBookingRequestsApiResponse =
+  /** status 200 Requests */ BookingRequestDto[];
+export type ListBookingRequestsApiArg = {
+  status?: "pending" | "accepted" | "rejected" | "expired";
+};
+export type AcceptBookingRequestApiResponse =
+  /** status 200 Accepted */ BookingRequestDto;
+export type AcceptBookingRequestApiArg = {
+  id: string;
+  acceptBookingRequestDto: AcceptBookingRequestDto;
+};
+export type RejectBookingRequestApiResponse =
+  /** status 200 Rejected */ BookingRequestDto;
+export type RejectBookingRequestApiArg = {
+  id: string;
+  rejectBookingRequestDto: RejectBookingRequestDto;
+};
+export type GetPublicBookingPageApiResponse =
+  /** status 200 Page */ PublicBookingPageDto;
+export type GetPublicBookingPageApiArg = {
+  slug: string;
+};
+export type GetAvailableSlotsApiResponse =
+  /** status 200 Free slots */ AvailableSlotsDto;
+export type GetAvailableSlotsApiArg = {
+  slug: string;
+  /** First day (YYYY-MM-DD); default today */
+  from?: string;
+  days?: number;
+};
+export type CreateBookingRequestApiResponse =
+  /** status 201 Request received */ BookingReceiptDto;
+export type CreateBookingRequestApiArg = {
+  slug: string;
+  createBookingRequestDto: CreateBookingRequestDto;
 };
 export type ComponentHealthDto = {
   name: string;
@@ -709,6 +912,26 @@ export type LogoDto = {
 export type UploadLogoRequestDto = {
   /** data:image/png;base64,... or data:image/jpeg;base64,... (512 KB) */
   dataUrl: string;
+};
+export type AuditEventDto = {
+  id: string;
+  /** `<category>.<verb>`, e.g. `patient.created` */
+  action: string;
+  category: string;
+  actor: "professional" | "patient" | "system";
+  targetType: string | null;
+  targetId: string | null;
+  details: {
+    [key: string]: string | number | boolean | null;
+  };
+  ip: string | null;
+  userAgent: string | null;
+  occurredAt: string;
+};
+export type AuditEventPageDto = {
+  items: AuditEventDto[];
+  /** Pass it as `before` to load the next (older) page; null on the last page */
+  nextBefore: string | null;
 };
 export type PlanDto = {
   id: "monthly" | "annual";
@@ -924,6 +1147,10 @@ export type AppointmentDto = {
   modality: "in_person" | "virtual";
   status: "scheduled" | "cancelled";
   notes: string | null;
+  /** Consultation fee (ARS); null = no fee */
+  fee: number | null;
+  /** `online`: requested by the patient */
+  source: "agenda" | "online";
   cancelledAt: string | null;
 };
 export type ScheduleAppointmentRequestDto = {
@@ -933,6 +1160,52 @@ export type ScheduleAppointmentRequestDto = {
   type: "first_visit" | "control" | "follow_up" | "medication" | "other";
   modality: "in_person" | "virtual";
   notes?: string | null;
+  /** Omit to use the fee configured for the type; null for no fee */
+  fee?: number | null;
+};
+export type ConsultationFeesDto = {
+  currency: string;
+  amounts: {
+    first_visit: number | null;
+    control: number | null;
+    follow_up: number | null;
+    medication: number | null;
+    other: number | null;
+  };
+  updatedAt: string;
+};
+export type UpdateConsultationFeesRequestDto = {
+  amounts: {
+    first_visit: number | null;
+    control: number | null;
+    follow_up: number | null;
+    medication: number | null;
+    other: number | null;
+  };
+};
+export type EarningsReportDto = {
+  currency: string;
+  from: string;
+  to: string;
+  months: {
+    month: string;
+    earned: number;
+    projected: number;
+    appointments: number;
+    unpriced: number;
+    byType: {
+      type: "first_visit" | "control" | "follow_up" | "medication" | "other";
+      earned: number;
+      projected: number;
+      appointments: number;
+    }[];
+  }[];
+  totals: {
+    earned: number;
+    projected: number;
+    appointments: number;
+    unpriced: number;
+  };
 };
 export type RescheduleAppointmentRequestDto = {
   startsAt: string;
@@ -940,6 +1213,8 @@ export type RescheduleAppointmentRequestDto = {
   type: "first_visit" | "control" | "follow_up" | "medication" | "other";
   modality: "in_person" | "virtual";
   notes?: string | null;
+  /** Omit to use the fee configured for the type; null for no fee */
+  fee?: number | null;
 };
 export type NotificationDto = {
   id: string;
@@ -973,6 +1248,106 @@ export type StartVirtualMeetingRequestDto = {
   /** Virtual appointment the call belongs to; omit from the patient file */
   appointmentId?: string | null;
 };
+export type BookingSettingsDto = {
+  slug: string;
+  timezone: string;
+  enabled: boolean;
+  slotMinutes: number;
+  minNoticeHours: number;
+  horizonDays: number;
+  modalities: ("in_person" | "virtual")[];
+  weeklyHours: {
+    /** ISO weekday: 1 Monday … 7 Sunday */
+    weekday: number;
+    start: string;
+    end: string;
+  }[];
+  instructions: string | null;
+};
+export type UpdateBookingSettingsRequestDto = {
+  enabled: boolean;
+  slotMinutes: number;
+  minNoticeHours: number;
+  horizonDays: number;
+  modalities: ("in_person" | "virtual")[];
+  weeklyHours: {
+    /** ISO weekday: 1 Monday … 7 Sunday */
+    weekday: number;
+    start: string;
+    end: string;
+  }[];
+  instructions: string | null;
+};
+export type BookingRequestDto = {
+  id: string;
+  requester: {
+    firstName: string;
+    lastName: string;
+    dni: string;
+    birthDate: string | null;
+    phone: string | null;
+    email: string | null;
+  };
+  /** Patient with the same DNI, if the requester is already a patient */
+  existingPatientId: string | null;
+  startsAt: string;
+  endsAt: string;
+  durationMinutes: number;
+  modality: "in_person" | "virtual";
+  reason: string | null;
+  status: "pending" | "accepted" | "rejected" | "expired";
+  appointmentId: string | null;
+  rejectionReason: string | null;
+  createdAt: string;
+  decidedAt: string | null;
+};
+export type AcceptBookingRequestDto = {
+  type: "first_visit" | "control" | "follow_up" | "medication" | "other";
+  notes?: string | null;
+};
+export type RejectBookingRequestDto = {
+  reason?: string | null;
+};
+export type PublicBookingPageDto = {
+  slug: string;
+  professional: {
+    fullName: string;
+    specialty: string;
+    offices: string[];
+  };
+  slotMinutes: number;
+  horizonDays: number;
+  modalities: ("in_person" | "virtual")[];
+  instructions: string | null;
+  timezone: string;
+};
+export type AvailableSlotsDto = {
+  timezone: string;
+  days: {
+    date: string;
+    slots: string[];
+  }[];
+};
+export type BookingReceiptDto = {
+  id: string;
+  startsAt: string;
+  durationMinutes: number;
+  modality: "in_person" | "virtual";
+  status: "pending";
+};
+export type CreateBookingRequestDto = {
+  firstName: string;
+  lastName: string;
+  dni: string;
+  birthDate?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  startsAt: string;
+  modality: "in_person" | "virtual";
+  reason?: string | null;
+  /** Honeypot: must stay empty */
+  website?: string;
+};
 export const {
   useGetHealthQuery,
   useGetLivenessQuery,
@@ -989,6 +1364,7 @@ export const {
   useGetLogoQuery,
   useUploadLogoMutation,
   useRemoveLogoMutation,
+  useListAuditEventsQuery,
   useGetSubscriptionQuery,
   useChoosePlanMutation,
   useAddPaymentMethodMutation,
@@ -1011,10 +1387,21 @@ export const {
   useGetRecordAccessLogQuery,
   useListAppointmentsQuery,
   useScheduleAppointmentMutation,
+  useGetConsultationFeesQuery,
+  useUpdateConsultationFeesMutation,
+  useGetEarningsReportQuery,
   useGetAppointmentQuery,
   useRescheduleAppointmentMutation,
   useCancelAppointmentMutation,
   useListNotificationsQuery,
   useStartVirtualMeetingMutation,
   useListVirtualMeetingsQuery,
+  useGetBookingSettingsQuery,
+  useUpdateBookingSettingsMutation,
+  useListBookingRequestsQuery,
+  useAcceptBookingRequestMutation,
+  useRejectBookingRequestMutation,
+  useGetPublicBookingPageQuery,
+  useGetAvailableSlotsQuery,
+  useCreateBookingRequestMutation,
 } = injectedRtkApi;

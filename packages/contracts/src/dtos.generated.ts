@@ -227,6 +227,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/audit/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** User audit trail: what was done in the account, when and from where (newest first) */
+        get: operations["listAuditEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/subscription": {
         parameters: {
             query?: never;
@@ -521,6 +538,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/appointments/fees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consultation fees per appointment type (default fee of new appointments) */
+        get: operations["getConsultationFees"];
+        /** Set the consultation fee of each appointment type */
+        put: operations["updateConsultationFees"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/appointments/earnings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Earnings per month from the fees of held (earned) and upcoming (projected) appointments */
+        get: operations["getEarningsReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/appointments/{id}": {
         parameters: {
             query?: never;
@@ -585,6 +637,126 @@ export interface paths {
         put?: never;
         /** CU-15 Create the video call link and send it to the patient */
         post: operations["startVirtualMeeting"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/booking/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Online booking settings and public link of the professional */
+        get: operations["getBookingSettings"];
+        /** Enable online booking and set office hours, slot length and notice */
+        put: operations["updateBookingSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/booking/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Appointment requests sent by patients (pending first by date) */
+        get: operations["listBookingRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/booking/requests/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accept a request: registers the patient if new and schedules the appointment */
+        post: operations["acceptBookingRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/booking/requests/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a request (the patient is told by email when possible) */
+        post: operations["rejectBookingRequest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/booking/public/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public: booking page of a professional */
+        get: operations["getPublicBookingPage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/booking/public/{slug}/slots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Public: free slots per day */
+        get: operations["getAvailableSlots"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/booking/public/{slug}/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Public: a patient asks for an appointment; the professional accepts or rejects it */
+        post: operations["createBookingRequest"];
         delete?: never;
         options?: never;
         head?: never;
@@ -706,6 +878,29 @@ export interface components {
         UploadLogoRequestDto: {
             /** @description data:image/png;base64,... or data:image/jpeg;base64,... (512 KB) */
             dataUrl: string;
+        };
+        AuditEventPageDto: {
+            items: components["schemas"]["AuditEventDto"][];
+            /** @description Pass it as `before` to load the next (older) page; null on the last page */
+            nextBefore: string | null;
+        };
+        AuditEventDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description `<category>.<verb>`, e.g. `patient.created` */
+            action: string;
+            category: string;
+            /** @enum {string} */
+            actor: "professional" | "patient" | "system";
+            targetType: string | null;
+            targetId: string | null;
+            details: {
+                [key: string]: string | number | boolean | null;
+            };
+            ip: string | null;
+            userAgent: string | null;
+            /** Format: date-time */
+            occurredAt: string;
         };
         /** @description CU-18 subscription panel */
         SubscriptionDetailDto: {
@@ -975,8 +1170,61 @@ export interface components {
             /** @enum {string} */
             status: "scheduled" | "cancelled";
             notes: string | null;
+            /** @description Consultation fee (ARS); null = no fee */
+            fee: number | null;
+            /**
+             * @description `online`: requested by the patient
+             * @enum {string}
+             */
+            source: "agenda" | "online";
             /** Format: date-time */
             cancelledAt: string | null;
+        };
+        ConsultationFeesDto: {
+            currency: string;
+            amounts: {
+                first_visit: number | null;
+                control: number | null;
+                follow_up: number | null;
+                medication: number | null;
+                other: number | null;
+            };
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        UpdateConsultationFeesRequestDto: {
+            amounts: {
+                first_visit: number | null;
+                control: number | null;
+                follow_up: number | null;
+                medication: number | null;
+                other: number | null;
+            };
+        };
+        EarningsReportDto: {
+            currency: string;
+            from: string;
+            to: string;
+            months: {
+                month: string;
+                earned: number;
+                projected: number;
+                appointments: number;
+                unpriced: number;
+                byType: {
+                    /** @enum {string} */
+                    type: "first_visit" | "control" | "follow_up" | "medication" | "other";
+                    earned: number;
+                    projected: number;
+                    appointments: number;
+                }[];
+            }[];
+            totals: {
+                earned: number;
+                projected: number;
+                appointments: number;
+                unpriced: number;
+            };
         };
         ScheduleAppointmentRequestDto: {
             /** Format: uuid */
@@ -989,6 +1237,8 @@ export interface components {
             /** @enum {string} */
             modality: "in_person" | "virtual";
             notes?: string | null;
+            /** @description Omit to use the fee configured for the type; null for no fee */
+            fee?: number | null;
         };
         RescheduleAppointmentRequestDto: {
             /** Format: date-time */
@@ -999,6 +1249,8 @@ export interface components {
             /** @enum {string} */
             modality: "in_person" | "virtual";
             notes?: string | null;
+            /** @description Omit to use the fee configured for the type; null for no fee */
+            fee?: number | null;
         };
         NotificationDto: {
             /** Format: uuid */
@@ -1044,6 +1296,127 @@ export interface components {
              */
             appointmentId?: string | null;
         };
+        BookingSettingsDto: {
+            slug: string;
+            timezone: string;
+            enabled: boolean;
+            slotMinutes: number;
+            minNoticeHours: number;
+            horizonDays: number;
+            modalities: ("in_person" | "virtual")[];
+            weeklyHours: {
+                /** @description ISO weekday: 1 Monday … 7 Sunday */
+                weekday: number;
+                start: string;
+                end: string;
+            }[];
+            instructions: string | null;
+        };
+        UpdateBookingSettingsRequestDto: {
+            enabled: boolean;
+            slotMinutes: number;
+            minNoticeHours: number;
+            horizonDays: number;
+            modalities: ("in_person" | "virtual")[];
+            weeklyHours: {
+                /** @description ISO weekday: 1 Monday … 7 Sunday */
+                weekday: number;
+                start: string;
+                end: string;
+            }[];
+            instructions: string | null;
+        };
+        BookingRequestDto: {
+            /** Format: uuid */
+            id: string;
+            requester: {
+                firstName: string;
+                lastName: string;
+                dni: string;
+                /** Format: date */
+                birthDate: string | null;
+                phone: string | null;
+                email: string | null;
+            };
+            /**
+             * Format: uuid
+             * @description Patient with the same DNI, if the requester is already a patient
+             */
+            existingPatientId: string | null;
+            /** Format: date-time */
+            startsAt: string;
+            /** Format: date-time */
+            endsAt: string;
+            durationMinutes: number;
+            /** @enum {string} */
+            modality: "in_person" | "virtual";
+            reason: string | null;
+            /** @enum {string} */
+            status: "pending" | "accepted" | "rejected" | "expired";
+            /** Format: uuid */
+            appointmentId: string | null;
+            rejectionReason: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            decidedAt: string | null;
+        };
+        AcceptBookingRequestDto: {
+            /** @enum {string} */
+            type: "first_visit" | "control" | "follow_up" | "medication" | "other";
+            notes?: string | null;
+        };
+        RejectBookingRequestDto: {
+            reason?: string | null;
+        };
+        PublicBookingPageDto: {
+            slug: string;
+            professional: {
+                fullName: string;
+                specialty: string;
+                offices: string[];
+            };
+            slotMinutes: number;
+            horizonDays: number;
+            modalities: ("in_person" | "virtual")[];
+            instructions: string | null;
+            timezone: string;
+        };
+        AvailableSlotsDto: {
+            timezone: string;
+            days: {
+                date: string;
+                slots: string[];
+            }[];
+        };
+        BookingReceiptDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            startsAt: string;
+            durationMinutes: number;
+            /** @enum {string} */
+            modality: "in_person" | "virtual";
+            /** @enum {string} */
+            status: "pending";
+        };
+        CreateBookingRequestDto: {
+            firstName: string;
+            lastName: string;
+            dni: string;
+            /** Format: date */
+            birthDate?: string | null;
+            phone?: string | null;
+            /** Format: email */
+            email?: string | null;
+            /** Format: date-time */
+            startsAt: string;
+            /** @enum {string} */
+            modality: "in_person" | "virtual";
+            reason?: string | null;
+            /** @description Honeypot: must stay empty */
+            website?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -1067,6 +1440,8 @@ export type ChangePasswordRequestDto = components['schemas']['ChangePasswordRequ
 export type UpdateProfileRequestDto = components['schemas']['UpdateProfileRequestDto'];
 export type LogoDto = components['schemas']['LogoDto'];
 export type UploadLogoRequestDto = components['schemas']['UploadLogoRequestDto'];
+export type AuditEventPageDto = components['schemas']['AuditEventPageDto'];
+export type AuditEventDto = components['schemas']['AuditEventDto'];
 export type SubscriptionDetailDto = components['schemas']['SubscriptionDetailDto'];
 export type PlanDto = components['schemas']['PlanDto'];
 export type PaymentMethodDto = components['schemas']['PaymentMethodDto'];
@@ -1092,11 +1467,23 @@ export type MedicationInputDto = components['schemas']['MedicationInputDto'];
 export type DiagnosisHistoryEntryDto = components['schemas']['DiagnosisHistoryEntryDto'];
 export type RecordAccessDto = components['schemas']['RecordAccessDto'];
 export type AppointmentDto = components['schemas']['AppointmentDto'];
+export type ConsultationFeesDto = components['schemas']['ConsultationFeesDto'];
+export type UpdateConsultationFeesRequestDto = components['schemas']['UpdateConsultationFeesRequestDto'];
+export type EarningsReportDto = components['schemas']['EarningsReportDto'];
 export type ScheduleAppointmentRequestDto = components['schemas']['ScheduleAppointmentRequestDto'];
 export type RescheduleAppointmentRequestDto = components['schemas']['RescheduleAppointmentRequestDto'];
 export type NotificationDto = components['schemas']['NotificationDto'];
 export type VirtualMeetingDto = components['schemas']['VirtualMeetingDto'];
 export type StartVirtualMeetingRequestDto = components['schemas']['StartVirtualMeetingRequestDto'];
+export type BookingSettingsDto = components['schemas']['BookingSettingsDto'];
+export type UpdateBookingSettingsRequestDto = components['schemas']['UpdateBookingSettingsRequestDto'];
+export type BookingRequestDto = components['schemas']['BookingRequestDto'];
+export type AcceptBookingRequestDto = components['schemas']['AcceptBookingRequestDto'];
+export type RejectBookingRequestDto = components['schemas']['RejectBookingRequestDto'];
+export type PublicBookingPageDto = components['schemas']['PublicBookingPageDto'];
+export type AvailableSlotsDto = components['schemas']['AvailableSlotsDto'];
+export type BookingReceiptDto = components['schemas']['BookingReceiptDto'];
+export type CreateBookingRequestDto = components['schemas']['CreateBookingRequestDto'];
 export type $defs = Record<string, never>;
 export interface operations {
     getHealth: {
@@ -1625,6 +2012,61 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    listAuditEvents: {
+        parameters: {
+            query?: {
+                /** @description session, account, patient, consultation, appointment, booking, … */
+                category?: string;
+                from?: string;
+                to?: string;
+                /** @description Cursor: the `nextBefore` of the previous page */
+                before?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of audit events */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEventPageDto"];
+                };
+            };
+            /** @description Invalid filter */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
             };
             /** @description Missing or invalid session */
             401: {
@@ -2819,6 +3261,147 @@ export interface operations {
             };
         };
     };
+    getConsultationFees: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Fee table */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsultationFeesDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    updateConsultationFees: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateConsultationFeesRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Fee table saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsultationFeesDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getEarningsReport: {
+        parameters: {
+            query: {
+                /** @description First month (YYYY-MM) */
+                from: string;
+                /** @description Last month, inclusive (YYYY-MM). Max 24 months */
+                to: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Monthly earnings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EarningsReportDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
     getAppointment: {
         parameters: {
             query?: never;
@@ -3147,6 +3730,405 @@ export interface operations {
             };
             /** @description The video platform is not available */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getBookingSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Settings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingSettingsDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    updateBookingSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateBookingSettingsRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Saved */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingSettingsDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    listBookingRequests: {
+        parameters: {
+            query?: {
+                status?: "pending" | "accepted" | "rejected" | "expired";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Requests */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingRequestDto"][];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    acceptBookingRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AcceptBookingRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingRequestDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Time taken or request already decided */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    rejectBookingRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RejectBookingRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Rejected */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingRequestDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Time taken or request already decided */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getPublicBookingPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicBookingPageDto"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getAvailableSlots: {
+        parameters: {
+            query?: {
+                /** @description First day (YYYY-MM-DD); default today */
+                from?: string;
+                days?: number;
+            };
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Free slots */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AvailableSlotsDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    createBookingRequest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["CreateBookingRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Request received */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BookingReceiptDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Time taken or request already decided */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Too many requests */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };
