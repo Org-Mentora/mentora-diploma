@@ -31,9 +31,15 @@ export class Appointment extends Entity<AppointmentProps> {
   static readonly MAX_DURATION = 240;
   static readonly REMINDER_WINDOW_MS = 24 * 60 * MINUTE_MS;
 
-  static schedule(professionalId: string, patientId: string, slot: AppointmentSlot, now: Date) {
+  static schedule(
+    id: string,
+    professionalId: string,
+    patientId: string,
+    slot: AppointmentSlot,
+    now: Date,
+  ) {
     Appointment.validateSlot(slot, now);
-    return new Appointment(crypto.randomUUID(), {
+    return new Appointment(id, {
       ...slot,
       notes: slot.notes?.trim() || null,
       professionalId,

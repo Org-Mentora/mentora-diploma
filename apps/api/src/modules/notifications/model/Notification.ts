@@ -25,8 +25,8 @@ export interface NotificationProps {
 
 // Aggregate Root
 export class Notification extends Entity<NotificationProps> {
-  static record(props: NotificationProps): Notification {
-    return new Notification(crypto.randomUUID(), props);
+  static record(id: string, props: NotificationProps): Notification {
+    return new Notification(id, props);
   }
 
   static restore(id: string, props: NotificationProps): Notification {

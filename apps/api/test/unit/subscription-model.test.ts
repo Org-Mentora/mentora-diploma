@@ -12,6 +12,7 @@ const contact = { email: 'ana@mentora.test', name: 'Ana García' };
 
 const card = (last4 = '4242') =>
   PaymentMethod.register(
+    crypto.randomUUID(),
     {
       brand: 'visa',
       last4,

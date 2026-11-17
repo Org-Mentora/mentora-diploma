@@ -1,13 +1,14 @@
 import type { Router } from 'express';
+import type { DateFormatter } from '#core/format/DateFormatter';
 import type { AppLogger } from '#core/logging/AppLogger';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 import type { ScheduledJob } from '#core/scheduling/ScheduledJob';
 import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
-import type { DateTimeFormatter } from '#infrastructure/format/DateTimeFormatter';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { NotificationCenter } from '#modules/notifications';
 import type { PatientDirectory } from '#modules/patients';
@@ -35,9 +36,10 @@ import { AppointmentRoutes } from './view/AppointmentRoutes';
 export interface AppointmentsModuleDependencies {
   guard: AuthGuard;
   clock: Clock;
+  ids: IdGenerator;
   patients: PatientDirectory;
   notifications: NotificationCenter;
-  dates: DateTimeFormatter;
+  dates: DateFormatter;
   logger: AppLogger;
   transactions: TransactionManager;
   context: TransactionContext;
@@ -72,6 +74,7 @@ export class AppointmentsModule implements AppModule, AppointmentPresenterFactor
         ),
       deps.clock,
       deps.lock ?? new MongooseAgendaLock(deps.context),
+      deps.ids,
     );
   }
 

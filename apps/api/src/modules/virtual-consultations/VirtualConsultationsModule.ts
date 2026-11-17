@@ -1,5 +1,6 @@
 import type { Router } from 'express';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
@@ -29,6 +30,7 @@ import { VirtualMeetingRoutes } from './view/VirtualMeetingRoutes';
 export interface VirtualConsultationsModuleDependencies {
   guard: AuthGuard;
   clock: Clock;
+  ids: IdGenerator;
   transactions: TransactionManager;
   context: TransactionContext;
   links: MeetingLinkProvider;
@@ -52,6 +54,7 @@ export class VirtualConsultationsModule implements AppModule, VirtualConsultatio
       new NotificationMeetingInvitations(deps.notifications),
       deps.transactions,
       deps.clock,
+      deps.ids,
     );
   }
 

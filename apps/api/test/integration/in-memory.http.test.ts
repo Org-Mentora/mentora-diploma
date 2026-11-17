@@ -1,8 +1,9 @@
 import mongoose from 'mongoose';
 import request from 'supertest';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { UuidIdGenerator } from '#core/model/IdGenerator';
 import { TransactionContext } from '#infrastructure/database/TransactionContext';
-import { DateTimeFormatter } from '#infrastructure/format/DateTimeFormatter';
+import { IntlDateFormatter } from '#infrastructure/format/IntlDateFormatter';
 import { AuthGuard } from '#infrastructure/http/AuthGuard';
 import { RateLimiter } from '#infrastructure/http/RateLimiter';
 import { SessionCookie } from '#infrastructure/http/SessionCookie';
@@ -59,6 +60,7 @@ interface Fakes {
 
 function buildApplication(fakes: Fakes): Application {
   const clock = new MutableClock(TestApp.START);
+  const ids = new UuidIdGenerator();
   const tokens = new JoseTokenService(
     new HmacSha256SigningAlgorithm(TEST_JWT_SECRET),
     SESSION_TTL_SECONDS,
@@ -66,13 +68,14 @@ function buildApplication(fakes: Fakes): Application {
   const guard = new AuthGuard(tokens, clock);
   const logger = Logger.getInstance();
   const context = new TransactionContext();
-  const dates = new DateTimeFormatter('America/Argentina/Buenos_Aires');
+  const dates = new IntlDateFormatter('America/Argentina/Buenos_Aires');
   const mail = new CapturingMailTransport();
   const { transactions } = fakes;
 
   const subscriptions = new SubscriptionsModule({
     guard,
     clock,
+    ids,
     transactions,
     context,
     gateway: new SimulatedPaymentGateway(),
@@ -88,6 +91,7 @@ function buildApplication(fakes: Fakes): Application {
   const patients = new PatientsModule({
     guard,
     clock,
+    ids,
     transactions,
     context,
     logger,
@@ -105,6 +109,7 @@ function buildApplication(fakes: Fakes): Application {
   const notifications = new NotificationsModule({
     guard,
     clock,
+    ids,
     context,
     whatsapp: fakes.whatsapp,
     mail,
@@ -113,6 +118,7 @@ function buildApplication(fakes: Fakes): Application {
   const appointments = new AppointmentsModule({
     guard,
     clock,
+    ids,
     patients: patients.directory,
     notifications: notifications.center,
     dates,
@@ -131,6 +137,7 @@ function buildApplication(fakes: Fakes): Application {
       hasher: new ScryptPasswordHasher(),
       tokens,
       clock,
+      ids,
       transactions,
       context,
       subscriptions: subscriptions.access,
@@ -149,6 +156,7 @@ function buildApplication(fakes: Fakes): Application {
     new ClinicalRecordsModule({
       guard,
       clock,
+      ids,
       patients: patients.directory,
       activity: patients.activity,
       catalog: diagnoses.catalog,
@@ -162,6 +170,7 @@ function buildApplication(fakes: Fakes): Application {
     new VirtualConsultationsModule({
       guard,
       clock,
+      ids,
       transactions,
       context,
       links: new JitsiMeetingLinkProvider('https://meet.jit.si'),

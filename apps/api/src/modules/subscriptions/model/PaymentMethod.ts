@@ -23,13 +23,13 @@ export interface PaymentMethodProps {
 
 // Value Object
 export class PaymentMethod extends ValueObject<PaymentMethodProps> {
-  static register(props: Omit<PaymentMethodProps, 'id'>, now: Date): PaymentMethod {
+  static register(id: string, props: Omit<PaymentMethodProps, 'id'>, now: Date): PaymentMethod {
     PaymentMethod.assertValidExpiry(props.expMonth, props.expYear, now);
     const holderName = props.holderName.trim();
     if (!holderName) {
       throw new ValidationError('The card holder name is required', { field: 'holderName' });
     }
-    return new PaymentMethod({ ...props, holderName, id: crypto.randomUUID() });
+    return new PaymentMethod({ ...props, holderName, id });
   }
 
   static restore(props: PaymentMethodProps): PaymentMethod {

@@ -1,6 +1,8 @@
 import type { Router } from 'express';
+import type { DateFormatter } from '#core/format/DateFormatter';
 import type { AppLogger } from '#core/logging/AppLogger';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
@@ -9,7 +11,6 @@ import type { PasswordHasher } from '#core/security/PasswordHasher';
 import type { TokenService } from '#core/security/TokenService';
 import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
-import type { DateTimeFormatter } from '#infrastructure/format/DateTimeFormatter';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { RateLimiter } from '#infrastructure/http/RateLimiter';
 import type { SessionCookie } from '#infrastructure/http/SessionCookie';
@@ -55,11 +56,12 @@ export interface AuthModuleDependencies {
   hasher: PasswordHasher;
   tokens: TokenService;
   clock: Clock;
+  ids: IdGenerator;
   transactions: TransactionManager;
   context: TransactionContext;
   subscriptions: SubscriptionAccess;
   mail: MailTransport;
-  dates: DateTimeFormatter;
+  dates: DateFormatter;
   logger: AppLogger;
   recoveryUrl: string;
   limiter: RateLimiter;
@@ -87,6 +89,7 @@ export class AuthModule implements AppModule, AuthPresenterFactory {
       deps.hasher,
       deps.tokens,
       deps.clock,
+      deps.ids,
     );
     this.#profiles = new ProfileService(
       this.#auth,
@@ -104,6 +107,7 @@ export class AuthModule implements AppModule, AuthPresenterFactory {
       new EmailPasswordRecoveryNotifier(deps.mail, deps.dates, deps.recoveryUrl, logger),
       deps.transactions,
       deps.clock,
+      deps.ids,
     );
     this.#migration = new LegacySubscriptionMigration(deps.subscriptions, logger);
   }

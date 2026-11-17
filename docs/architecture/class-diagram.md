@@ -42,7 +42,7 @@ flowchart LR
 
 ## API core (shared kernel)
 
-26 classes.
+29 classes.
 
 ```mermaid
 classDiagram
@@ -63,6 +63,12 @@ classDiagram
   class ConflictError {
     +kind
   }
+  class DateFormatter {
+    <<abstract>>
+    +date(value)* string
+    +time(value)* string
+    +dateTime(value) string
+  }
   class Entity~TProps, TId~ {
     <<abstract · Entity>>
     +id: TId
@@ -79,6 +85,10 @@ classDiagram
     +render(viewModel) void
     +renderError(error) void
     #serialize(viewModel) unknown
+  }
+  class IdGenerator {
+    <<abstract>>
+    +next()* string
   }
   class InputParser {
     +parse(schema, raw)$ T
@@ -156,6 +166,9 @@ classDiagram
   class UnauthorizedError {
     +kind
   }
+  class UuidIdGenerator {
+    +next() string
+  }
   class ValidationError {
     +kind
   }
@@ -177,6 +190,7 @@ classDiagram
   ForbiddenError <|-- SubscriptionInactiveError
   HttpView <|-- JsonHttpView
   HttpView <|-- NoContentHttpView
+  IdGenerator <|-- UuidIdGenerator
 ```
 
 ## API infrastructure
@@ -201,11 +215,6 @@ classDiagram
     -clock: Clock
     +requireSession: RequestHandler
     +requireActiveSubscription: RequestHandler
-  }
-  class DateTimeFormatter {
-    +date(value) string
-    +time(value) string
-    +dateTime(value) string
   }
   class ErrorHttpView {
     <<Passive View>>
@@ -240,6 +249,11 @@ classDiagram
     -initialDelayMs: 
     +start(jobs) void
     +stop() Promise~void~
+  }
+  class IntlDateFormatter {
+    <<Adapter>>
+    +date(value) string
+    +time(value) string
   }
   class JoseTokenService {
     <<Adapter>>
@@ -359,6 +373,9 @@ classDiagram
   class Clock {
     <<external>>
   }
+  class DateFormatter {
+    <<external>>
+  }
   class HttpView {
     <<external>>
   }
@@ -379,6 +396,7 @@ classDiagram
   }
   AuthGuard --> Clock
   AuthGuard --> TokenService
+  DateFormatter <|-- IntlDateFormatter
   HttpView <|-- ErrorHttpView
   IntervalJobScheduler --> JobLock
   JobLock <|-- MongoJobLock
@@ -433,7 +451,7 @@ classDiagram
     +MIN_DURATION$
     +MAX_DURATION$
     +REMINDER_WINDOW_MS$
-    +schedule(professionalId, patientId, slot, now)$
+    +schedule(id, professionalId, patientId, slot, now)$
     +restore(id, props)$ Appointment
     +endOf(startsAt, durationMinutes)$ Date
     +reschedule(slot, now) void
@@ -488,6 +506,7 @@ classDiagram
     -notifier: AppointmentNotifier
     -clock: Clock
     -lock: AgendaLock
+    -ids: IdGenerator
     +list(professionalId, from, to) Promise~AgendaEntry[]~
     +get(professionalId, appointmentId) Promise~AgendaEntry~
     +schedule(professionalId, patientId, slot) Promise~AgendaEntry~
@@ -544,7 +563,7 @@ classDiagram
     <<Adapter>>
     -patients: PatientDirectory
     -notifications: NotificationCenter
-    -dates: DateTimeFormatter
+    -dates: DateFormatter
     -logger: AppLogger
     +notify(event, appointment) Promise~void~
   }
@@ -575,10 +594,13 @@ classDiagram
   class Clock {
     <<external>>
   }
-  class DateTimeFormatter {
+  class DateFormatter {
     <<external>>
   }
   class Entity {
+    <<external>>
+  }
+  class IdGenerator {
     <<external>>
   }
   class MongooseRepository {
@@ -611,6 +633,7 @@ classDiagram
   AppointmentService --> AppointmentNotifier
   AppointmentService --> AppointmentRepository
   AppointmentService --> Clock
+  AppointmentService --> IdGenerator
   AppointmentService --> PatientNames
   AppointmentService --> TransactionManager
   AppointmentsModule --> AppointmentDirectory
@@ -621,7 +644,7 @@ classDiagram
   MongooseAgendaLock --> TransactionContext
   MongooseAppointmentRepository --> TransactionContext
   MongooseRepository <|-- MongooseAppointmentRepository
-  NotificationAppointmentNotifier --> DateTimeFormatter
+  NotificationAppointmentNotifier --> DateFormatter
   NotificationAppointmentNotifier --> NotificationCenter
   NotificationAppointmentNotifier --> PatientDirectory
   PatientDirectoryNames --> PatientDirectory
@@ -676,6 +699,7 @@ classDiagram
     -hasher: PasswordHasher
     -tokens: TokenService
     -clock: Clock
+    -ids: IdGenerator
     +now: Date
     +register(data) Promise~SessionSubject~
     +authenticate(email, password) Promise~SessionSubject~
@@ -698,7 +722,7 @@ classDiagram
   class EmailPasswordRecoveryNotifier {
     <<Adapter>>
     -mail: MailTransport
-    -dates: DateTimeFormatter
+    -dates: DateFormatter
     -recoveryUrl: string
     -logger: AppLogger
     +sendCode(message) Promise~void~
@@ -754,7 +778,7 @@ classDiagram
     <<Aggregate Root>>
     +TTL_MINUTES$
     +MAX_ATTEMPTS$
-    +issue(professionalId, codeHash, now)$ PasswordRecovery
+    +issue(id, professionalId, codeHash, now)$ PasswordRecovery
     +restore(id, props)$ PasswordRecovery
     +isUsableAt(now) boolean
     +recordFailedAttempt() void
@@ -787,6 +811,7 @@ classDiagram
     -notifier: PasswordRecoveryNotifier
     -transactions: TransactionManager
     -clock: Clock
+    -ids: IdGenerator
     +request(email) Promise~void~
     +verify(email, code) Promise~void~
     +reset(email, code, newPassword) Promise~void~
@@ -794,7 +819,7 @@ classDiagram
   }
   class Professional {
     <<Aggregate Root>>
-    +register(data, now)$ Professional
+    +register(id, data, now)$ Professional
     +restore(id, props)$ Professional
     +normalizeEmail(email)$ string
     +normalizeLicense(licenseNumber)$ string
@@ -913,13 +938,16 @@ classDiagram
   class Clock {
     <<external>>
   }
-  class DateTimeFormatter {
+  class DateFormatter {
     <<external>>
   }
   class Entity {
     <<external>>
   }
   class HttpView {
+    <<external>>
+  }
+  class IdGenerator {
     <<external>>
   }
   class MailTransport {
@@ -965,13 +993,14 @@ classDiagram
   AuthRoutes --> RateLimiter
   AuthRoutes --> SessionCookie
   AuthService --> Clock
+  AuthService --> IdGenerator
   AuthService --> PasswordHasher
   AuthService --> ProfessionalAccess
   AuthService --> ProfessionalRepository
   AuthService --> TokenService
   AuthService --> TransactionManager
   ChangePasswordPresenter --> AuthService
-  EmailPasswordRecoveryNotifier --> DateTimeFormatter
+  EmailPasswordRecoveryNotifier --> DateFormatter
   EmailPasswordRecoveryNotifier --> MailTransport
   Entity <|-- PasswordRecovery
   GetCurrentProfessionalPresenter --> AuthService
@@ -988,6 +1017,7 @@ classDiagram
   PasswordRecoveryNotifier <|-- EmailPasswordRecoveryNotifier
   PasswordRecoveryRepository <|.. MongoosePasswordRecoveryRepository
   PasswordRecoveryService --> Clock
+  PasswordRecoveryService --> IdGenerator
   PasswordRecoveryService --> PasswordHasher
   PasswordRecoveryService --> PasswordRecoveryNotifier
   PasswordRecoveryService --> PasswordRecoveryRepository
@@ -1058,7 +1088,7 @@ classDiagram
   }
   class ClinicalRecord {
     <<Aggregate Root>>
-    +open(professionalId, patientId, now)$ ClinicalRecord
+    +open(id, professionalId, patientId, now)$ ClinicalRecord
     +restore(id, props)$ ClinicalRecord
     +addConsultation(consultation, now) void
     +consultationsChronological() Consultation[]
@@ -1092,6 +1122,7 @@ classDiagram
     -diagnoses: DiagnosisResolver
     -clock: Clock
     -accesses: RecordAccessLog
+    -ids: IdGenerator
     +getRecord(professionalId, patientId) Promise~ClinicalRecord~
     +accessLog(professionalId, patientId) Promise~RecordAccess[]~
     +registerConsultation(professionalId, patientId, data) Promise~Consultation~
@@ -1118,7 +1149,7 @@ classDiagram
   }
   class Consultation {
     <<Entity>>
-    +record(data, now)$ Consultation
+    +record(id, data, now)$ Consultation
     +restore(id, props)$ Consultation
     +date: Date
     +type: ConsultationType
@@ -1210,6 +1241,9 @@ classDiagram
   class Entity {
     <<external>>
   }
+  class IdGenerator {
+    <<external>>
+  }
   class MongooseRepository {
     <<external>>
   }
@@ -1243,6 +1277,7 @@ classDiagram
   ClinicalRecordService --> ClinicalRecordRepository
   ClinicalRecordService --> Clock
   ClinicalRecordService --> DiagnosisResolver
+  ClinicalRecordService --> IdGenerator
   ClinicalRecordService --> PatientLookup
   ClinicalRecordService --> RecordAccessLog
   ClinicalRecordService --> TransactionManager
@@ -1478,7 +1513,7 @@ classDiagram
   }
   class Notification {
     <<Aggregate Root>>
-    +record(props)$ Notification
+    +record(id, props)$ Notification
     +restore(id, props)$ Notification
     +professionalId: string
     +patientId: string
@@ -1498,6 +1533,7 @@ classDiagram
     -whatsapp: WhatsAppGateway
     -email: EmailGateway
     -clock: Clock
+    -ids: IdGenerator
     +send(message) Promise~DeliveryOutcome~
     +history(professionalId, patientId) Promise~Notification[]~
   }
@@ -1545,6 +1581,9 @@ classDiagram
   class Entity {
     <<external>>
   }
+  class IdGenerator {
+    <<external>>
+  }
   class MailTransport {
     <<external>>
   }
@@ -1568,6 +1607,7 @@ classDiagram
   MongooseRepository <|-- MongooseNotificationRepository
   NotificationCenter --> Clock
   NotificationCenter --> EmailGateway
+  NotificationCenter --> IdGenerator
   NotificationCenter --> NotificationRepository
   NotificationCenter --> WhatsAppGateway
   NotificationRepository <|.. MongooseNotificationRepository
@@ -1620,7 +1660,7 @@ classDiagram
     +DNI_PATTERN$
     +DORMANT_AFTER_MONTHS$
     +dormancyCutoff(now)$ Date
-    +register(professionalId, details, now)$ Patient
+    +register(id, professionalId, details, now)$ Patient
     +restore(id, props)$ Patient
     +normalizeDni(dni)$ string
     +updateDetails(details, now) void
@@ -1680,6 +1720,7 @@ classDiagram
     -patients: PatientRepository
     -transactions: TransactionManager
     -clock: Clock
+    -ids: IdGenerator
     +now: Date
     +register(professionalId, details) Promise~Patient~
     +search(professionalId, query) Promise~Patient[]~
@@ -1724,6 +1765,9 @@ classDiagram
   class Clock {
     <<external>>
   }
+  class IdGenerator {
+    <<external>>
+  }
   class MongooseRepository {
     <<external>>
   }
@@ -1755,6 +1799,7 @@ classDiagram
   PatientRepository <|.. MongoosePatientRepository
   PatientRoutes --> AuthGuard
   PatientService --> Clock
+  PatientService --> IdGenerator
   PatientService --> PatientRepository
   PatientService --> TransactionManager
   PatientsModule --> PatientActivity
@@ -1800,7 +1845,7 @@ classDiagram
   class EmailBillingNotifier {
     <<Adapter>>
     -mail: MailTransport
-    -dates: DateTimeFormatter
+    -dates: DateFormatter
     -planUrl: string
     -logger: AppLogger
     +notify(contact, event) Promise~void~
@@ -1828,8 +1873,8 @@ classDiagram
   }
   class Payment {
     <<Aggregate Root>>
-    +charged(data, now)$ Payment
-    +manual(data, now)$ Payment
+    +charged(id, data, now)$ Payment
+    +manual(id, data, now)$ Payment
     +restore(id, props)$ Payment
     +professionalId: string
     +planId: PlanId
@@ -1856,7 +1901,7 @@ classDiagram
   }
   class PaymentMethod {
     <<Value Object>>
-    +register(props, now)$ PaymentMethod
+    +register(id, props, now)$ PaymentMethod
     +restore(props)$ PaymentMethod
     +assertValidExpiry(expMonth, expYear, now)$ void
     +withChanges(changes, now) PaymentMethod
@@ -1979,6 +2024,7 @@ classDiagram
     -notifier: BillingNotifier
     -catalog: PlanCatalog
     -clock: Clock
+    -ids: IdGenerator
     +now: Date
     +plans: Plan[]
     +planOf(subscription) Plan | null
@@ -2027,10 +2073,13 @@ classDiagram
   class Clock {
     <<external>>
   }
-  class DateTimeFormatter {
+  class DateFormatter {
     <<external>>
   }
   class Entity {
+    <<external>>
+  }
+  class IdGenerator {
     <<external>>
   }
   class MailTransport {
@@ -2058,7 +2107,7 @@ classDiagram
   BillingNotifier <|-- EmailBillingNotifier
   CancelSubscriptionPresenter --> SubscriptionService
   ChoosePlanPresenter --> SubscriptionService
-  EmailBillingNotifier --> DateTimeFormatter
+  EmailBillingNotifier --> DateFormatter
   EmailBillingNotifier --> MailTransport
   Entity <|-- Payment
   Entity <|-- Subscription
@@ -2090,6 +2139,7 @@ classDiagram
   SubscriptionRoutes --> AuthGuard
   SubscriptionService --> BillingNotifier
   SubscriptionService --> Clock
+  SubscriptionService --> IdGenerator
   SubscriptionService --> PaymentGateway
   SubscriptionService --> PaymentRepository
   SubscriptionService --> PlanCatalog
@@ -2178,6 +2228,7 @@ classDiagram
     -invitations: MeetingInvitations
     -transactions: TransactionManager
     -clock: Clock
+    -ids: IdGenerator
     +start(professionalId, request) Promise~VirtualMeeting~
     +history(professionalId, patientId) Promise~VirtualMeeting[]~
     +forAppointment(professionalId, appointmentId) Promise~VirtualMeeting[]~
@@ -2193,7 +2244,7 @@ classDiagram
   }
   class VirtualMeeting {
     <<Aggregate Root>>
-    +start(data, now)$ VirtualMeeting
+    +start(id, data, now)$ VirtualMeeting
     +restore(id, props)$ VirtualMeeting
     +recordInvitation(status, error) void
     +professionalId: string
@@ -2236,6 +2287,9 @@ classDiagram
   class Entity {
     <<external>>
   }
+  class IdGenerator {
+    <<external>>
+  }
   class MongooseRepository {
     <<external>>
   }
@@ -2275,6 +2329,7 @@ classDiagram
   StartVirtualMeetingPresenter --> VirtualConsultationService
   VirtualConsultationService --> AppointmentLookup
   VirtualConsultationService --> Clock
+  VirtualConsultationService --> IdGenerator
   VirtualConsultationService --> MeetingInvitations
   VirtualConsultationService --> MeetingLinkProvider
   VirtualConsultationService --> PatientContacts

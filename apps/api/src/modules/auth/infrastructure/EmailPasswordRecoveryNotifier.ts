@@ -1,5 +1,5 @@
+import type { DateFormatter } from '#core/format/DateFormatter';
 import type { AppLogger } from '#core/logging/AppLogger';
-import type { DateTimeFormatter } from '#infrastructure/format/DateTimeFormatter';
 import type { MailTransport } from '#infrastructure/mail/MailTransport';
 import {
   PasswordRecoveryNotifier,
@@ -10,7 +10,7 @@ import {
 export class EmailPasswordRecoveryNotifier extends PasswordRecoveryNotifier {
   constructor(
     private readonly mail: MailTransport,
-    private readonly dates: DateTimeFormatter,
+    private readonly dates: DateFormatter,
     private readonly recoveryUrl: string,
     private readonly logger: AppLogger,
   ) {

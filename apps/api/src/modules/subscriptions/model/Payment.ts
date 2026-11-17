@@ -29,11 +29,12 @@ const MANUAL_LABEL: Record<ManualPaymentMethod, string> = {
 
 // Aggregate Root
 export class Payment extends Entity<PaymentProps> {
-  static charged(data: Omit<PaymentProps, 'createdAt' | 'paidAt'>, now: Date): Payment {
-    return new Payment(crypto.randomUUID(), { ...data, paidAt: now, createdAt: now });
+  static charged(id: string, data: Omit<PaymentProps, 'createdAt' | 'paidAt'>, now: Date): Payment {
+    return new Payment(id, { ...data, paidAt: now, createdAt: now });
   }
 
   static manual(
+    id: string,
     data: {
       professionalId: string;
       planId: PlanId;
@@ -45,7 +46,7 @@ export class Payment extends Entity<PaymentProps> {
     },
     now: Date,
   ): Payment {
-    return new Payment(crypto.randomUUID(), {
+    return new Payment(id, {
       professionalId: data.professionalId,
       planId: data.planId,
       amount: data.amount,

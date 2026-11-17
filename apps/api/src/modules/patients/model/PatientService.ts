@@ -1,5 +1,6 @@
 import { ConflictError, NotFoundError } from '#core/errors/ApplicationError';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import { type ManualPatientStatus, Patient, type PatientDetails } from './Patient';
 import type { PatientRepository } from './PatientRepository';
@@ -12,6 +13,7 @@ export class PatientService {
     private readonly patients: PatientRepository,
     private readonly transactions: TransactionManager,
     private readonly clock: Clock,
+    private readonly ids: IdGenerator,
   ) {}
 
   get now(): Date {
@@ -20,7 +22,7 @@ export class PatientService {
 
   register(professionalId: string, details: PatientDetails): Promise<Patient> {
     return this.transactions.run(async () => {
-      const patient = Patient.register(professionalId, details, this.clock.now());
+      const patient = Patient.register(this.ids.next(), professionalId, details, this.clock.now());
       await this.assertDniIsFree(professionalId, patient.dni);
       await this.patients.save(patient);
       return patient;

@@ -1,4 +1,5 @@
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { EmailGateway } from './EmailGateway';
 import {
   Notification,
@@ -48,6 +49,7 @@ export class NotificationCenter {
     private readonly whatsapp: WhatsAppGateway,
     private readonly email: EmailGateway,
     private readonly clock: Clock,
+    private readonly ids: IdGenerator,
   ) {}
 
   async send(message: PatientMessage): Promise<DeliveryOutcome> {
@@ -119,7 +121,7 @@ export class NotificationCenter {
     attempt: Attempt,
   ): Promise<DeliveryOutcome> {
     await this.notifications.save(
-      Notification.record({
+      Notification.record(this.ids.next(), {
         professionalId: message.professionalId,
         patientId: message.patientId,
         channel,

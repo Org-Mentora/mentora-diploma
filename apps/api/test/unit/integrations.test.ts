@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { UuidIdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import { IntervalJobScheduler } from '#infrastructure/scheduling/IntervalJobScheduler';
 import { MailEmailGateway } from '../../src/modules/notifications/infrastructure/MailEmailGateway';
@@ -52,7 +53,13 @@ describe('NotificationCenter (CU-14, CU-15)', () => {
     const repo = new MemoryNotifications();
     const whatsapp = new RecordingWhatsApp();
     const mail = new CapturingMailTransport();
-    const center = new NotificationCenter(repo, whatsapp, new MailEmailGateway(mail), clock);
+    const center = new NotificationCenter(
+      repo,
+      whatsapp,
+      new MailEmailGateway(mail),
+      clock,
+      new UuidIdGenerator(),
+    );
     return { repo, whatsapp, mail, center };
   };
 
@@ -239,6 +246,7 @@ describe('VirtualConsultationService (CU-15 step 2 alternative)', () => {
       })(),
       noTransaction,
       clock,
+      new UuidIdGenerator(),
     );
 
     await expect(service.start('p', { patientId: 'x', appointmentId: null })).rejects.toMatchObject(
@@ -270,7 +278,7 @@ describe('Patient dormancy (CU-07)', () => {
   };
 
   it('is dormant three calendar months after the last activity', () => {
-    const patient = Patient.register('p', details, now);
+    const patient = Patient.register(crypto.randomUUID(), 'p', details, now);
     expect(patient.isDormantAt(new Date('2030-03-31T12:00:00.000Z'))).toBe(false);
     expect(patient.isDormantAt(new Date('2030-04-02T12:00:00.000Z'))).toBe(true);
 

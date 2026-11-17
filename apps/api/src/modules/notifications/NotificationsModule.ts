@@ -1,5 +1,6 @@
 import type { Router } from 'express';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 import type { View } from '#core/view/View';
@@ -22,6 +23,7 @@ import { NotificationRoutes } from './view/NotificationRoutes';
 export interface NotificationsModuleDependencies {
   guard: AuthGuard;
   clock: Clock;
+  ids: IdGenerator;
   context: TransactionContext;
   whatsapp: WhatsAppGateway;
   mail: MailTransport;
@@ -39,6 +41,7 @@ export class NotificationsModule implements AppModule, NotificationPresenterFact
       deps.whatsapp,
       new MailEmailGateway(deps.mail),
       deps.clock,
+      deps.ids,
     );
   }
 

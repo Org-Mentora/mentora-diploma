@@ -1,6 +1,7 @@
 import type { Router } from 'express';
 import type { AppLogger } from '#core/logging/AppLogger';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
@@ -29,6 +30,7 @@ import { PatientRoutes } from './view/PatientRoutes';
 export interface PatientsModuleDependencies {
   guard: AuthGuard;
   clock: Clock;
+  ids: IdGenerator;
   transactions: TransactionManager;
   context: TransactionContext;
   logger: AppLogger;
@@ -46,7 +48,7 @@ export class PatientsModule implements AppModule, PatientPresenterFactory {
 
   constructor(private readonly deps: PatientsModuleDependencies) {
     const repository = deps.repository ?? new MongoosePatientRepository(deps.context);
-    this.#service = new PatientService(repository, deps.transactions, deps.clock);
+    this.#service = new PatientService(repository, deps.transactions, deps.clock, deps.ids);
     this.directory = new PatientDirectory(repository);
     this.activity = new PatientActivity(repository);
   }

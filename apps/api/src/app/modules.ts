@@ -1,11 +1,12 @@
 import type { AppLogger } from '#core/logging/AppLogger';
 import { type Clock, SystemClock } from '#core/model/Clock';
+import { type IdGenerator, UuidIdGenerator } from '#core/model/IdGenerator';
 import type { AppModule } from '#core/module/AppModule';
 import { AppConfig, type Env } from '#infrastructure/config/AppConfig';
 import { MongoConnection } from '#infrastructure/database/MongoConnection';
 import { MongoTransactionManager } from '#infrastructure/database/MongoTransactionManager';
 import { TransactionContext } from '#infrastructure/database/TransactionContext';
-import { DateTimeFormatter } from '#infrastructure/format/DateTimeFormatter';
+import { IntlDateFormatter } from '#infrastructure/format/IntlDateFormatter';
 import { AuthGuard } from '#infrastructure/http/AuthGuard';
 import { MongoRateLimitStore } from '#infrastructure/http/MongoRateLimitStore';
 import { RateLimiter } from '#infrastructure/http/RateLimiter';
@@ -42,6 +43,7 @@ import {
 
 export interface ModuleOptions {
   clock?: Clock;
+  ids?: IdGenerator;
   mail?: MailTransport;
   whatsapp?: WhatsAppGateway;
   payments?: PaymentGateway;
@@ -78,6 +80,7 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
   const { env } = config;
   const logger = Logger.getInstance();
   const clock = options.clock ?? new SystemClock();
+  const ids = options.ids ?? new UuidIdGenerator();
   const tokens = new JoseTokenService(
     new HmacSha256SigningAlgorithm(env.JWT_SECRET),
     env.SESSION_TTL_SECONDS,
@@ -86,13 +89,14 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
   const context = new TransactionContext();
   const database = MongoConnection.getInstance();
   const transactions = new MongoTransactionManager(database, context);
-  const dates = new DateTimeFormatter(env.APP_TIMEZONE);
+  const dates = new IntlDateFormatter(env.APP_TIMEZONE);
   const mail = options.mail ?? new SmtpMailTransport(env.SMTP_URL, env.MAIL_FROM);
   const appUrl = env.APP_URL.replace(/\/$/, '');
 
   const subscriptions = new SubscriptionsModule({
     guard,
     clock,
+    ids,
     transactions,
     context,
     gateway: options.payments ?? new SimulatedPaymentGateway(),
@@ -103,11 +107,12 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
     trialDays: env.TRIAL_DAYS,
     planUrl: `${appUrl}/settings/plan`,
   });
-  const patients = new PatientsModule({ guard, clock, transactions, context, logger });
+  const patients = new PatientsModule({ guard, clock, ids, transactions, context, logger });
   const diagnoses = new DiagnosisCatalogModule({ guard });
   const notifications = new NotificationsModule({
     guard,
     clock,
+    ids,
     context,
     whatsapp: options.whatsapp ?? whatsappFrom(env, logger),
     mail,
@@ -115,6 +120,7 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
   const appointments = new AppointmentsModule({
     guard,
     clock,
+    ids,
     patients: patients.directory,
     notifications: notifications.center,
     dates,
@@ -134,6 +140,7 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
       hasher: new ScryptPasswordHasher(),
       tokens,
       clock,
+      ids,
       transactions,
       context,
       subscriptions: subscriptions.access,
@@ -149,6 +156,7 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
     new ClinicalRecordsModule({
       guard,
       clock,
+      ids,
       patients: patients.directory,
       activity: patients.activity,
       catalog: diagnoses.catalog,
@@ -160,6 +168,7 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
     new VirtualConsultationsModule({
       guard,
       clock,
+      ids,
       transactions,
       context,
       links: options.meetings ?? meetingsFrom(env),

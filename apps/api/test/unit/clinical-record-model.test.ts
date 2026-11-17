@@ -19,12 +19,17 @@ function consultation(date: string, diagnosis: AssignedDiagnosis | null): Consul
     diagnosis,
     medications: [],
   };
-  return Consultation.record(data, at(date));
+  return Consultation.record(crypto.randomUUID(), data, at(date));
 }
 
 describe('ClinicalRecord aggregate (CU-08, CU-09, CU-11)', () => {
   it('lists consultations newest first and keeps every diagnosis in the history', () => {
-    const record = ClinicalRecord.open('prof', 'patient', at('2030-01-01T00:00:00Z'));
+    const record = ClinicalRecord.open(
+      crypto.randomUUID(),
+      'prof',
+      'patient',
+      at('2030-01-01T00:00:00Z'),
+    );
     const anxiety = AssignedDiagnosis.assign('F41.1', 'GAD', at('2030-01-10T00:00:00Z'));
     const depression = AssignedDiagnosis.assign('F32.1', 'MDD', at('2030-03-10T00:00:00Z'));
 
@@ -47,6 +52,7 @@ describe('ClinicalRecord aggregate (CU-08, CU-09, CU-11)', () => {
     expect(consultation('2030-01-10T10:00:00Z', null).evolution).toBe('Better sleep');
     expect(() =>
       Consultation.record(
+        crypto.randomUUID(),
         {
           date: at('2030-01-10T10:00:00Z'),
           type: 'virtual',

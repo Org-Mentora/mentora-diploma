@@ -1,4 +1,5 @@
 import { Clock } from '#core/model/Clock';
+import { IdGenerator } from '#core/model/IdGenerator';
 import type { ErrorViewModel, View } from '#core/view/View';
 import { type MailMessage, MailTransport } from '#infrastructure/mail/MailTransport';
 import { WhatsAppDeliveryError, WhatsAppGateway } from '#modules/notifications';
@@ -13,6 +14,19 @@ export class FixedClock extends Clock {
 
   now(): Date {
     return this.date;
+  }
+}
+
+export class SequentialIds extends IdGenerator {
+  #count = 0;
+
+  constructor(private readonly prefix: string) {
+    super();
+  }
+
+  next(): string {
+    this.#count += 1;
+    return `${this.prefix}-${this.#count}`;
   }
 }
 

@@ -1,5 +1,6 @@
 import { ConflictError, UnauthorizedError, ValidationError } from '#core/errors/ApplicationError';
 import type { Clock } from '#core/model/Clock';
+import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { PasswordHasher } from '#core/security/PasswordHasher';
 import type { TokenService } from '#core/security/TokenService';
@@ -32,6 +33,7 @@ export class AuthService {
     private readonly hasher: PasswordHasher,
     private readonly tokens: TokenService,
     private readonly clock: Clock,
+    private readonly ids: IdGenerator,
   ) {}
 
   get now(): Date {
@@ -42,7 +44,11 @@ export class AuthService {
     PasswordPolicy.assertSatisfiedBy(data.password);
     const passwordHash = await this.hasher.hash(data.password);
     return this.transactions.run(async () => {
-      const professional = Professional.register({ ...data, passwordHash }, this.clock.now());
+      const professional = Professional.register(
+        this.ids.next(),
+        { ...data, passwordHash },
+        this.clock.now(),
+      );
       await this.assertUnique(professional.email, professional.licenseNumber);
       await this.professionals.save(professional);
       const access = await this.access.startTrial(

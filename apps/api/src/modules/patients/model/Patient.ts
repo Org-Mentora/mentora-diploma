@@ -50,8 +50,8 @@ export class Patient extends Person<PatientProps> {
     return CalendarMonths.add(now, -Patient.DORMANT_AFTER_MONTHS);
   }
 
-  static register(professionalId: string, details: PatientDetails, now: Date): Patient {
-    return new Patient(crypto.randomUUID(), {
+  static register(id: string, professionalId: string, details: PatientDetails, now: Date): Patient {
+    return new Patient(id, {
       ...Patient.validate(details),
       professionalId,
       status: 'active',
