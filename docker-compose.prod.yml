@@ -1,0 +1,142 @@
+# Production deployment on one host (ADR-0038, ADR-0039). Images come from GHCR.
+#   cp .env.production.example .env.production   # fill every secret
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+# Only the web container publishes a port; put TLS in front of it (docs/operations/deployment.md).
+name: mentora-prod
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-hardening: &hardening
+  restart: unless-stopped
+  logging: *logging
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  mongo-keyfile:
+    image: mongo:8.0
+    entrypoint: ["/bin/sh", "/scripts/keyfile.sh"]
+    volumes:
+      - mongo-keys:/keys
+      - ./docker/mongo/keyfile.sh:/scripts/keyfile.sh:ro
+    restart: "no"
+
+  mongo:
+    <<: *hardening
+    image: mongo:8.0
+    command: ["--replSet", "rs0", "--bind_ip_all", "--keyFile", "/keys/keyfile"]
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-root}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?set MONGO_ROOT_PASSWORD}
+      MONGO_APP_DATABASE: mentora
+      MONGO_APP_USER: mentora
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?set MONGO_APP_PASSWORD}
+      MONGO_BACKUP_USER: backup
+      MONGO_BACKUP_PASSWORD: ${MONGO_BACKUP_PASSWORD:?set MONGO_BACKUP_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+      - mongo-keys:/keys:ro
+      - ./docker/mongo/init-users.js:/docker-entrypoint-initdb.d/init-users.js:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mongosh --quiet -u "$$MONGO_INITDB_ROOT_USERNAME" -p "$$MONGO_INITDB_ROOT_PASSWORD"
+          --authenticationDatabase admin --eval "try { rs.status() } catch (e) {
+          rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'mongo:27017' }] }) }
+          quit(db.hello().isWritablePrimary ? 0 : 1)"
+      interval: 5s
+      timeout: 10s
+      start_period: 30s
+      retries: 30
+    depends_on:
+      mongo-keyfile:
+        condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+
+  api:
+    <<: *hardening
+    image: ghcr.io/org-mentora/mentora-api:${MENTORA_VERSION:-latest}
+    read_only: true
+    stop_grace_period: 20s
+    tmpfs:
+      - /tmp
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGO_URI: mongodb://mentora:${MONGO_APP_PASSWORD}@mongo:27017/mentora?authSource=mentora&replicaSet=rs0
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      CORS_ORIGIN: ${APP_URL:?set APP_URL}
+      APP_URL: ${APP_URL}
+      APP_TIMEZONE: ${APP_TIMEZONE:-America/Argentina/Buenos_Aires}
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      SESSION_TTL_SECONDS: ${SESSION_TTL_SECONDS:-28800}
+      TRIAL_DAYS: ${TRIAL_DAYS:-14}
+      TRUST_PROXY: 1
+      RATE_LIMIT_ENABLED: "true"
+      SCHEDULER_ENABLED: ${SCHEDULER_ENABLED:-true}
+      SHUTDOWN_TIMEOUT_MS: ${SHUTDOWN_TIMEOUT_MS:-10000}
+      SMTP_URL: ${SMTP_URL:?set SMTP_URL}
+      MAIL_FROM: ${MAIL_FROM:?set MAIL_FROM}
+      WHATSAPP_PROVIDER: ${WHATSAPP_PROVIDER:-local}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      MEETING_PROVIDER: ${MEETING_PROVIDER:-jitsi}
+      JITSI_BASE_URL: ${JITSI_BASE_URL:-https://meet.jit.si}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN:-}
+      PLAN_MONTHLY_PRICE: ${PLAN_MONTHLY_PRICE:-25000}
+      PLAN_ANNUAL_PRICE: ${PLAN_ANNUAL_PRICE:-250000}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  web:
+    <<: *hardening
+    image: ghcr.io/org-mentora/mentora-web:${MENTORA_VERSION:-latest}
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /etc/nginx/conf.d:uid=101,gid=101,mode=0755
+    environment:
+      API_UPSTREAM: http://api:3000
+    ports:
+      - "${PUBLIC_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128m
+
+  backup:
+    <<: *hardening
+    image: mongo:8.0
+    entrypoint: ["/bin/sh", "/scripts/schedule.sh"]
+    environment:
+      MONGO_BACKUP_URI: mongodb://backup:${MONGO_BACKUP_PASSWORD}@mongo:27017/?authSource=admin&replicaSet=rs0
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-24}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+    volumes:
+      - ${BACKUP_DIR:-./backups}:/backups
+      - ./docker/backup:/scripts:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
+  mongo-keys:
