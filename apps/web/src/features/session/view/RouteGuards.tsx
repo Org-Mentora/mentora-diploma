@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router';
-import { useSessionViewModel } from '../viewmodel/useSessionViewModel';
+import { PLAN_PATH, useSessionViewModel } from '../viewmodel/useSessionViewModel';
 
 function FullPageMessage({ text }: { text: string }) {
   return (
@@ -9,7 +9,19 @@ function FullPageMessage({ text }: { text: string }) {
   );
 }
 
-/** Protected area: requires a session with an active subscription or trial. */
+export function RequireLogin() {
+  const { state } = useSessionViewModel();
+  const location = useLocation();
+
+  if (state === 'loading') {
+    return <FullPageMessage text="Loading your session…" />;
+  }
+  if (state === 'anonymous') {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+  return <Outlet />;
+}
+
 export function RequireSession() {
   const { state } = useSessionViewModel();
   const location = useLocation();
@@ -20,13 +32,12 @@ export function RequireSession() {
   if (state === 'anonymous') {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
-  if (state === 'expired') {
-    return <Navigate to="/plan-expired" replace />;
+  if (state === 'restricted') {
+    return <Navigate to={PLAN_PATH} replace />;
   }
   return <Outlet />;
 }
 
-/** Login and register: skip them when the professional is already logged in. */
 export function PublicOnly() {
   const { state } = useSessionViewModel();
 
@@ -36,8 +47,8 @@ export function PublicOnly() {
   if (state === 'active') {
     return <Navigate to="/patients" replace />;
   }
-  if (state === 'expired') {
-    return <Navigate to="/plan-expired" replace />;
+  if (state === 'restricted') {
+    return <Navigate to={PLAN_PATH} replace />;
   }
   return <Outlet />;
 }

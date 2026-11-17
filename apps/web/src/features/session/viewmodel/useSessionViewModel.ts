@@ -8,8 +8,9 @@ import {
 } from '@/model/api/generated/mentoraApi';
 import { SessionAdapter, type SessionUiModel } from '@/model/domain/session/SessionAdapter';
 
-/** `expired` = logged in but the trial ended (CU-01 step 7). */
-export type SessionState = 'loading' | 'anonymous' | 'active' | 'expired';
+export type SessionState = 'loading' | 'anonymous' | 'active' | 'restricted';
+
+export const PLAN_PATH = '/settings/plan';
 
 export interface SessionViewModel {
   state: SessionState;
@@ -18,7 +19,7 @@ export interface SessionViewModel {
   logout: () => Promise<void>;
 }
 
-/** ViewModel shared by the route guards and the application shell. */
+// ViewModel
 export function useSessionViewModel(): SessionViewModel {
   const { data, isLoading, isError } = useGetCurrentProfessionalQuery();
   const [logout, { isLoading: isLoggingOut }] = useLogoutMutation();
@@ -35,8 +36,8 @@ export function useSessionViewModel(): SessionViewModel {
     state = 'loading';
   } else if (!session) {
     state = 'anonymous';
-  } else if (session.isExpired) {
-    state = 'expired';
+  } else if (!session.hasAccess) {
+    state = 'restricted';
   }
 
   return {
@@ -47,7 +48,6 @@ export function useSessionViewModel(): SessionViewModel {
       await logout()
         .unwrap()
         .catch(() => undefined);
-      // Drop every cached response so the next professional never sees stale data.
       dispatch(mentoraApi.util.resetApiState());
       navigate('/login', { replace: true });
     },
