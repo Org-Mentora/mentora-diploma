@@ -14,6 +14,7 @@ export interface PaymentProps {
   status: PaymentStatus;
   methodLabel: string;
   reference: string | null;
+  chargeKey: string | null;
   failureReason: string | null;
   paidAt: Date;
   createdAt: Date;
@@ -53,6 +54,7 @@ export class Payment extends Entity<PaymentProps> {
       status: 'approved',
       methodLabel: MANUAL_LABEL[data.method],
       reference: data.reference?.trim() || null,
+      chargeKey: null,
       failureReason: null,
       paidAt: data.paidAt,
       createdAt: now,
@@ -93,6 +95,10 @@ export class Payment extends Entity<PaymentProps> {
 
   get reference(): string | null {
     return this.props.reference;
+  }
+
+  get chargeKey(): string | null {
+    return this.props.chargeKey;
   }
 
   get failureReason(): string | null {

@@ -135,6 +135,23 @@ describe('Subscription API (CU-18, CU-03 trial, CU-01 step 7)', () => {
     await agent.get('/api/patients').expect(200);
   });
 
+  it('charges and extends the period once when the plan is confirmed twice at the same time', async () => {
+    const { agent } = await newAgent();
+    t.clock.advanceDays(15);
+    await t.runJob(RENEWALS);
+    await agent.post('/api/subscription/payment-methods').send(CARD).expect(201);
+
+    const [a, b] = await Promise.all([
+      agent.put('/api/subscription/plan').send({ planId: 'monthly' }),
+      agent.put('/api/subscription/plan').send({ planId: 'monthly' }),
+    ]);
+
+    expect([a.status, b.status]).toEqual([200, 200]);
+    expect(a.body.currentPeriodEndsAt).toBe(b.body.currentPeriodEndsAt);
+    const payments = (await agent.get('/api/subscription/payments')).body;
+    expect(payments).toHaveLength(1);
+  });
+
   it('marks the subscription pending when the automatic charge is declined', async () => {
     const { agent, email } = await newAgent();
     await agent.post('/api/subscription/payment-methods').send(DECLINED).expect(201);

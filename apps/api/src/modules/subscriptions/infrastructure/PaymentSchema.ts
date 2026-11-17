@@ -10,6 +10,7 @@ export interface PaymentDocument extends MongoDocument {
   status: 'approved' | 'declined' | 'failed';
   methodLabel: string;
   reference: string | null;
+  chargeKey?: string | null;
   failureReason: string | null;
   paidAt: Date;
   createdAt: Date;
@@ -26,6 +27,7 @@ const schema = new Schema<PaymentDocument>(
     status: { type: String, enum: ['approved', 'declined', 'failed'], required: true },
     methodLabel: { type: String, required: true },
     reference: { type: String, default: null },
+    chargeKey: { type: String, default: null },
     failureReason: { type: String, default: null },
     paidAt: { type: Date, required: true },
     createdAt: { type: Date, required: true },
@@ -34,5 +36,9 @@ const schema = new Schema<PaymentDocument>(
 );
 
 schema.index({ professionalId: 1, createdAt: -1 });
+schema.index(
+  { chargeKey: 1 },
+  { unique: true, partialFilterExpression: { chargeKey: { $type: 'string' } } },
+);
 
 export const PaymentModel = mongoose.model<PaymentDocument>('Payment', schema, 'payments');

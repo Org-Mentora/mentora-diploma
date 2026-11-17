@@ -27,6 +27,10 @@ export class MongoosePaymentRepository
     return this.model.countDocuments({ professionalId }).session(this.session).exec();
   }
 
+  async hasChargeKey(chargeKey: string): Promise<boolean> {
+    return (await this.model.exists({ chargeKey }).session(this.session)) !== null;
+  }
+
   async hasManualReference(professionalId: string, reference: string): Promise<boolean> {
     const found = await this.model
       .exists({ professionalId, kind: 'manual', reference })

@@ -102,6 +102,9 @@ export class SubscriptionService {
     const result = await this.charge(pending, `Mentora ${plan.name} plan`);
     const subscription = await this.transactions.run(async () => {
       const current = await this.get(professionalId);
+      if (await this.payments.hasChargeKey(pending.idempotencyKey)) {
+        return current;
+      }
       await this.payments.save(this.chargedPayment(current, pending, 'plan_change', result));
       if (result.outcome === 'approved') {
         current.applyPayment(pending.plan, this.now);
@@ -269,6 +272,9 @@ export class SubscriptionService {
     const result = await this.charge(pending, `Mentora ${pending.plan.name} plan renewal`);
     const outcome = await this.transactions.run(async () => {
       const subscription = await this.get(professionalId);
+      if (await this.payments.hasChargeKey(pending.idempotencyKey)) {
+        return { subscription, event: null };
+      }
       const now = this.now;
       await this.payments.save(this.chargedPayment(subscription, pending, 'automatic', result));
       let event: BillingEvent | null = null;
@@ -331,6 +337,7 @@ export class SubscriptionService {
         status: result.outcome === 'error' ? 'failed' : result.outcome,
         methodLabel: pending.method.label,
         reference: result.outcome === 'approved' ? result.reference : null,
+        chargeKey: pending.idempotencyKey,
         failureReason: result.outcome === 'approved' ? null : result.reason,
       },
       this.now,

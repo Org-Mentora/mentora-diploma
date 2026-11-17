@@ -1811,6 +1811,7 @@ classDiagram
     <<Repository, Adapter>>
     +findByProfessional(professionalId) Promise~Payment[]~
     +countByProfessional(professionalId) Promise~number~
+    +hasChargeKey(chargeKey) Promise~boolean~
     +hasManualReference(professionalId, reference) Promise~boolean~
   }
   class MongooseSubscriptionRepository {
@@ -1830,6 +1831,7 @@ classDiagram
     +status: PaymentStatus
     +methodLabel: string
     +reference: string | null
+    +chargeKey: string | null
     +failureReason: string | null
     +paidAt: Date
     +createdAt: Date
@@ -1864,6 +1866,7 @@ classDiagram
     <<abstract · Repository>>
     +findByProfessional(professionalId)* Promise~Payment[]~
     +countByProfessional(professionalId)* Promise~number~
+    +hasChargeKey(chargeKey)* Promise~boolean~
     +hasManualReference(professionalId, reference)* Promise~boolean~
   }
   class Plan {
