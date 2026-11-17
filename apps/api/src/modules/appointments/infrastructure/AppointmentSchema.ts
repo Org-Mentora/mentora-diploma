@@ -11,6 +11,8 @@ export interface AppointmentDocument extends MongoDocument {
   modality: 'in_person' | 'virtual';
   status: 'scheduled' | 'cancelled';
   notes: string | null;
+  fee?: number | null;
+  source?: 'agenda' | 'online';
   createdAt: Date;
   updatedAt: Date;
   cancelledAt: Date | null;
@@ -33,6 +35,8 @@ const schema = new Schema<AppointmentDocument>(
     modality: { type: String, enum: ['in_person', 'virtual'], required: true },
     status: { type: String, enum: ['scheduled', 'cancelled'], required: true },
     notes: { type: String, default: null },
+    fee: { type: Number, default: null },
+    source: { type: String, enum: ['agenda', 'online'], default: 'agenda' },
     createdAt: { type: Date, required: true },
     updatedAt: { type: Date, required: true },
     cancelledAt: { type: Date, default: null },

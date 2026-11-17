@@ -1,5 +1,6 @@
 import { Repository } from '#core/model/Repository';
 import type { Appointment } from './Appointment';
+import type { EarningsRow } from './EarningsReport';
 
 // Repository
 export abstract class AppointmentRepository extends Repository<Appointment> {
@@ -15,4 +16,10 @@ export abstract class AppointmentRepository extends Repository<Appointment> {
     endsAt: Date,
   ): Promise<Appointment[]>;
   abstract findNeedingReminder(from: Date, to: Date, limit: number): Promise<Appointment[]>;
+  abstract earnings(
+    professionalId: string,
+    from: Date,
+    to: Date,
+    now: Date,
+  ): Promise<EarningsRow[]>;
 }

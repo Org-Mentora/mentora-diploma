@@ -2,8 +2,7 @@ import type {
   AppointmentDto,
   RescheduleAppointmentRequestDto,
 } from '../contracts/appointments.contracts';
-import type { AppointmentSlot } from '../model/Appointment';
-import type { AgendaEntry } from '../model/AppointmentService';
+import type { AgendaEntry, SlotRequest } from '../model/AppointmentService';
 
 export class AppointmentViewModel {
   static toDto({ appointment, patientName }: AgendaEntry): AppointmentDto {
@@ -18,17 +17,20 @@ export class AppointmentViewModel {
       modality: appointment.modality,
       status: appointment.status,
       notes: appointment.notes,
+      fee: appointment.fee,
+      source: appointment.source,
       cancelledAt: appointment.cancelledAt?.toISOString() ?? null,
     };
   }
 
-  static toSlot(input: RescheduleAppointmentRequestDto): AppointmentSlot {
+  static toSlot(input: RescheduleAppointmentRequestDto): SlotRequest {
     return {
       startsAt: new Date(input.startsAt),
       durationMinutes: input.durationMinutes,
       type: input.type,
       modality: input.modality,
       notes: input.notes ?? null,
+      fee: input.fee,
     };
   }
 }

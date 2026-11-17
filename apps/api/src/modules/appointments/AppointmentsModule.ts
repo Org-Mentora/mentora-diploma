@@ -1,6 +1,7 @@
 import type { Router } from 'express';
 import type { DateFormatter } from '#core/format/DateFormatter';
 import type { AppLogger } from '#core/logging/AppLogger';
+import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
@@ -14,23 +15,32 @@ import type { NotificationCenter } from '#modules/notifications';
 import type { PatientDirectory } from '#modules/patients';
 import {
   type AppointmentDto,
+  type ConsultationFeesDto,
+  type EarningsReportDto,
   registerAppointmentContracts,
 } from './contracts/appointments.contracts';
 import { MongooseAgendaLock } from './infrastructure/MongooseAgendaLock';
 import { MongooseAppointmentRepository } from './infrastructure/MongooseAppointmentRepository';
+import { MongooseConsultationFeesRepository } from './infrastructure/MongooseConsultationFeesRepository';
 import { NotificationAppointmentNotifier } from './infrastructure/NotificationAppointmentNotifier';
 import { PatientDirectoryNames } from './infrastructure/PatientDirectoryNames';
 import type { AgendaLock } from './model/AgendaLock';
+import { AppointmentBooking } from './model/AppointmentBooking';
 import { AppointmentDirectory } from './model/AppointmentDirectory';
 import type { AppointmentNotifier } from './model/AppointmentNotifier';
 import type { AppointmentRepository } from './model/AppointmentRepository';
 import { AppointmentService } from './model/AppointmentService';
+import type { ConsultationFeesRepository } from './model/ConsultationFeesRepository';
+import { EarningsService } from './model/EarningsService';
 import type { AppointmentPresenterFactory } from './presenter/AppointmentPresenterFactory';
 import { CancelAppointmentPresenter } from './presenter/CancelAppointmentPresenter';
 import { GetAppointmentPresenter } from './presenter/GetAppointmentPresenter';
+import { GetConsultationFeesPresenter } from './presenter/GetConsultationFeesPresenter';
+import { GetEarningsReportPresenter } from './presenter/GetEarningsReportPresenter';
 import { ListAppointmentsPresenter } from './presenter/ListAppointmentsPresenter';
 import { RescheduleAppointmentPresenter } from './presenter/RescheduleAppointmentPresenter';
 import { ScheduleAppointmentPresenter } from './presenter/ScheduleAppointmentPresenter';
+import { UpdateConsultationFeesPresenter } from './presenter/UpdateConsultationFeesPresenter';
 import { AppointmentRoutes } from './view/AppointmentRoutes';
 
 export interface AppointmentsModuleDependencies {
@@ -43,7 +53,10 @@ export interface AppointmentsModuleDependencies {
   logger: AppLogger;
   transactions: TransactionManager;
   context: TransactionContext;
+  audit: AuditTrail;
+  timezone: string;
   repository?: AppointmentRepository;
+  fees?: ConsultationFeesRepository;
   notifier?: AppointmentNotifier;
   lock?: AgendaLock;
 }
@@ -54,11 +67,15 @@ const TEN_MINUTES_MS = 10 * 60 * 1000;
 export class AppointmentsModule implements AppModule, AppointmentPresenterFactory {
   readonly basePath = '/appointments';
   readonly directory: AppointmentDirectory;
+  readonly booking: AppointmentBooking;
   readonly #service: AppointmentService;
+  readonly #earnings: EarningsService;
   readonly #logger: AppLogger;
 
   constructor(private readonly deps: AppointmentsModuleDependencies) {
-    const repository = deps.repository ?? new MongooseAppointmentRepository(deps.context);
+    const repository =
+      deps.repository ?? new MongooseAppointmentRepository(deps.context, deps.timezone);
+    const fees = deps.fees ?? new MongooseConsultationFeesRepository(deps.context);
     this.#logger = deps.logger.child({ module: 'appointments' });
     this.directory = new AppointmentDirectory(repository);
     this.#service = new AppointmentService(
@@ -75,6 +92,16 @@ export class AppointmentsModule implements AppModule, AppointmentPresenterFactor
       deps.clock,
       deps.lock ?? new MongooseAgendaLock(deps.context),
       deps.ids,
+      fees,
+      deps.audit,
+    );
+    this.booking = new AppointmentBooking(this.#service);
+    this.#earnings = new EarningsService(
+      fees,
+      repository,
+      deps.transactions,
+      deps.clock,
+      deps.audit,
     );
   }
 
@@ -119,5 +146,17 @@ export class AppointmentsModule implements AppModule, AppointmentPresenterFactor
 
   cancelAppointment(view: View<AppointmentDto>): CancelAppointmentPresenter {
     return new CancelAppointmentPresenter(view, this.#service);
+  }
+
+  getConsultationFees(view: View<ConsultationFeesDto>): GetConsultationFeesPresenter {
+    return new GetConsultationFeesPresenter(view, this.#earnings);
+  }
+
+  updateConsultationFees(view: View<ConsultationFeesDto>): UpdateConsultationFeesPresenter {
+    return new UpdateConsultationFeesPresenter(view, this.#earnings);
+  }
+
+  getEarningsReport(view: View<EarningsReportDto>): GetEarningsReportPresenter {
+    return new GetEarningsReportPresenter(view, this.#earnings);
   }
 }

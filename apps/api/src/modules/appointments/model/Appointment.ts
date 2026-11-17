@@ -4,6 +4,7 @@ import { Entity } from '#core/model/Entity';
 export type AppointmentType = 'first_visit' | 'control' | 'follow_up' | 'medication' | 'other';
 export type AppointmentModality = 'in_person' | 'virtual';
 export type AppointmentStatus = 'scheduled' | 'cancelled';
+export type AppointmentSource = 'agenda' | 'online';
 
 export interface AppointmentSlot {
   startsAt: Date;
@@ -11,10 +12,12 @@ export interface AppointmentSlot {
   type: AppointmentType;
   modality: AppointmentModality;
   notes: string | null;
+  fee: number | null;
 }
 
 export interface AppointmentProps extends AppointmentSlot {
   professionalId: string;
+  source: AppointmentSource;
   patientId: string;
   status: AppointmentStatus;
   createdAt: Date;
@@ -30,6 +33,7 @@ export class Appointment extends Entity<AppointmentProps> {
   static readonly MIN_DURATION = 10;
   static readonly MAX_DURATION = 240;
   static readonly REMINDER_WINDOW_MS = 24 * 60 * MINUTE_MS;
+  static readonly MAX_FEE = 100_000_000;
 
   static schedule(
     id: string,
@@ -37,12 +41,14 @@ export class Appointment extends Entity<AppointmentProps> {
     patientId: string,
     slot: AppointmentSlot,
     now: Date,
+    source: AppointmentSource = 'agenda',
   ) {
     Appointment.validateSlot(slot, now);
     return new Appointment(id, {
       ...slot,
       notes: slot.notes?.trim() || null,
       professionalId,
+      source,
       patientId,
       status: 'scheduled',
       createdAt: now,
@@ -75,6 +81,12 @@ export class Appointment extends Entity<AppointmentProps> {
         `Duration must be between ${Appointment.MIN_DURATION} and ${Appointment.MAX_DURATION} minutes`,
         { field: 'durationMinutes' },
       );
+    }
+    if (
+      slot.fee !== null &&
+      (!Number.isFinite(slot.fee) || slot.fee < 0 || slot.fee > Appointment.MAX_FEE)
+    ) {
+      throw new ValidationError('The fee must be a positive amount', { field: 'fee' });
     }
     if (slot.startsAt.getTime() < now.getTime()) {
       throw new ValidationError('Appointments cannot be scheduled in the past', {
@@ -165,6 +177,14 @@ export class Appointment extends Entity<AppointmentProps> {
 
   get notes(): string | null {
     return this.props.notes;
+  }
+
+  get fee(): number | null {
+    return this.props.fee;
+  }
+
+  get source(): AppointmentSource {
+    return this.props.source;
   }
 
   get status(): AppointmentStatus {

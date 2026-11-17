@@ -7,9 +7,13 @@ import { ExpressResponderAdapter } from '#infrastructure/http/ExpressResponderAd
 import {
   type AppointmentDto,
   AppointmentIdParamsSchema,
+  type ConsultationFeesDto,
+  EarningsQuerySchema,
+  type EarningsReportDto,
   ListAppointmentsQuerySchema,
   RescheduleAppointmentRequestSchema,
   ScheduleAppointmentRequestSchema,
+  UpdateConsultationFeesRequestSchema,
 } from '../contracts/appointments.contracts';
 import type { AppointmentPresenterFactory } from '../presenter/AppointmentPresenterFactory';
 
@@ -37,6 +41,27 @@ export class AppointmentRoutes {
       await this.presenters
         .scheduleAppointment(view)
         .present({ actor: ActorReader.from(res), data });
+    });
+
+    router.get('/fees', async (_req, res) => {
+      const view = new JsonHttpView<ConsultationFeesDto>(new ExpressResponderAdapter(res));
+      await this.presenters.getConsultationFees(view).present(ActorReader.from(res));
+    });
+
+    router.put('/fees', async (req, res) => {
+      const view = new JsonHttpView<ConsultationFeesDto>(new ExpressResponderAdapter(res));
+      const data = InputParser.parse(UpdateConsultationFeesRequestSchema, req.body);
+      await this.presenters
+        .updateConsultationFees(view)
+        .present({ actor: ActorReader.from(res), data });
+    });
+
+    router.get('/earnings', async (req, res) => {
+      const view = new JsonHttpView<EarningsReportDto>(new ExpressResponderAdapter(res));
+      const query = InputParser.parse(EarningsQuerySchema, req.query);
+      await this.presenters
+        .getEarningsReport(view)
+        .present({ actor: ActorReader.from(res), ...query });
     });
 
     router.get('/:id', async (req, res) => {

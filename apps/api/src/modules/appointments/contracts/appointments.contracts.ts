@@ -23,6 +23,10 @@ export const AppointmentSchema = z
     modality: AppointmentModalitySchema,
     status: z.enum(['scheduled', 'cancelled']),
     notes: z.string().nullable(),
+    fee: z.number().nullable().meta({ description: 'Consultation fee (ARS); null = no fee' }),
+    source: z
+      .enum(['agenda', 'online'])
+      .meta({ description: '`online`: requested by the patient' }),
     cancelledAt: z.iso.datetime().nullable(),
   })
   .meta({ id: 'AppointmentDto' });
@@ -33,7 +37,65 @@ const slotShape = {
   type: AppointmentTypeSchema,
   modality: AppointmentModalitySchema,
   notes: z.string().trim().max(1000).nullable().optional(),
+  fee: z.number().min(0).max(100_000_000).nullable().optional().meta({
+    description: 'Omit to use the fee configured for the type; null for no fee',
+  }),
 };
+
+const FeeAmountSchema = z.number().min(0).max(100_000_000).nullable();
+const FeeTableSchema = z.object({
+  first_visit: FeeAmountSchema,
+  control: FeeAmountSchema,
+  follow_up: FeeAmountSchema,
+  medication: FeeAmountSchema,
+  other: FeeAmountSchema,
+});
+
+export const ConsultationFeesSchema = z
+  .object({ currency: z.string(), amounts: FeeTableSchema, updatedAt: z.iso.datetime() })
+  .meta({ id: 'ConsultationFeesDto' });
+
+export const UpdateConsultationFeesRequestSchema = z
+  .object({ amounts: FeeTableSchema })
+  .meta({ id: 'UpdateConsultationFeesRequestDto' });
+
+const MonthSchema = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/);
+
+export const EarningsQuerySchema = z.object({
+  from: MonthSchema.meta({ description: 'First month (YYYY-MM)' }),
+  to: MonthSchema.meta({ description: 'Last month, inclusive (YYYY-MM). Max 24 months' }),
+});
+
+export const EarningsReportSchema = z
+  .object({
+    currency: z.string(),
+    from: z.string(),
+    to: z.string(),
+    months: z.array(
+      z.object({
+        month: z.string(),
+        earned: z.number(),
+        projected: z.number(),
+        appointments: z.number().int(),
+        unpriced: z.number().int(),
+        byType: z.array(
+          z.object({
+            type: AppointmentTypeSchema,
+            earned: z.number(),
+            projected: z.number(),
+            appointments: z.number().int(),
+          }),
+        ),
+      }),
+    ),
+    totals: z.object({
+      earned: z.number(),
+      projected: z.number(),
+      appointments: z.number().int(),
+      unpriced: z.number().int(),
+    }),
+  })
+  .meta({ id: 'EarningsReportDto' });
 
 export const ScheduleAppointmentRequestSchema = z
   .object({ patientId: z.uuid(), ...slotShape })
@@ -52,6 +114,10 @@ export const ListAppointmentsQuerySchema = z.object({
 export type AppointmentDto = z.infer<typeof AppointmentSchema>;
 export type ScheduleAppointmentRequestDto = z.infer<typeof ScheduleAppointmentRequestSchema>;
 export type RescheduleAppointmentRequestDto = z.infer<typeof RescheduleAppointmentRequestSchema>;
+export type ConsultationFeesDto = z.infer<typeof ConsultationFeesSchema>;
+export type UpdateConsultationFeesRequestDto = z.infer<typeof UpdateConsultationFeesRequestSchema>;
+export type EarningsQueryDto = z.infer<typeof EarningsQuerySchema>;
+export type EarningsReportDto = z.infer<typeof EarningsReportSchema>;
 
 export function registerAppointmentContracts(registry: ContractRegistry): void {
   const tags = ['Appointments'];
@@ -72,6 +138,42 @@ export function registerAppointmentContracts(registry: ContractRegistry): void {
     request: { query: ListAppointmentsQuerySchema },
     responses: {
       200: { description: 'Appointments ordered by start', schema: z.array(AppointmentSchema) },
+      400: invalid,
+    },
+  });
+  registry.registerRoute({
+    method: 'get',
+    path: '/appointments/fees',
+    operationId: 'getConsultationFees',
+    summary: 'Consultation fees per appointment type (default fee of new appointments)',
+    tags,
+    auth: true,
+    responses: { 200: { description: 'Fee table', schema: ConsultationFeesSchema } },
+  });
+  registry.registerRoute({
+    method: 'put',
+    path: '/appointments/fees',
+    operationId: 'updateConsultationFees',
+    summary: 'Set the consultation fee of each appointment type',
+    tags,
+    auth: true,
+    request: { body: UpdateConsultationFeesRequestSchema },
+    responses: {
+      200: { description: 'Fee table saved', schema: ConsultationFeesSchema },
+      400: invalid,
+    },
+  });
+  registry.registerRoute({
+    method: 'get',
+    path: '/appointments/earnings',
+    operationId: 'getEarningsReport',
+    summary:
+      'Earnings per month from the fees of held (earned) and upcoming (projected) appointments',
+    tags,
+    auth: true,
+    request: { query: EarningsQuerySchema },
+    responses: {
+      200: { description: 'Monthly earnings', schema: EarningsReportSchema },
       400: invalid,
     },
   });
