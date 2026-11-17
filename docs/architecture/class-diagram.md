@@ -798,7 +798,6 @@ classDiagram
     +hasLogo: boolean
     +registeredAt: Date
     +updatedAt: Date
-    +profile: ProfessionalProfile
   }
   class ProfessionalAccess {
     <<abstract>>

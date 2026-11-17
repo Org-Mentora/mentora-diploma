@@ -147,16 +147,4 @@ export class Professional extends Person<ProfessionalProps> {
   get updatedAt(): Date {
     return this.props.updatedAt;
   }
-
-  get profile(): ProfessionalProfile {
-    return {
-      firstName: this.firstName,
-      lastName: this.lastName,
-      email: this.email,
-      phone: this.phone,
-      specialty: this.specialty,
-      licenseNumber: this.licenseNumber,
-      offices: [...this.offices],
-    };
-  }
 }
