@@ -340,6 +340,16 @@ async function seed() {
   }
   await must(200, 'PATCH', `/patients/${ids.diego}/status`, { status: 'discharged' });
 
+  await must(200, 'PUT', '/appointments/fees', {
+    amounts: {
+      first_visit: 45000,
+      control: 30000,
+      follow_up: 30000,
+      medication: 25000,
+      other: null,
+    },
+  });
+
   let virtualAppointment = null;
   for (const { patient, cancel, ...slot } of appointments) {
     const created = await must(201, 'POST', '/appointments', { patientId: ids[patient], ...slot });
@@ -366,9 +376,37 @@ async function seed() {
   });
   await must(200, 'PUT', '/subscription/plan', { planId: 'monthly' });
 
+  const booking = await must(200, 'PUT', '/booking/settings', {
+    enabled: true,
+    slotMinutes: 45,
+    minNoticeHours: 12,
+    horizonDays: 30,
+    modalities: ['in_person', 'virtual'],
+    weeklyHours: [1, 2, 3, 4, 5].flatMap((weekday) => [
+      { weekday, start: '09:00', end: '13:00' },
+      { weekday, start: '14:00', end: '18:00' },
+    ]),
+    instructions: 'Ground-floor office. Bring previous studies if you have them.',
+  });
+  const slots = await must(200, 'GET', `/booking/public/${booking.slug}/slots?days=14`);
+  const freeDay = slots.days.findLast((day) => day.slots.length > 0);
+  if (freeDay) {
+    await must(201, 'POST', `/booking/public/${booking.slug}/requests`, {
+      firstName: 'Paula',
+      lastName: 'Ríos',
+      dni: '40111222',
+      phone: '+5491155550000',
+      email: 'paula.rios@example.com',
+      startsAt: freeDay.slots[0],
+      modality: 'virtual',
+      reason: 'First consultation for insomnia',
+    });
+  }
+
   console.log(
     `seed: ${patients.length} patients, ${consultationCount} consultations, ` +
-      `${appointments.length} appointments (1 cancelled), 1 virtual meeting, 1 card`,
+      `${appointments.length} appointments (1 cancelled), 1 virtual meeting, 1 card, ` +
+      `fees, online booking at /book/${booking.slug} with ${freeDay ? 1 : 0} pending request`,
   );
   console.log(`seed: log in with ${EMAIL} / ${PASSWORD}`);
 }
