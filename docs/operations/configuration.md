@@ -15,6 +15,7 @@ message instead of failing later.
 | `NODE_ENV` | `development` | `production` | `production` refuses the development `JWT_SECRET` |
 | `PORT` | `3000` | `3000` | HTTP port inside the container |
 | `MONGO_URI` | `mongodb://localhost:27017/mentora?directConnection=true` | built from `MONGO_APP_PASSWORD` | Must point to a replica set (transactions, ADR-0025) |
+| `MONGO_MAX_POOL_SIZE` | `20` | `20` | Connections in the single pool shared by every repository (`MongoConnection` Singleton) |
 | `LOG_LEVEL` | `info` | `info` | `fatal` `error` `warn` `info` `debug` `trace` `silent` |
 | `CORS_ORIGIN` | `http://localhost:5173` | `APP_URL` | Allowed browser origin |
 | `APP_URL` | `http://localhost:5173` | **required** | Public web URL, base of links in emails |

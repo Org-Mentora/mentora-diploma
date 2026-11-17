@@ -137,7 +137,7 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
       dates,
       logger,
       recoveryUrl: `${appUrl}/forgot-password`,
-      limiter: new RateLimiter(env.RATE_LIMIT_ENABLED, new MongoRateLimitStore()),
+      limiter: new RateLimiter(env.RATE_LIMIT_ENABLED, new MongoRateLimitStore(database)),
     }),
     subscriptions,
     patients,

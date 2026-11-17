@@ -13,6 +13,7 @@ const EnvSchema = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().positive().default(3000),
     MONGO_URI: z.string().min(1).default('mongodb://localhost:27017/mentora?directConnection=true'),
+    MONGO_MAX_POOL_SIZE: z.coerce.number().int().min(1).max(500).default(20),
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),

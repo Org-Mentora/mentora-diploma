@@ -88,6 +88,14 @@ describe('MongooseRepository adapter', () => {
     expect(await connection.ping()).toBeGreaterThanOrEqual(0);
   });
 
+  it('keeps one pool for the whole process, shared by models and raw collections', async () => {
+    await Promise.all([connection.connect(mongo.getUri()), connection.connect(mongo.getUri())]);
+
+    expect(mongoose.connections).toHaveLength(1);
+    expect(NoteModel.db).toBe(connection.connection);
+    expect(connection.connection.getClient().options.maxPoolSize).toBe(20);
+  });
+
   describe('transactions (ADR-0025)', () => {
     it('commits every write of the unit of work and returns its result', async () => {
       const result = await transactions.run(async () => {
@@ -144,8 +152,8 @@ describe('MongooseRepository adapter', () => {
   });
 
   it('MongoJobLock lets one instance run a job until it releases it or the lease ends', async () => {
-    const first = new MongoJobLock();
-    const second = new MongoJobLock();
+    const first = new MongoJobLock(connection);
+    const second = new MongoJobLock(connection);
 
     expect(await first.acquire('job-a', 60_000)).toBe(true);
     expect(await second.acquire('job-a', 60_000)).toBe(false);
@@ -160,8 +168,8 @@ describe('MongooseRepository adapter', () => {
   });
 
   it('MongoRateLimitStore counts hits per window shared by every instance', async () => {
-    const first = new MongoRateLimitStore();
-    const second = new MongoRateLimitStore();
+    const first = new MongoRateLimitStore(connection);
+    const second = new MongoRateLimitStore(connection);
     const t0 = Date.now();
 
     const hits = await Promise.all(

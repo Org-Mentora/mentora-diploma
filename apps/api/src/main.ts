@@ -25,7 +25,7 @@ async function bootstrap(): Promise<void> {
     logger.error('Unhandled promise rejection', { err: reason });
   });
 
-  await database.connect(env.MONGO_URI);
+  await database.connect(env.MONGO_URI, env.MONGO_MAX_POOL_SIZE);
   logger.info('Connected to MongoDB');
 
   const application = new Application();
@@ -41,7 +41,7 @@ async function bootstrap(): Promise<void> {
 
   const scheduler = new IntervalJobScheduler(
     logger.child({ component: 'scheduler' }),
-    new MongoJobLock(),
+    new MongoJobLock(database),
   );
   if (env.SCHEDULER_ENABLED) {
     scheduler.start(application.scheduledJobs());

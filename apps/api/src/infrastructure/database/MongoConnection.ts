@@ -1,8 +1,11 @@
 import mongoose, { type Connection } from 'mongoose';
 
+const DEFAULT_MAX_POOL_SIZE = 20;
+
 // Singleton
 export class MongoConnection {
   static #instance: MongoConnection | undefined;
+  #connecting: Promise<void> | undefined;
 
   private constructor() {}
 
@@ -11,11 +14,16 @@ export class MongoConnection {
     return MongoConnection.#instance;
   }
 
-  async connect(uri: string): Promise<void> {
-    if (this.isConnected) {
-      return;
-    }
-    await mongoose.connect(uri, { serverSelectionTimeoutMS: 5_000 });
+  connect(uri: string, maxPoolSize = DEFAULT_MAX_POOL_SIZE): Promise<void> {
+    this.#connecting ??= this.open(uri, maxPoolSize).catch((error: unknown) => {
+      this.#connecting = undefined;
+      throw error;
+    });
+    return this.#connecting;
+  }
+
+  private async open(uri: string, maxPoolSize: number): Promise<void> {
+    await mongoose.connect(uri, { serverSelectionTimeoutMS: 5_000, maxPoolSize });
     await this.assertSupportsTransactions();
   }
 
@@ -31,6 +39,7 @@ export class MongoConnection {
   }
 
   async disconnect(): Promise<void> {
+    this.#connecting = undefined;
     await mongoose.disconnect();
   }
 

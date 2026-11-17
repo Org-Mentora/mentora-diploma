@@ -2,6 +2,7 @@ import type { AppModule } from '#core/module/AppModule';
 import type { ScheduledJob } from '#core/scheduling/ScheduledJob';
 import { AppConfig } from '#infrastructure/config/AppConfig';
 import { MigrationLog } from '#infrastructure/database/MigrationLog';
+import { MongoConnection } from '#infrastructure/database/MongoConnection';
 import { ExpressServer } from '#infrastructure/http/ExpressServer';
 import { Logger } from '#infrastructure/logger/Logger';
 import { OpenApiRegistry } from '#infrastructure/openapi/OpenApiRegistry';
@@ -31,7 +32,9 @@ export class Application {
     }
   }
 
-  async runMigrations(log: MigrationLog = new MigrationLog()): Promise<string[]> {
+  async runMigrations(
+    log: MigrationLog = new MigrationLog(MongoConnection.getInstance()),
+  ): Promise<string[]> {
     const ran: string[] = [];
     for (const migration of this.modules.flatMap((module) => module.migrations?.() ?? [])) {
       if (await log.runOnce(migration.name, () => migration.run())) {
