@@ -32,7 +32,6 @@ export interface DiagnosisSearch {
   term: string;
   setTerm: (term: string) => void;
   options: DiagnosisOption[];
-  isSearching: boolean;
   hint: string;
   selected: { code: string; name: string } | null;
   select: (option: DiagnosisOption) => void;
@@ -102,7 +101,6 @@ export function useNewConsultationViewModel(): NewConsultationViewModel {
       term,
       setTerm,
       options,
-      isSearching: diagnoses.isFetching,
       hint:
         debouncedTerm.length < 2
           ? 'Type at least 2 characters of a name or code (e.g. "anxiety", "F41")'

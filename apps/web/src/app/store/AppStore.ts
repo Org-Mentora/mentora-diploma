@@ -12,8 +12,6 @@ function createStore() {
 }
 
 export type ReduxStore = ReturnType<typeof createStore>;
-export type RootState = ReturnType<ReduxStore['getState']>;
-export type AppDispatch = ReduxStore['dispatch'];
 
 // Singleton
 export class AppStore {
