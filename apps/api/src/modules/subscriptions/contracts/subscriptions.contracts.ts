@@ -212,7 +212,7 @@ export function registerSubscriptionContracts(registry: ContractRegistry): void 
     method: 'get',
     path: '/subscription/payments',
     operationId: 'listPayments',
-    summary: 'CU-18 Payment history, newest first',
+    summary: 'CU-18 Payment history, latest 100, newest first',
     tags: ['Subscription'],
     auth: true,
     responses: { 200: { description: 'Payments', schema: z.array(PaymentSchema) } },

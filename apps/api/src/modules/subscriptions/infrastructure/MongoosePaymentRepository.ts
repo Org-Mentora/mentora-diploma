@@ -14,10 +14,11 @@ export class MongoosePaymentRepository
     super(PaymentModel, new PaymentMapper(), context);
   }
 
-  async findByProfessional(professionalId: string): Promise<Payment[]> {
+  async findByProfessional(professionalId: string, limit: number): Promise<Payment[]> {
     const records = await this.model
       .find({ professionalId })
       .sort({ createdAt: -1 })
+      .limit(limit)
       .session(this.session)
       .lean<PaymentDocument[]>();
     return records.map((record) => this.mapper.toDomain(record));

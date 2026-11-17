@@ -37,6 +37,7 @@ interface PendingCharge {
 }
 
 const RENEWAL_BATCH = 100;
+const PAYMENT_HISTORY_LIMIT = 100;
 
 export interface RenewalReport {
   processed: number;
@@ -213,7 +214,7 @@ export class SubscriptionService {
   }
 
   listPayments(professionalId: string): Promise<Payment[]> {
-    return this.payments.findByProfessional(professionalId);
+    return this.payments.findByProfessional(professionalId, PAYMENT_HISTORY_LIMIT);
   }
 
   async processDueRenewals(): Promise<RenewalReport> {

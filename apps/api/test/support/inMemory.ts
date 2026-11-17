@@ -386,8 +386,8 @@ export class InMemoryPaymentRepository extends PaymentRepository {
     return this.#store.remove(id);
   }
 
-  async findByProfessional(professionalId: string): Promise<Payment[]> {
-    return this.of(professionalId).sort(newestFirst);
+  async findByProfessional(professionalId: string, limit: number): Promise<Payment[]> {
+    return this.of(professionalId).sort(newestFirst).slice(0, limit);
   }
 
   async countByProfessional(professionalId: string): Promise<number> {
