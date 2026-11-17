@@ -26,7 +26,7 @@ We record every architecturally significant decision as an ADR using the
 | [0011](0011-frontend-mvvm.md) | Frontend architecture: MVVM | Accepted | frontend |
 | [0012](0012-tailwind-shadcn.md) | Tailwind CSS v4 and shadcn/ui | Accepted | frontend |
 | [0013](0013-biome-architecture-linting.md) | Biome for linting, formatting and architecture rules | Accepted | tooling |
-| [0014](0014-containerization.md) | Containerization with Docker and Compose | Accepted | ops |
+| [0014](0014-containerization.md) | Containerization with Docker and Compose | Accepted (amended by 0038) | ops |
 | [0015](0015-testing-strategy.md) | Testing strategy | Accepted | quality |
 | [0016](0016-english-only.md) | English for code and documentation | Accepted | process |
 | [0017](0017-agent-context.md) | Context strategy for AI coding agents | Accepted | process |
@@ -37,3 +37,18 @@ We record every architecturally significant decision as an ADR using the
 | [0022](0022-cross-module-collaboration.md) | Cross-module collaboration through Model-owned abstractions | Accepted | backend |
 | [0023](0023-openapi-3-1-nullable-refs.md) | Emit OpenAPI 3.1 and declare nullable references explicitly | Accepted | api |
 | [0024](0024-injectable-module-adapters.md) | Injectable module adapters with production defaults | Accepted | backend |
+| [0025](0025-transactions-with-context.md) | Database transactions through a transaction context | Accepted | backend |
+| [0026](0026-scheduled-jobs.md) | In-process scheduled jobs declared by modules | Accepted | backend, patterns |
+| [0027](0027-email-smtp-mailpit.md) | Outbound email through SMTP (nodemailer), with Mailpit locally | Accepted | backend, ops |
+| [0028](0028-password-recovery-codes.md) | Password recovery with short-lived, hashed, single-use codes | Accepted | backend, security |
+| [0029](0029-subscriptions-and-payments.md) | Subscriptions module with a payment gateway port and a simulated gateway | Accepted | backend, domain, security |
+| [0030](0030-whatsapp-notifications.md) | WhatsApp notifications module with a delivery log and a local outbox | Accepted | backend, integration |
+| [0031](0031-video-call-providers.md) | Video calls through a link provider port (Jitsi locally, Google Meet optional) | Accepted | backend, integration |
+| [0032](0032-logo-storage-and-client-pdf.md) | Logo stored in MongoDB; prescriptions printed and rendered to PDF in the browser | Accepted | backend, frontend |
+| [0033](0033-cross-module-commands.md) | Cross-module commands inside the caller's transaction | Accepted | backend, patterns |
+| [0034](0034-session-credentials-version.md) | Session tokens carry a credentials version | Accepted | backend, security |
+| [0035](0035-comments-name-design-patterns.md) | Code comments only name the design pattern | Accepted | process, patterns |
+| [0036](0036-ci-cd-quality-gates.md) | CI/CD quality gates and release pipeline | Accepted | tooling, ops, security |
+| [0037](0037-operational-readiness.md) | Operational readiness of the API | Accepted | backend, ops, security |
+| [0038](0038-production-images-and-deployment.md) | Production images and single-host deployment | Accepted | ops, security |
+| [0039](0039-database-backup-strategy.md) | Database backup strategy | Accepted | ops, data |
