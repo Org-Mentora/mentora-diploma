@@ -73,6 +73,7 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | Backend | [0031](docs/adr/0031-video-call-providers.md) | CU-15 `MeetingLinkProvider`: Jitsi by default, Google Meet by config | Accepted |
 | API/Web | [0032](docs/adr/0032-logo-storage-and-client-pdf.md) | Logo as PNG/JPEG in `professional_logos`; prescriptions printed or rendered with jsPDF in the browser | Accepted |
 | Backend | [0033](docs/adr/0033-cross-module-commands.md) | Cross-module command services called inside the caller's transaction | Accepted |
+| Backend | [0040](docs/adr/0040-concurrency-and-audit-hardening.md) | Agenda lock per professional, rate limits in Mongo (`MongoRateLimitStore`), append-only clinical record access log, email fallback in `NotificationCenter.send` | Accepted |
 | Patterns | [0006](docs/adr/0006-singleton-pattern.md) | Singleton: AppConfig, Logger, MongoConnection, OpenApiRegistry, AppStore | Accepted |
 | Patterns | [0007](docs/adr/0007-adapter-pattern.md) | Adapter at every technology boundary (Mongoose, pino, Express, zod-to-openapi, DTO→UI) | Accepted |
 | API | [0009](docs/adr/0009-code-first-openapi.md) | zod contracts with `.meta({id})` → OpenAPI → Swagger UI at `/api/docs` (~~OpenAPI 3.0.3~~ → 0023) | Amended |
@@ -83,7 +84,7 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | Frontend | [0012](docs/adr/0012-tailwind-shadcn.md) | Tailwind v4 CSS-first + shadcn/ui in `src/shared/ui` | Accepted |
 | Ops | [0014](docs/adr/0014-containerization.md) | Multi-stage Dockerfiles (dev/build/runtime), Compose + dev watch overlay (~~root nginx :80~~ → 0038) | Amended |
 | Ops | [0036](docs/adr/0036-ci-cd-quality-gates.md) | CI gates (lint, types, tests, build, codegen + class diagram, audit, e2e smoke + restore drill), CodeQL, GHCR release with SBOM; actions pinned by SHA | Accepted |
-| Ops | [0037](docs/adr/0037-operational-readiness.md) | `/health/live` + `/health/ready`, auth rate limits (429), `X-Request-Id`, graceful shutdown, `MongoJobLock`, `MigrationLog` | Accepted |
+| Ops | [0037](docs/adr/0037-operational-readiness.md) | `/health/live` + `/health/ready`, auth rate limits (429, ~~in memory~~ → 0040), `X-Request-Id`, graceful shutdown, `MongoJobLock`, `MigrationLog` | Amended |
 | Ops | [0038](docs/adr/0038-production-images-and-deployment.md) | Non-root images on GHCR, nginx-unprivileged :8080, `docker-compose.prod.yml` with Mongo auth, read-only containers | Accepted |
 | Ops | [0039](docs/adr/0039-database-backup-strategy.md) | Daily `mongodump` sidecar, sha256, 14-day retention, offsite copy, restore drill in CI; RPO 24 h / RTO 1 h | Accepted |
 | Quality | [0015](docs/adr/0015-testing-strategy.md) | Vitest everywhere: SpyView presenters, supertest, in-memory Mongo, mocked ViewModels | Accepted |

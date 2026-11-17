@@ -104,4 +104,4 @@ lease in `job_locks`; a lease expires after one interval if an instance died.
 
 Run more API replicas behind the web nginx (`$COMPOSE up -d --scale api=2`, then
 `$COMPOSE restart web` so nginx resolves the new containers). Jobs stay single-run
-thanks to `MongoJobLock`. Rate limits are per instance (ADR-0037).
+thanks to `MongoJobLock`. Rate limits are shared through MongoDB (ADR-0040).

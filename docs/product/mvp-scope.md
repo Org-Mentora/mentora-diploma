@@ -46,14 +46,10 @@ The guide [Try every use case locally](../guides/try-locally.md) walks through a
   ([ADR-0030](../adr/0030-whatsapp-notifications.md)).
 - A real payment provider must tokenize cards in the browser
   ([ADR-0029](../adr/0029-subscriptions-and-payments.md)).
-- Rate limits are kept in memory per API instance ([ADR-0037](../adr/0037-operational-readiness.md)).
 - Manual payments (CU-18) are accepted only when the access ends within 7 days, with a date in the
   last 30 days and a reference that was not used before.
-- The CU-15 invitation is sent by WhatsApp only; there is no email fallback.
 - One MongoDB node: up to 24 h of data can be lost in a disaster
   ([ADR-0039](../adr/0039-database-backup-strategy.md)).
-- Two simultaneous bookings of the same slot can still both succeed
-  ([ADR-0025](../adr/0025-transactions-with-context.md)).
 
 Diagram entities without use cases: `Institucion`, `Consultorio` (offices are addresses on the
 professional), `Liquidacion`, `ObraSocial` (as an entity) and `ContactoFamiliar` history.

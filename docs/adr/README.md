@@ -52,3 +52,4 @@ We record every architecturally significant decision as an ADR using the
 | [0037](0037-operational-readiness.md) | Operational readiness of the API | Accepted | backend, ops, security |
 | [0038](0038-production-images-and-deployment.md) | Production images and single-host deployment | Accepted | ops, security |
 | [0039](0039-database-backup-strategy.md) | Database backup strategy | Accepted | ops, data |
+| [0040](0040-concurrency-and-audit-hardening.md) | Concurrency and audit hardening | Accepted | backend, security, data |
