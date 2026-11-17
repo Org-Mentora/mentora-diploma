@@ -1,12 +1,14 @@
 import type { AppModule } from '#core/module/AppModule';
+import type { ScheduledJob } from '#core/scheduling/ScheduledJob';
 import { AppConfig } from '#infrastructure/config/AppConfig';
+import { MigrationLog } from '#infrastructure/database/MigrationLog';
 import { ExpressServer } from '#infrastructure/http/ExpressServer';
 import { Logger } from '#infrastructure/logger/Logger';
 import { OpenApiRegistry } from '#infrastructure/openapi/OpenApiRegistry';
 import packageJson from '../../package.json' with { type: 'json' };
 import { createModules } from './modules';
 
-/** Application composition root: modules + contracts + HTTP server. */
+// Composition Root
 export class Application {
   #openApiDocument: object | undefined;
 
@@ -23,11 +25,24 @@ export class Application {
     return this.#openApiDocument;
   }
 
-  /** Runs each module's one-off startup work (e.g. seeding the DSM-5 catalog). */
   async bootstrapModules(): Promise<void> {
     for (const module of this.modules) {
       await module.onBootstrap?.();
     }
+  }
+
+  async runMigrations(log: MigrationLog = new MigrationLog()): Promise<string[]> {
+    const ran: string[] = [];
+    for (const migration of this.modules.flatMap((module) => module.migrations?.() ?? [])) {
+      if (await log.runOnce(migration.name, () => migration.run())) {
+        ran.push(migration.name);
+      }
+    }
+    return ran;
+  }
+
+  scheduledJobs(): ScheduledJob[] {
+    return this.modules.flatMap((module) => module.scheduledJobs?.() ?? []);
   }
 
   createServer(options: { quiet?: boolean } = {}): ExpressServer {
@@ -37,6 +52,7 @@ export class Application {
       corsOrigin: AppConfig.getInstance().env.CORS_ORIGIN,
       openApiDocument: this.openApiDocument,
       quiet: options.quiet ?? false,
+      trustProxy: AppConfig.getInstance().env.TRUST_PROXY,
     });
   }
 }
