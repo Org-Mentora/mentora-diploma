@@ -53,3 +53,4 @@ We record every architecturally significant decision as an ADR using the
 | [0038](0038-production-images-and-deployment.md) | Production images and single-host deployment | Accepted | ops, security |
 | [0039](0039-database-backup-strategy.md) | Database backup strategy | Accepted | ops, data |
 | [0040](0040-concurrency-and-audit-hardening.md) | Concurrency and audit hardening | Accepted | backend, security, data |
+| [0041](0041-pluggable-token-signing-algorithm.md) | Pluggable token signing algorithm | Accepted | backend, security |
