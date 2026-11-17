@@ -1,15 +1,21 @@
 # API (apps/api): MVP Passive View + OOP
 
-ADRs: 0004 (MVP), 0005 (OOP), 0006 (Singleton), 0007 (Adapter), 0008 (Mongo), 0009 (OpenAPI).
+ADRs: 0004 (MVP), 0005 (OOP), 0006 (Singleton), 0007 (Adapter), 0008 (Mongo), 0009 (OpenAPI),
+0024 (module dependencies), 0025 (transactions), 0026 (jobs), 0027 (email), 0029 (subscriptions), 0030 (WhatsApp),
+0031 (video calls), 0033 (cross-module commands).
 Reference slice to copy: `src/modules/health`. Recipe: `.claude/skills/new-backend-module`.
 
 ## Layout
 
 ```
 src/core/            base classes: Presenter, View/HttpView, InputParser, Entity, ValueObject,
-                     Repository, DataMapper, ApplicationError, AppModule, ContractRegistry
+                     Repository, DataMapper, TransactionManager, ApplicationError, AppModule,
+                     ContractRegistry, ScheduledJob, JobLock, CalendarMonths, NoContentHttpView
 src/infrastructure/  singletons + adapters: AppConfig, Logger(Pino), MongoConnection,
-                     MongooseRepository, OpenApiRegistry, ExpressServer, ExpressResponderAdapter
+                     MongooseRepository, TransactionContext, MongoTransactionManager,
+                     OpenApiRegistry, ExpressServer, ExpressResponderAdapter, MailTransport,
+                     IntervalJobScheduler, MongoJobLock, MigrationLog, RateLimiter,
+                     DateTimeFormatter
 src/modules/<m>/     model/ infrastructure/ presenter/ view/ contracts/ <M>Module.ts index.ts
 src/app/             Application (composition root), modules.ts (register modules here)
 test/                unit/ integration/ support/ (fakes: SpyView, FixedClock, ...)
@@ -37,8 +43,19 @@ test/                unit/ integration/ support/ (fakes: SpyView, FixedClock, ..
   its own abstract class and an adapter in its `infrastructure/` implements it. Wire in `src/app/modules.ts`.
 - **Contracts:** nullable DTO refs use `nullableRef(Schema)` (ADR-0023).
 - **Module dependencies (ADR-0024):** one `<Name>ModuleDependencies` object. Model ports are
-  optional and default to the Mongoose adapter (`deps.repository ?? new MongooseXRepository()`);
-  the clock, guard, logger and Singleton-backed adapters come from `src/app/modules.ts`.
+  optional and default to the Mongoose adapter (`deps.repository ?? new MongooseXRepository(deps.context)`);
+  the clock, guard, logger, transactions and Singleton-backed adapters come from `src/app/modules.ts`.
+- **Transactions (ADR-0025):** Model services wrap write use cases in `transactions.run(async () => …)`;
+  notifications go after `run`. Every repository query calls `.session(this.session)`.
+- **External calls (ADR-0029..0031):** gateways, email and WhatsApp never run inside `run`; decide in one
+  transaction, call outside, store the result in another. Retried transactions must not repeat side effects.
+- **Jobs (ADR-0026):** `scheduledJobs()` in the module root; idempotent, one transaction per item.
+- **Readiness (ADR-0037):** public auth routes add `limiter.limit(RULE)` (429 `TooManyRequestsError`);
+  one-off data fixes are `migrations()` of the module root, named `'<yyyy-mm>-<name>'`, run once per
+  database by `Application.runMigrations()`; `/health/live` must never depend on MongoDB.
+- **Comments (ADR-0035):** only `// <Pattern>` above the declaration. After adding or changing classes run
+  `pnpm docs:classes` (CI runs `pnpm docs:check`).
+- **Test seams:** `createModules({ clock, mail, whatsapp, payments, meetings })`; `TestApp.runJob(name)`.
 
 ## After changing contracts
 
@@ -47,5 +64,6 @@ test/                unit/ integration/ support/ (fakes: SpyView, FixedClock, ..
 ## Tests
 
 Presenter: `SpyView` + fakes. HTTP: supertest on `new Application([module]).createServer({ quiet: true }).app`.
-Repositories: `mongodb-memory-server`. Whole API without Mongo: in-memory adapters in
-`test/support/inMemory.ts`, wired in `test/integration/in-memory.http.test.ts`.
+Repositories: `MongoMemoryReplSet` from `mongodb-memory-server` (transactions need a replica set).
+Whole API without Mongo: in-memory adapters in `test/support/inMemory.ts`, wired in
+`test/integration/in-memory.http.test.ts`.

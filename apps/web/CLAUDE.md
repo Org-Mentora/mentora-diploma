@@ -29,7 +29,11 @@ src/shared/ui | lib         shadcn components, cn()
 
 - Forms (ADR-0021): zod schema + mapper in `model/domain/<f>/*.form.ts`; the ViewModel owns `useForm`
   and maps API `error.field` to `form.setError`. Re-export form types from the ViewModel for sub-views.
-- Session: `features/session` (`RequireSession`, `PublicOnly`, `AppShell`). Logout resets the RTK cache.
+- Session: `features/session` (`RequireLogin` any session, `RequireSession` with access, `PublicOnly`,
+  `AppShell`). Without access only `/settings/*` works (CU-01 step 7, CU-18). Logout resets the RTK cache.
+- `baseApi` refetches `/auth/me` on `403 SUBSCRIPTION_INACTIVE` (refreshes the cookie, ADR-0029).
+- Third-party engines (jsPDF) live in `model/domain` adapters, loaded with `import()` by ViewModels (ADR-0032).
+- Confirmations: `ConfirmDialog` from `@/shared/ui/confirm-dialog`.
 
 ## Workflow
 
@@ -38,3 +42,5 @@ src/shared/ui | lib         shadcn components, cn()
    `app/router.tsx`.
 3. Add a new shadcn component with `pnpm dlx shadcn@latest add <name>` (lands in `src/shared/ui`).
 4. Tests: mock the generated hooks for ViewModel tests; mock the ViewModel for View tests.
+5. Handle `429 TOO_MANY_REQUESTS` like any API error: show `error.message` (it says when to retry).
+6. New model classes (adapters) appear in `docs/architecture/class-diagram.md`: run `pnpm docs:classes`.
