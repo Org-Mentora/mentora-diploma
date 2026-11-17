@@ -2,7 +2,7 @@
 # Mentora API image (ADR-0014). Build from the repository root:
 #   docker build -f docker/api.Dockerfile -t mentora-api .
 
-FROM node:24-alpine AS base
+FROM node:26-alpine AS base
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable
@@ -33,7 +33,7 @@ RUN pnpm --filter @mentora/api build \
  && pnpm --filter @mentora/api deploy --prod --legacy /out
 
 # --- runtime: production-only dependencies, non-root, no build tools ---
-FROM node:24-alpine AS runtime
+FROM node:26-alpine AS runtime
 ARG VERSION=dev
 ARG REVISION=unknown
 LABEL org.opencontainers.image.title="mentora-api"       org.opencontainers.image.description="Mentora API (Express 5, MVP)"       org.opencontainers.image.source="https://github.com/Org-Mentora/mentora-diploma"       org.opencontainers.image.version=$VERSION       org.opencontainers.image.revision=$REVISION
