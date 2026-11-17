@@ -102,6 +102,7 @@ function buildApplication(fakes: Fakes): Application {
     clock,
     context,
     whatsapp: fakes.whatsapp,
+    mail,
     repository: new InMemoryNotificationRepository(),
   });
   const appointments = new AppointmentsModule({

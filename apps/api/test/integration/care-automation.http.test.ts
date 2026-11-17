@@ -189,6 +189,20 @@ describe('Care automation API (CU-07 automatic, CU-14, CU-15)', () => {
       await agent.get('/api/virtual-meetings').expect(400);
     });
 
+    it('emails the invitation when the patient has no phone', async () => {
+      const id = await patient({ email: 'lucia.paz@mail.test' });
+
+      const started = await agent.post('/api/virtual-meetings').send({ patientId: id }).expect(201);
+
+      expect(started.body).toMatchObject({ invitationStatus: 'sent' });
+      expect(t.mail.lastTo('lucia.paz@mail.test')?.text).toContain(started.body.joinUrl);
+      expect((await notifications(id))[0]).toMatchObject({
+        channel: 'email',
+        recipient: 'lucia.paz@mail.test',
+        status: 'sent',
+      });
+    });
+
     it('rejects in-person appointments and foreign patients', async () => {
       const id = await patient();
       const { body: inPerson } = await schedule(id, '2030-01-26T13:00:00.000Z').expect(201);

@@ -1,7 +1,7 @@
 export type { NotificationDto } from './contracts/notifications.contracts';
 export { LocalWhatsAppOutbox } from './infrastructure/LocalWhatsAppOutbox';
 export { WhatsAppCloudApiGateway } from './infrastructure/WhatsAppCloudApiGateway';
-export type { NotificationTopic } from './model/Notification';
+export type { NotificationChannel, NotificationTopic } from './model/Notification';
 export type {
   DeliveryOutcome,
   NotificationCenter,

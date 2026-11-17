@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import { IntervalJobScheduler } from '#infrastructure/scheduling/IntervalJobScheduler';
+import { MailEmailGateway } from '../../src/modules/notifications/infrastructure/MailEmailGateway';
 import { WhatsAppCloudApiGateway } from '../../src/modules/notifications/infrastructure/WhatsAppCloudApiGateway';
 import type { Notification } from '../../src/modules/notifications/model/Notification';
 import { NotificationCenter } from '../../src/modules/notifications/model/NotificationCenter';
@@ -18,7 +19,7 @@ import {
 } from '../../src/modules/virtual-consultations/model/ports';
 import { VirtualConsultationService } from '../../src/modules/virtual-consultations/model/VirtualConsultationService';
 import type { VirtualMeeting } from '../../src/modules/virtual-consultations/model/VirtualMeeting';
-import { FixedClock, RecordingWhatsApp } from '../support/fakes';
+import { CapturingMailTransport, FixedClock, RecordingWhatsApp } from '../support/fakes';
 
 const now = new Date('2030-01-01T12:00:00.000Z');
 const clock = new FixedClock(now);
@@ -46,26 +47,64 @@ class MemoryNotifications extends NotificationRepository {
 const jsonResponse = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
-describe('NotificationCenter (CU-14)', () => {
+describe('NotificationCenter (CU-14, CU-15)', () => {
   const message = {
     professionalId: 'p',
     patientId: 'x',
-    topic: 'appointment_scheduled' as const,
+    topic: 'virtual_meeting' as const,
     body: 'Hi',
   };
-
-  it('skips patients without phone and retries a transient failure once', async () => {
+  const setup = () => {
     const repo = new MemoryNotifications();
     const whatsapp = new RecordingWhatsApp();
-    const center = new NotificationCenter(repo, whatsapp, clock);
+    const mail = new CapturingMailTransport();
+    const center = new NotificationCenter(repo, whatsapp, new MailEmailGateway(mail), clock);
+    return { repo, whatsapp, mail, center };
+  };
 
-    expect(await center.sendWhatsApp({ ...message, phone: null })).toEqual({
+  it('skips patients without phone or email', async () => {
+    const { center } = setup();
+
+    expect(await center.send({ ...message, phone: null, email: null })).toEqual({
+      channel: 'whatsapp',
       status: 'skipped',
-      error: 'The patient has no phone number',
+      error: 'The patient has no phone number or email',
     });
+  });
+
+  it('retries a transient whatsapp failure once and logs it as failed', async () => {
+    const { repo, whatsapp, center } = setup();
     whatsapp.failNext(2);
-    expect((await center.sendWhatsApp({ ...message, phone: '1155550000' })).status).toBe('failed');
+
+    expect((await center.send({ ...message, phone: '1155550000', email: null })).status).toBe(
+      'failed',
+    );
     expect(repo.saved.at(-1)?.attempts).toBe(2);
+  });
+
+  it('falls back to email when the patient has no phone or whatsapp fails', async () => {
+    const { repo, whatsapp, mail, center } = setup();
+
+    const emailOnly = await center.send({ ...message, phone: null, email: 'ana@mail.com' });
+    whatsapp.failNext(2);
+    const afterFailure = await center.send({
+      ...message,
+      phone: '1155550000',
+      email: 'ana@mail.com',
+    });
+
+    expect(emailOnly).toEqual({ channel: 'email', status: 'sent', error: null });
+    expect(afterFailure).toEqual({ channel: 'email', status: 'sent', error: null });
+    expect(mail.lastTo('ana@mail.com')).toEqual({
+      to: 'ana@mail.com',
+      subject: 'Your video consultation link',
+      text: 'Hi',
+    });
+    expect(repo.saved.map((n) => [n.channel, n.status])).toEqual([
+      ['email', 'sent'],
+      ['whatsapp', 'failed'],
+      ['email', 'sent'],
+    ]);
   });
 });
 
@@ -197,7 +236,7 @@ describe('VirtualConsultationService (CU-15 step 2 alternative)', () => {
       })(),
       new (class extends PatientContacts {
         async find() {
-          return { fullName: 'Lucía Paz', phone: null };
+          return { fullName: 'Lucía Paz', phone: null, email: null };
         }
       })(),
       new (class extends AppointmentLookup {

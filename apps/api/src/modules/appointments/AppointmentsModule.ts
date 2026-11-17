@@ -17,8 +17,8 @@ import {
 } from './contracts/appointments.contracts';
 import { MongooseAgendaLock } from './infrastructure/MongooseAgendaLock';
 import { MongooseAppointmentRepository } from './infrastructure/MongooseAppointmentRepository';
+import { NotificationAppointmentNotifier } from './infrastructure/NotificationAppointmentNotifier';
 import { PatientDirectoryNames } from './infrastructure/PatientDirectoryNames';
-import { WhatsAppAppointmentNotifier } from './infrastructure/WhatsAppAppointmentNotifier';
 import type { AgendaLock } from './model/AgendaLock';
 import { AppointmentDirectory } from './model/AppointmentDirectory';
 import type { AppointmentNotifier } from './model/AppointmentNotifier';
@@ -64,7 +64,7 @@ export class AppointmentsModule implements AppModule, AppointmentPresenterFactor
       deps.transactions,
       new PatientDirectoryNames(deps.patients),
       deps.notifier ??
-        new WhatsAppAppointmentNotifier(deps.patients, deps.notifications, deps.dates),
+        new NotificationAppointmentNotifier(deps.patients, deps.notifications, deps.dates),
       deps.clock,
       deps.lock ?? new MongooseAgendaLock(deps.context),
     );

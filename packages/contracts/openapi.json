@@ -1652,7 +1652,8 @@
           "channel": {
             "type": "string",
             "enum": [
-              "whatsapp"
+              "whatsapp",
+              "email"
             ]
           },
           "topic": {
@@ -4191,7 +4192,7 @@
     "/notifications": {
       "get": {
         "operationId": "listNotifications",
-        "summary": "CU-14 WhatsApp messages sent to a patient and their delivery result",
+        "summary": "CU-14 WhatsApp and email messages sent to a patient and their delivery result",
         "tags": [
           "Notifications"
         ],

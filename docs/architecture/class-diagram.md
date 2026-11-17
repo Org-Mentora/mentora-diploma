@@ -524,6 +524,13 @@ classDiagram
     +findScheduledOverlapping(professionalId, startsAt, endsAt) Promise~Appointment[]~
     +findNeedingReminder(from, to, limit) Promise~Appointment[]~
   }
+  class NotificationAppointmentNotifier {
+    <<Adapter>>
+    -patients: PatientDirectory
+    -notifications: NotificationCenter
+    -dates: DateTimeFormatter
+    +notify(event, appointment) Promise~void~
+  }
   class PatientDirectoryNames {
     <<Adapter>>
     -directory: PatientDirectory
@@ -544,13 +551,6 @@ classDiagram
     <<Presenter>>
     -agenda: AppointmentService
     #execute(actor,data) Promise~AppointmentDto~
-  }
-  class WhatsAppAppointmentNotifier {
-    <<Adapter>>
-    -patients: PatientDirectory
-    -notifications: NotificationCenter
-    -dates: DateTimeFormatter
-    +notify(event, appointment) Promise~void~
   }
   class AuthGuard {
     <<external>>
@@ -587,7 +587,7 @@ classDiagram
   }
   AgendaLock <|.. MongooseAgendaLock
   AppointmentDirectory --> AppointmentRepository
-  AppointmentNotifier <|-- WhatsAppAppointmentNotifier
+  AppointmentNotifier <|-- NotificationAppointmentNotifier
   AppointmentRepository <|.. MongooseAppointmentRepository
   AppointmentRoutes --> AuthGuard
   AppointmentService --> AgendaLock
@@ -604,6 +604,9 @@ classDiagram
   MongooseAgendaLock --> TransactionContext
   MongooseAppointmentRepository --> TransactionContext
   MongooseRepository <|-- MongooseAppointmentRepository
+  NotificationAppointmentNotifier --> DateTimeFormatter
+  NotificationAppointmentNotifier --> NotificationCenter
+  NotificationAppointmentNotifier --> PatientDirectory
   PatientDirectoryNames --> PatientDirectory
   PatientNames <|-- PatientDirectoryNames
   Presenter <|-- CancelAppointmentPresenter
@@ -614,9 +617,6 @@ classDiagram
   Repository <|-- AppointmentRepository
   RescheduleAppointmentPresenter --> AppointmentService
   ScheduleAppointmentPresenter --> AppointmentService
-  WhatsAppAppointmentNotifier --> DateTimeFormatter
-  WhatsAppAppointmentNotifier --> NotificationCenter
-  WhatsAppAppointmentNotifier --> PatientDirectory
 ```
 
 ## API module: Auth and account (CU-01, CU-02, CU-03, CU-16, CU-17)
@@ -1409,11 +1409,15 @@ classDiagram
 
 ## API module: Notifications
 
-12 classes.
+14 classes.
 
 ```mermaid
 classDiagram
   direction LR
+  class EmailGateway {
+    <<abstract>>
+    +send(to, subject, body)* Promise~void~
+  }
   class ListNotificationsPresenter {
     <<Presenter>>
     -center: NotificationCenter
@@ -1423,6 +1427,11 @@ classDiagram
     <<Adapter>>
     -logger: AppLogger
     +send(to, body) Promise~string~
+  }
+  class MailEmailGateway {
+    <<Adapter>>
+    -mail: MailTransport
+    +send(to, subject, body) Promise~void~
   }
   class MongooseNotificationRepository {
     <<Repository, Adapter>>
@@ -1434,7 +1443,7 @@ classDiagram
     +restore(id, props)$ Notification
     +professionalId: string
     +patientId: string
-    +channel: string
+    +channel: NotificationChannel
     +topic: NotificationTopic
     +recipient: string | null
     +body: string
@@ -1448,8 +1457,9 @@ classDiagram
     <<Facade>>
     -notifications: NotificationRepository
     -whatsapp: WhatsAppGateway
+    -email: EmailGateway
     -clock: Clock
-    +sendWhatsApp(message) Promise~DeliveryOutcome~
+    +send(message) Promise~DeliveryOutcome~
     +history(professionalId, patientId) Promise~Notification[]~
   }
   class NotificationMapper {
@@ -1496,6 +1506,9 @@ classDiagram
   class Entity {
     <<external>>
   }
+  class MailTransport {
+    <<external>>
+  }
   class MongooseRepository {
     <<external>>
   }
@@ -1508,11 +1521,14 @@ classDiagram
   class TransactionContext {
     <<external>>
   }
+  EmailGateway <|-- MailEmailGateway
   Entity <|-- Notification
   ListNotificationsPresenter --> NotificationCenter
+  MailEmailGateway --> MailTransport
   MongooseNotificationRepository --> TransactionContext
   MongooseRepository <|-- MongooseNotificationRepository
   NotificationCenter --> Clock
+  NotificationCenter --> EmailGateway
   NotificationCenter --> NotificationRepository
   NotificationCenter --> WhatsAppGateway
   NotificationRepository <|.. MongooseNotificationRepository
@@ -2093,6 +2109,11 @@ classDiagram
     +findByPatient(professionalId, patientId) Promise~VirtualMeeting[]~
     +findByAppointment(professionalId, appointmentId) Promise~VirtualMeeting | null~
   }
+  class NotificationMeetingInvitations {
+    <<Adapter>>
+    -notifications: NotificationCenter
+    +send(invitation)
+  }
   class PatientContacts {
     <<abstract>>
     +find(professionalId, patientId)* Promise~PatientContactInfo | null~
@@ -2161,11 +2182,6 @@ classDiagram
   class VirtualMeetingViewModel {
     +toDto(meeting)$ VirtualMeetingDto
   }
-  class WhatsAppMeetingInvitations {
-    <<Adapter>>
-    -notifications: NotificationCenter
-    +send(invitation)
-  }
   class AppointmentDirectory {
     <<external>>
   }
@@ -2203,11 +2219,12 @@ classDiagram
   AppointmentLookup <|-- AppointmentDirectoryLookup
   Entity <|-- VirtualMeeting
   ListVirtualMeetingsPresenter --> VirtualConsultationService
-  MeetingInvitations <|-- WhatsAppMeetingInvitations
+  MeetingInvitations <|-- NotificationMeetingInvitations
   MeetingLinkProvider <|-- GoogleMeetLinkProvider
   MeetingLinkProvider <|-- JitsiMeetingLinkProvider
   MongooseRepository <|-- MongooseVirtualMeetingRepository
   MongooseVirtualMeetingRepository --> TransactionContext
+  NotificationMeetingInvitations --> NotificationCenter
   PatientContacts <|-- PatientDirectoryContacts
   PatientDirectoryContacts --> PatientDirectory
   Presenter <|-- ListVirtualMeetingsPresenter
@@ -2223,7 +2240,6 @@ classDiagram
   VirtualConsultationService --> VirtualMeetingRepository
   VirtualMeetingRepository <|.. MongooseVirtualMeetingRepository
   VirtualMeetingRoutes --> AuthGuard
-  WhatsAppMeetingInvitations --> NotificationCenter
 ```
 
 ## Web model and store

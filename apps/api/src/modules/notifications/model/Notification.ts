@@ -6,12 +6,13 @@ export type NotificationTopic =
   | 'appointment_cancelled'
   | 'appointment_reminder'
   | 'virtual_meeting';
+export type NotificationChannel = 'whatsapp' | 'email';
 export type NotificationStatus = 'sent' | 'failed' | 'skipped';
 
 export interface NotificationProps {
   professionalId: string;
   patientId: string;
-  channel: 'whatsapp';
+  channel: NotificationChannel;
   topic: NotificationTopic;
   recipient: string | null;
   body: string;
@@ -24,8 +25,8 @@ export interface NotificationProps {
 
 // Aggregate Root
 export class Notification extends Entity<NotificationProps> {
-  static record(props: Omit<NotificationProps, 'channel'>): Notification {
-    return new Notification(crypto.randomUUID(), { ...props, channel: 'whatsapp' });
+  static record(props: NotificationProps): Notification {
+    return new Notification(crypto.randomUUID(), props);
   }
 
   static restore(id: string, props: NotificationProps): Notification {
@@ -40,7 +41,7 @@ export class Notification extends Entity<NotificationProps> {
     return this.props.patientId;
   }
 
-  get channel(): 'whatsapp' {
+  get channel(): NotificationChannel {
     return this.props.channel;
   }
 

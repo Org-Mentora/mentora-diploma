@@ -5,10 +5,12 @@ import type { ContractRegistry } from '#core/module/ContractRegistry';
 import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
+import type { MailTransport } from '#infrastructure/mail/MailTransport';
 import {
   type NotificationDto,
   registerNotificationContracts,
 } from './contracts/notifications.contracts';
+import { MailEmailGateway } from './infrastructure/MailEmailGateway';
 import { MongooseNotificationRepository } from './infrastructure/MongooseNotificationRepository';
 import { NotificationCenter } from './model/NotificationCenter';
 import type { NotificationRepository } from './model/NotificationRepository';
@@ -22,6 +24,7 @@ export interface NotificationsModuleDependencies {
   clock: Clock;
   context: TransactionContext;
   whatsapp: WhatsAppGateway;
+  mail: MailTransport;
   repository?: NotificationRepository;
 }
 
@@ -34,6 +37,7 @@ export class NotificationsModule implements AppModule, NotificationPresenterFact
     this.center = new NotificationCenter(
       deps.repository ?? new MongooseNotificationRepository(deps.context),
       deps.whatsapp,
+      new MailEmailGateway(deps.mail),
       deps.clock,
     );
   }

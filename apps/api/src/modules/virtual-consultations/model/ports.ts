@@ -28,6 +28,7 @@ export abstract class MeetingLinkProvider {
 export interface PatientContactInfo {
   fullName: string;
   phone: string | null;
+  email: string | null;
 }
 
 export abstract class PatientContacts {
@@ -50,6 +51,7 @@ export interface Invitation {
   professionalId: string;
   patientId: string;
   phone: string | null;
+  email: string | null;
   body: string;
 }
 

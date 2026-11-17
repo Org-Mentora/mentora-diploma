@@ -3,6 +3,7 @@ import type { PatientRepository } from './PatientRepository';
 export interface PatientContact {
   fullName: string;
   phone: string | null;
+  email: string | null;
 }
 
 export class PatientDirectory {
@@ -28,7 +29,10 @@ export class PatientDirectory {
     const patients =
       unique.length > 0 ? await this.patients.findOwnedMany(professionalId, unique) : [];
     return new Map(
-      patients.map((patient) => [patient.id, { fullName: patient.fullName, phone: patient.phone }]),
+      patients.map((patient) => [
+        patient.id,
+        { fullName: patient.fullName, phone: patient.phone, email: patient.email },
+      ]),
     );
   }
 }

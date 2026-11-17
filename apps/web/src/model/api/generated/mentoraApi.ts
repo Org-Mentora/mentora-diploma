@@ -921,7 +921,7 @@ export type RescheduleAppointmentRequestDto = {
 export type NotificationDto = {
   id: string;
   patientId: string;
-  channel: "whatsapp";
+  channel: "whatsapp" | "email";
   topic:
     | "appointment_scheduled"
     | "appointment_rescheduled"

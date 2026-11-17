@@ -5,7 +5,7 @@ export const NotificationSchema = z
   .object({
     id: z.uuid(),
     patientId: z.uuid(),
-    channel: z.enum(['whatsapp']),
+    channel: z.enum(['whatsapp', 'email']),
     topic: z.enum([
       'appointment_scheduled',
       'appointment_rescheduled',
@@ -32,7 +32,7 @@ export function registerNotificationContracts(registry: ContractRegistry): void 
     method: 'get',
     path: '/notifications',
     operationId: 'listNotifications',
-    summary: 'CU-14 WhatsApp messages sent to a patient and their delivery result',
+    summary: 'CU-14 WhatsApp and email messages sent to a patient and their delivery result',
     tags: ['Notifications'],
     auth: true,
     request: { query: ListNotificationsQuerySchema },

@@ -15,8 +15,8 @@ import {
 } from './contracts/virtual-consultations.contracts';
 import {
   AppointmentDirectoryLookup,
+  NotificationMeetingInvitations,
   PatientDirectoryContacts,
-  WhatsAppMeetingInvitations,
 } from './infrastructure/collaborators';
 import { MongooseVirtualMeetingRepository } from './infrastructure/MongooseVirtualMeetingRepository';
 import type { MeetingLinkProvider, VirtualMeetingRepository } from './model/ports';
@@ -49,7 +49,7 @@ export class VirtualConsultationsModule implements AppModule, VirtualConsultatio
       deps.links,
       new PatientDirectoryContacts(deps.patients),
       new AppointmentDirectoryLookup(deps.appointments),
-      new WhatsAppMeetingInvitations(deps.notifications),
+      new NotificationMeetingInvitations(deps.notifications),
       deps.transactions,
       deps.clock,
     );

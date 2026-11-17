@@ -546,7 +546,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** CU-14 WhatsApp messages sent to a patient and their delivery result */
+        /** CU-14 WhatsApp and email messages sent to a patient and their delivery result */
         get: operations["listNotifications"];
         put?: never;
         post?: never;
@@ -981,7 +981,7 @@ export interface components {
             /** Format: uuid */
             patientId: string;
             /** @enum {string} */
-            channel: "whatsapp";
+            channel: "whatsapp" | "email";
             /** @enum {string} */
             topic: "appointment_scheduled" | "appointment_rescheduled" | "appointment_cancelled" | "appointment_reminder" | "virtual_meeting";
             recipient: string | null;

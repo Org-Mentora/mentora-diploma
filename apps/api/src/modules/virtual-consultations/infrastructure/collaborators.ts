@@ -34,16 +34,17 @@ export class AppointmentDirectoryLookup extends AppointmentLookup {
 }
 
 // Adapter
-export class WhatsAppMeetingInvitations extends MeetingInvitations {
+export class NotificationMeetingInvitations extends MeetingInvitations {
   constructor(private readonly notifications: NotificationCenter) {
     super();
   }
 
   send(invitation: Invitation) {
-    return this.notifications.sendWhatsApp({
+    return this.notifications.send({
       professionalId: invitation.professionalId,
       patientId: invitation.patientId,
       phone: invitation.phone,
+      email: invitation.email,
       topic: 'virtual_meeting',
       body: invitation.body,
     });

@@ -12,7 +12,7 @@ const TOPIC: Record<AppointmentEvent, NotificationTopic> = {
 };
 
 // Adapter
-export class WhatsAppAppointmentNotifier extends AppointmentNotifier {
+export class NotificationAppointmentNotifier extends AppointmentNotifier {
   constructor(
     private readonly patients: PatientDirectory,
     private readonly notifications: NotificationCenter,
@@ -29,10 +29,11 @@ export class WhatsAppAppointmentNotifier extends AppointmentNotifier {
     if (!contact) {
       return;
     }
-    await this.notifications.sendWhatsApp({
+    await this.notifications.send({
       professionalId: appointment.professionalId,
       patientId: appointment.patientId,
       phone: contact.phone,
+      email: contact.email,
       topic: TOPIC[event],
       body: this.compose(event, contact.fullName, appointment),
     });
