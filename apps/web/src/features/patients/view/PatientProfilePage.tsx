@@ -1,6 +1,10 @@
 import { ArrowLeft, FileText, Pencil, Stethoscope } from 'lucide-react';
 import { Link } from 'react-router';
-import { ClinicalRecordPanel, DiagnosisHistoryPanel } from '@/features/clinical-records';
+import {
+  ClinicalRecordPanel,
+  DiagnosisHistoryPanel,
+  RecordAccessPanel,
+} from '@/features/clinical-records';
 import { NotificationsPanel } from '@/features/notifications';
 import { VirtualMeetingButton, VirtualMeetingsPanel } from '@/features/virtual-consultations';
 import { Badge } from '@/shared/ui/badge';
@@ -94,6 +98,7 @@ export function PatientProfilePage() {
           <TabsTrigger value="diagnoses">Diagnoses</TabsTrigger>
           <TabsTrigger value="meetings">Virtual consultations</TabsTrigger>
           <TabsTrigger value="messages">Messages</TabsTrigger>
+          <TabsTrigger value="access">Access log</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
           <Card>
@@ -140,6 +145,9 @@ export function PatientProfilePage() {
         </TabsContent>
         <TabsContent value="messages">
           <NotificationsPanel patientId={vm.patientId} />
+        </TabsContent>
+        <TabsContent value="access">
+          <RecordAccessPanel patientId={vm.patientId} />
         </TabsContent>
       </Tabs>
 
