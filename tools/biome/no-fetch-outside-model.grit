@@ -1,5 +1,3 @@
-// ADR-0010 / ADR-0011: HTTP calls go through the generated RTK Query API in src/model.
-// Views, ViewModels and shared UI must never call fetch() directly.
 language js
 
 `fetch($args)` as $call where {

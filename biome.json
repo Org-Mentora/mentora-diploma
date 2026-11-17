@@ -93,7 +93,8 @@
               "options": {
                 "paths": {
                   "mongoose": "[arch] core/ is framework-agnostic. Persistence belongs to infrastructure/ (ADR-0004).",
-                  "pino": "[arch] core/ depends on the AppLogger interface, not on pino (ADR-0007)."
+                  "pino": "[arch] core/ depends on the AppLogger interface, not on pino (ADR-0007).",
+                  "nodemailer": "[arch] core/ is framework-agnostic. Email delivery is an infrastructure adapter (ADR-0027)."
                 },
                 "patterns": [
                   {
@@ -138,7 +139,8 @@
                 "paths": {
                   "express": "[arch][MVP] The Model is transport-agnostic (ADR-0004).",
                   "mongoose": "[arch][MVP] The Model declares abstract repositories; Mongoose lives in infrastructure/ (ADR-0007).",
-                  "zod": "[arch][MVP] Input validation is a View concern; the Model enforces invariants in code (ADR-0004)."
+                  "zod": "[arch][MVP] Input validation is a View concern; the Model enforces invariants in code (ADR-0004).",
+                  "nodemailer": "[arch][MVP] The Model declares notifier ports; email lives in infrastructure/ (ADR-0027)."
                 },
                 "patterns": [
                   {
@@ -305,7 +307,8 @@
                 "paths": {
                   "@reduxjs/toolkit": "[arch][MVVM] Views bind to their ViewModel, never to the store (ADR-0011).",
                   "react-redux": "[arch][MVVM] Views bind to their ViewModel, never to the store (ADR-0011).",
-                  "@mentora/contracts": "[arch][MVVM] Views render UI models exposed by the ViewModel, not DTOs (ADR-0011)."
+                  "@mentora/contracts": "[arch][MVVM] Views render UI models exposed by the ViewModel, not DTOs (ADR-0011).",
+                  "jspdf": "[arch][MVVM] PDF rendering is a Model adapter (model/domain), loaded by the ViewModel (ADR-0032)."
                 },
                 "patterns": [
                   {
@@ -333,7 +336,8 @@
               "options": {
                 "paths": {
                   "react-dom": "[arch][MVVM] ViewModels expose state and commands; rendering is the View's job (ADR-0011).",
-                  "@/model/api/baseApi": "[arch] Use the generated hooks from @/model/api/generated (ADR-0010)."
+                  "@/model/api/baseApi": "[arch] Use the generated hooks from @/model/api/generated (ADR-0010).",
+                  "jspdf": "[arch][MVVM] Use the PDF adapter in model/domain, never jspdf directly (ADR-0032)."
                 },
                 "patterns": [
                   {
@@ -398,6 +402,16 @@
     {
       "includes": ["apps/web/src/features/**", "apps/web/src/shared/**", "apps/web/src/app/**"],
       "plugins": ["./tools/biome/no-fetch-outside-model.grit"]
+    },
+    {
+      "includes": ["docker/mongo/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noUndeclaredEnvVars": "off"
+          }
+        }
+      }
     }
   ]
 }

@@ -6,6 +6,12 @@ pre-commit:
       glob: "*.{js,mjs,ts,tsx,json,jsonc,css,grit}"
       run: pnpm exec biome check --write --no-errors-on-unmatched --files-ignore-unknown=true {staged_files}
       stage_fixed: true
+    comments:
+      glob: "*.{js,mjs,cjs,ts,tsx,css}"
+      run: node tools/comments/check-comments.mjs
+    class-diagram:
+      glob: "apps/*/src/**/*.{ts,tsx}"
+      run: node tools/docs/class-diagram.mjs --check
 
 commit-msg:
   commands:
