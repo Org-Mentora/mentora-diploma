@@ -165,6 +165,14 @@
                   }
                 ]
               }
+            },
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "crypto": "[arch][DIP] New ids come from the injected IdGenerator (ADR-0042)."
+                }
+              }
             }
           }
         }

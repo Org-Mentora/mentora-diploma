@@ -10,9 +10,9 @@ to the file or ADR that proves it.
 | Use cases of the specification | **18 / 18** implemented ([scope](docs/product/mvp-scope.md)) |
 | API modules | 9 (`apps/api/src/modules/*`) |
 | Web features | 10 (`apps/web/src/features/*`) |
-| Architecture decisions | 41 ADRs ([index](docs/adr/README.md)) |
-| Automated tests | 204 (API 152, web 52), plus an end-to-end smoke test of the production images |
-| Classes in the generated class diagram | 256 ([class diagram](docs/architecture/class-diagram.md)) |
+| Architecture decisions | 42 ADRs ([index](docs/adr/README.md)) |
+| Automated tests | 207 (API 153, web 54), plus an end-to-end smoke test of the production images |
+| Classes in the generated class diagram | 261 ([class diagram](docs/architecture/class-diagram.md)) |
 
 ---
 
@@ -52,6 +52,7 @@ to the file or ADR that proves it.
   - Details in [ADR-0018](docs/adr/0018-authentication-session-cookie.md), [ADR-0028](docs/adr/0028-password-recovery-codes.md), [ADR-0034](docs/adr/0034-session-credentials-version.md), [ADR-0041](docs/adr/0041-pluggable-token-signing-algorithm.md) and [SECURITY.md](SECURITY.md).
 - **Architecture enforced by tooling:**
   - Biome reports any import that crosses a layer as `[arch]` ([ADR-0013](docs/adr/0013-biome-architecture-linting.md)).
+  - Biome also rejects `crypto` in the API model and `sonner` in web views and ViewModels ([ADR-0042](docs/adr/0042-dependency-inversion-for-platform-services.md)).
   - GritQL plugins in `tools/biome/` check Singleton constructors and forbid `fetch` outside the model.
   - A comment checker allows only design-pattern names ([ADR-0035](docs/adr/0035-comments-name-design-patterns.md)).
   - The class diagram is generated from the code and checked in CI.
@@ -109,7 +110,7 @@ to the file or ADR that proves it.
 | **O**: Open/Closed | Adding a provider, algorithm or module adds a class and a line in the composition root, without editing consumers. Strategies cover payments, WhatsApp, meeting links and JWT signing. `Presenter.present()` and `HttpView.render()` are fixed templates with extension points. | `src/modules/subscriptions/model/PaymentGateway.ts`, `src/modules/virtual-consultations/model/ports.ts`, `src/infrastructure/security/TokenSigningAlgorithm.ts`, `src/app/modules.ts`, [ADR-0041](docs/adr/0041-pluggable-token-signing-algorithm.md) |
 | **L**: Liskov Substitution | Every abstract port has interchangeable implementations that the same tests exercise: Mongoose vs in-memory repositories, local outbox vs WhatsApp Cloud API, Jitsi vs Google Meet, HS256 vs a test Ed25519 signer. | `apps/api/test/support/inMemory.ts`, `test/integration/in-memory.http.test.ts`, `src/modules/notifications/infrastructure/LocalWhatsAppOutbox.ts` / `WhatsAppCloudApiGateway.ts`, `test/unit/auth-model.test.ts` |
 | **I**: Interface Segregation | Small, consumer-owned ports. Clinical records ask for `PatientLookup` and appointments for `PatientNames`, never the whole patients API. Other examples: `Clock`, `JobLock`, `HttpResponder`, the one-method `View<T>`, and one PresenterFactory interface per module. | `src/modules/clinical-records/model/PatientLookup.ts`, `src/modules/appointments/model/PatientNames.ts`, `src/core/model/Clock.ts`, `src/core/view/View.ts`, `src/modules/patients/presenter/PatientPresenterFactory.ts` |
-| **D**: Dependency Inversion | The Model owns its abstractions and infrastructure implements them. Services receive `Repository`, `TransactionManager`, `TokenService` and `PasswordHasher` through the constructor. Singletons are resolved only in composition roots. In the web, Views depend on ViewModels, never on Redux or the API. Biome enforces all of this. | `src/modules/patients/model/PatientRepository.ts` ← `infrastructure/MongoosePatientRepository.ts`, `src/core/model/TransactionManager.ts`, `src/core/security/TokenService.ts` ← `infrastructure/security/JoseTokenService.ts` ← `TokenSigningAlgorithm`, [ADR-0022](docs/adr/0022-cross-module-collaboration.md), [ADR-0024](docs/adr/0024-injectable-module-adapters.md) |
+| **D**: Dependency Inversion | The Model owns its abstractions and infrastructure implements them. Services receive `Repository`, `TransactionManager`, `TokenService`, `PasswordHasher`, `Clock` and `IdGenerator` through the constructor. Notifiers depend on `DateFormatter`, not on `Intl`. ViewModels get `UserFeedback` and `BrowserActions` from `PlatformContext` instead of importing `sonner`, `window` or `navigator`. Singletons are resolved only in composition roots. In the web, Views depend on ViewModels, never on Redux or the API. Biome enforces all of this. | `src/modules/patients/model/PatientRepository.ts` ← `infrastructure/MongoosePatientRepository.ts`, `src/core/model/TransactionManager.ts`, `src/core/security/TokenService.ts` ← `infrastructure/security/JoseTokenService.ts` ← `TokenSigningAlgorithm`, `src/core/model/IdGenerator.ts`, `src/core/format/DateFormatter.ts`, `apps/web/src/model/platform/Platform.ts`, [ADR-0042](docs/adr/0042-dependency-inversion-for-platform-services.md), [ADR-0022](docs/adr/0022-cross-module-collaboration.md), [ADR-0024](docs/adr/0024-injectable-module-adapters.md) |
 
 Paths starting with `src/` or `test/` are relative to `apps/api`.
 
@@ -122,11 +123,11 @@ Every class that applies a pattern carries a one-line `// <Pattern>` comment
 the Strategy classes, for example. The full catalogue with tables is in
 [docs/architecture/patterns.md](docs/architecture/patterns.md).
 
-### Backend (`apps/api/src`, 195 tags)
+### Backend (`apps/api/src`, 196 tags)
 
 | Pattern | Count | Example references |
 | --- | --- | --- |
-| Adapter | 44 | `infrastructure/logger/PinoLoggerAdapter.ts`, `infrastructure/mail/SmtpMailTransport.ts`, `infrastructure/security/JoseTokenService.ts`, `modules/clinical-records/infrastructure/PatientDirectoryLookup.ts` |
+| Adapter | 45 | `infrastructure/logger/PinoLoggerAdapter.ts`, `infrastructure/format/IntlDateFormatter.ts`, `infrastructure/mail/SmtpMailTransport.ts`, `infrastructure/security/JoseTokenService.ts`, `modules/clinical-records/infrastructure/PatientDirectoryLookup.ts` |
 | Presenter | 40 | `modules/patients/presenter/*Presenter.ts` (one per use case) |
 | Repository | 24 | `core/model/Repository.ts`, `infrastructure/database/MongooseRepository.ts`, `modules/*/model/*Repository.ts` |
 | Abstract Factory | 18 | `modules/patients/presenter/PatientPresenterFactory.ts`, implemented by `modules/patients/PatientsModule.ts` |
@@ -144,13 +145,14 @@ the Strategy classes, for example. The full catalogue with tables is in
 | State | 1 | `modules/subscriptions/model/Subscription.ts` (trial, active, pending payment, suspended, expired) |
 | Facade | 1 | `modules/notifications/model/NotificationCenter.ts` (WhatsApp → email fallback → delivery log) |
 
-### Frontend (`apps/web/src`, 35 tags)
+### Frontend (`apps/web/src`, 38 tags)
 
 | Pattern | Count | Example references |
 | --- | --- | --- |
 | ViewModel | 23 | `features/patients/viewmodel/usePatientListViewModel.ts`, `features/session/viewmodel/useSessionViewModel.ts` |
-| Adapter | 11 | `model/domain/patients/PatientAdapter.ts`, `model/api/ApiErrorAdapter.ts`, `model/domain/prescriptions/PrescriptionPdfAdapter.ts` (jsPDF) |
+| Adapter | 13 | `model/domain/patients/PatientAdapter.ts`, `model/api/ApiErrorAdapter.ts`, `model/domain/prescriptions/PrescriptionPdfAdapter.ts` (jsPDF), `model/platform/SonnerUserFeedback.ts`, `model/platform/WindowBrowserActions.ts` |
 | Singleton | 1 | `app/store/AppStore.ts` (Redux store) |
+| Composition Root | 1 | `app/AppProviders.tsx` (store and `PlatformContext`) |
 
 ---
 
@@ -174,7 +176,9 @@ A reviewer with limited time can follow this path.
    View/HttpView, Entity, ValueObject, Repository, DataMapper, TransactionManager, ScheduledJob and
    ApplicationError.
 3. **Wiring:** `apps/api/src/app/modules.ts` is the single place where implementations are
-   chosen: Mongo or in-memory, Jitsi or Meet, WhatsApp outbox or Cloud API, the signing algorithm.
+   chosen: Mongo or in-memory, Jitsi or Meet, WhatsApp outbox or Cloud API, the signing algorithm,
+   the clock, the id generator and the date formatter. In the web the equivalent is
+   `apps/web/src/app/AppProviders.tsx`.
 4. **Richest domain logic:**
    - `modules/subscriptions/model/Subscription.ts` (State) and `SubscriptionService.ts`.
    - `modules/appointments/model/AppointmentService.ts` (overlaps and agenda lock).
@@ -211,7 +215,7 @@ A reviewer with limited time can follow this path.
 ```bash
 pnpm install
 docker compose up -d mongo mailpit
-pnpm lint && pnpm typecheck && pnpm test   # architecture rules, types, 204 tests
+pnpm lint && pnpm typecheck && pnpm test   # architecture rules, types, 207 tests
 pnpm dev                                    # web :5173, API :3000, Swagger :3000/api/docs
 docker compose up --build                   # full stack in containers, web :8080
 ```
