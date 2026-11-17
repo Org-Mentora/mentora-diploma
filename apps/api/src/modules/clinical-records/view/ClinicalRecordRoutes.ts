@@ -14,7 +14,6 @@ import {
 } from '../contracts/clinical-records.contracts';
 import type { ClinicalRecordPresenterFactory } from '../presenter/ClinicalRecordPresenterFactory';
 
-/** Mounted under `/api/patients`: the record is a sub-resource of the patient. */
 export class ClinicalRecordRoutes {
   constructor(
     private readonly presenters: ClinicalRecordPresenterFactory,

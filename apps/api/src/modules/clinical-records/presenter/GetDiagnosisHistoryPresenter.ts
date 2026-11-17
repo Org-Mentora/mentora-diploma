@@ -5,7 +5,7 @@ import type { ClinicalRecordService } from '../model/ClinicalRecordService';
 import { ClinicalRecordViewModel } from './ClinicalRecordViewModel';
 import type { PatientRecordRef } from './GetClinicalRecordPresenter';
 
-/** CU-11 step 10: diagnosis history of the patient. */
+// Presenter
 export class GetDiagnosisHistoryPresenter extends Presenter<
   PatientRecordRef,
   DiagnosisHistoryEntryDto[]

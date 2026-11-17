@@ -10,7 +10,7 @@ export interface PatientRecordRef {
   patientId: string;
 }
 
-/** CU-08 Consult clinical record. */
+// Presenter
 export class GetClinicalRecordPresenter extends Presenter<PatientRecordRef, ClinicalRecordDto> {
   constructor(
     view: View<ClinicalRecordDto>,

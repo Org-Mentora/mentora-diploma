@@ -10,7 +10,6 @@ export interface ConsultationProps {
   type: ConsultationType;
   reason: string;
   observations: string | null;
-  /** Evolution note (`NotaEvolucion`); optional per CU-09 step 4. */
   evolution: string | null;
   diagnosis: AssignedDiagnosis | null;
   medications: Medication[];
@@ -19,7 +18,7 @@ export interface ConsultationProps {
 
 export type NewConsultation = Omit<ConsultationProps, 'recordedAt'>;
 
-/** A consultation inside a clinical record (CU-09). Entity owned by `ClinicalRecord`. */
+// Entity
 export class Consultation extends Entity<ConsultationProps> {
   static record(data: NewConsultation, now: Date): Consultation {
     const reason = data.reason.trim();

@@ -1,11 +1,14 @@
 import type { Router } from 'express';
 import type { Clock } from '#core/model/Clock';
+import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
+import type { DataMigration } from '#core/module/DataMigration';
 import type { View } from '#core/view/View';
+import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { DiagnosisCatalog } from '#modules/diagnosis-catalog';
-import type { PatientDirectory } from '#modules/patients';
+import type { PatientActivity, PatientDirectory } from '#modules/patients';
 import {
   type ClinicalRecordDto,
   type ConsultationDto,
@@ -13,7 +16,9 @@ import {
   registerClinicalRecordContracts,
 } from './contracts/clinical-records.contracts';
 import { CatalogDiagnosisResolver } from './infrastructure/CatalogDiagnosisResolver';
+import { ClinicalActivityBackfill } from './infrastructure/ClinicalActivityBackfill';
 import { MongooseClinicalRecordRepository } from './infrastructure/MongooseClinicalRecordRepository';
+import { PatientActivityRecorder } from './infrastructure/PatientActivityRecorder';
 import { PatientDirectoryLookup } from './infrastructure/PatientDirectoryLookup';
 import type { ClinicalRecordRepository } from './model/ClinicalRecordRepository';
 import { ClinicalRecordService } from './model/ClinicalRecordService';
@@ -28,20 +33,27 @@ export interface ClinicalRecordsModuleDependencies {
   guard: AuthGuard;
   clock: Clock;
   patients: PatientDirectory;
+  activity: PatientActivity;
   catalog: DiagnosisCatalog;
-  /** Defaults to MongoDB; tests may pass an in-memory implementation. */
+  transactions: TransactionManager;
+  context: TransactionContext;
   repository?: ClinicalRecordRepository;
 }
 
-/** Composition root of the clinical record module (CU-08, CU-09, CU-11, CU-12). */
+// Composition Root, Abstract Factory
 export class ClinicalRecordsModule implements AppModule, ClinicalRecordPresenterFactory {
   readonly basePath = '/patients';
   readonly #service: ClinicalRecordService;
+  readonly #backfill: ClinicalActivityBackfill;
 
   constructor(private readonly deps: ClinicalRecordsModuleDependencies) {
+    const activity = new PatientActivityRecorder(deps.activity);
+    this.#backfill = new ClinicalActivityBackfill(activity);
     this.#service = new ClinicalRecordService(
-      deps.repository ?? new MongooseClinicalRecordRepository(),
+      deps.repository ?? new MongooseClinicalRecordRepository(deps.context),
+      deps.transactions,
       new PatientDirectoryLookup(deps.patients),
+      activity,
       new CatalogDiagnosisResolver(deps.catalog),
       deps.clock,
     );
@@ -53,6 +65,10 @@ export class ClinicalRecordsModule implements AppModule, ClinicalRecordPresenter
 
   createRouter(): Router {
     return new ClinicalRecordRoutes(this, this.deps.guard).build();
+  }
+
+  migrations(): DataMigration[] {
+    return [{ name: '2026-11-clinical-activity-backfill', run: () => this.#backfill.run() }];
   }
 
   getClinicalRecord(view: View<ClinicalRecordDto>): GetClinicalRecordPresenter {
