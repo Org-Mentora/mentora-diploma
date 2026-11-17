@@ -131,4 +131,24 @@ describe('Clinical record API (CU-08, CU-09, CU-11, CU-12)', () => {
       .send({ date: '2030-01-05T15:00:00.000Z', type: 'in_person', reason: 'x' })
       .expect(404);
   });
+
+  it('CU-09 keeps every consultation registered concurrently (ADR-0025)', async () => {
+    const { body: patient } = await agent
+      .post('/api/patients')
+      .send({ firstName: 'Tomás', lastName: 'Paz', dni: '30111222' })
+      .expect(201);
+    const url = `/api/patients/${patient.id}/clinical-record`;
+
+    const responses = await Promise.all(
+      Array.from({ length: 5 }, (_, i) =>
+        agent
+          .post(`${url}/consultations`)
+          .send({ date: '2030-03-05T15:00:00.000Z', type: 'virtual', reason: `Visit ${i}` }),
+      ),
+    );
+
+    expect(responses.map((r) => r.status)).toEqual([201, 201, 201, 201, 201]);
+    const record = await agent.get(url).expect(200);
+    expect(record.body.consultations).toHaveLength(5);
+  });
 });

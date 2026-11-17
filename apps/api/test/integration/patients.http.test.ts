@@ -112,7 +112,6 @@ describe('Patients API (CU-04..CU-07)', () => {
 
     await other.get(`/api/patients/${patient.id}`).expect(404);
     expect((await other.get('/api/patients').expect(200)).body).toEqual([]);
-    // The same DNI can exist for another professional.
     await other
       .post('/api/patients')
       .send({ firstName: 'Same', lastName: 'Dni', dni: '31222333' })
