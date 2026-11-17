@@ -11,7 +11,6 @@ interface FormFieldProps {
   children: ReactNode;
 }
 
-/** Label + control + validation message, consistently spaced. */
 function FormField({ id, label, error, hint, className, children }: FormFieldProps) {
   return (
     <div className={cn('grid gap-2', className)}>
