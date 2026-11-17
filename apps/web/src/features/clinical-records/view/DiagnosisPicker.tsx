@@ -5,7 +5,6 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import type { DiagnosisSearch } from '../viewmodel/useNewConsultationViewModel';
 
-/** CU-11 steps 2-7: search the read-only DSM-5 catalog and pick one diagnosis. */
 export function DiagnosisPicker({ search }: { search: DiagnosisSearch }) {
   return (
     <div className="grid gap-2">

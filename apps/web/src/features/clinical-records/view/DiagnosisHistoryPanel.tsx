@@ -2,7 +2,6 @@ import { Card, CardContent } from '@/shared/ui/card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { useDiagnosisHistoryViewModel } from '../viewmodel/useDiagnosisHistoryViewModel';
 
-/** CU-11 step 10: every diagnosis assigned to the patient, newest first. */
 export function DiagnosisHistoryPanel({ patientId }: { patientId: string }) {
   const { items, isLoading, error } = useDiagnosisHistoryViewModel(patientId);
 
