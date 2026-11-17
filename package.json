@@ -14,11 +14,17 @@
     "test": "turbo run test",
     "codegen": "turbo run codegen",
     "codegen:check": "pnpm codegen && git diff --exit-code -- packages/contracts apps/web/src/model/api/generated",
-    "lint": "biome check .",
+    "lint": "biome check . && pnpm lint:comments",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "docker:up": "docker compose up --build -d",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "lint:comments": "node tools/comments/check-comments.mjs",
+    "smoke": "node tools/smoke/smoke.mjs",
+    "db:backup": "node tools/db/backup.mjs",
+    "db:restore": "node tools/db/restore.mjs",
+    "docs:classes": "node tools/docs/class-diagram.mjs",
+    "docs:check": "node tools/docs/class-diagram.mjs --check"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
