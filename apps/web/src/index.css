@@ -5,6 +5,8 @@
 
 :root {
   --radius: 0.625rem;
+  --chart-earned: #2a78d6;
+  --chart-projected: #eb6834;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -24,6 +26,8 @@
 }
 
 .dark {
+  --chart-earned: #3987e5;
+  --chart-projected: #d95926;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -43,6 +47,8 @@
 }
 
 @theme inline {
+  --color-chart-earned: var(--chart-earned);
+  --color-chart-projected: var(--chart-projected);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
