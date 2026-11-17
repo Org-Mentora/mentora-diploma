@@ -16,6 +16,10 @@ import type { ProfessionalLogo } from '../../src/modules/auth/model/Professional
 import { ProfessionalRepository } from '../../src/modules/auth/model/ProfessionalRepository';
 import type { ClinicalRecord } from '../../src/modules/clinical-records/model/ClinicalRecord';
 import { ClinicalRecordRepository } from '../../src/modules/clinical-records/model/ClinicalRecordRepository';
+import {
+  type RecordAccess,
+  RecordAccessLog,
+} from '../../src/modules/clinical-records/model/RecordAccessLog';
 import { DiagnosisCatalogEntry } from '../../src/modules/diagnosis-catalog/model/DiagnosisCatalogEntry';
 import {
   DiagnosisCatalogRepository,
@@ -248,6 +252,25 @@ export class SpyAgendaLock extends AgendaLock {
 
   async acquire(professionalId: string): Promise<void> {
     this.acquired.push(professionalId);
+  }
+}
+
+export class InMemoryRecordAccessLog extends RecordAccessLog {
+  readonly entries: RecordAccess[] = [];
+
+  async append(access: RecordAccess): Promise<void> {
+    this.entries.push(access);
+  }
+
+  async findByPatient(
+    professionalId: string,
+    patientId: string,
+    limit: number,
+  ): Promise<RecordAccess[]> {
+    return this.entries
+      .filter((a) => a.professionalId === professionalId && a.patientId === patientId)
+      .reverse()
+      .slice(0, limit);
   }
 }
 

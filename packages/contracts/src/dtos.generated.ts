@@ -486,6 +486,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/patients/{patientId}/clinical-record/access-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Append-only log of reads and writes of the clinical record (latest 100, newest first) */
+        get: operations["getRecordAccessLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/appointments": {
         parameters: {
             query?: never;
@@ -932,6 +949,14 @@ export interface components {
             consultationDate: string;
             diagnosis: components["schemas"]["AssignedDiagnosisDto"];
         };
+        RecordAccessDto: {
+            /** @enum {string} */
+            action: "view_record" | "view_consultation" | "view_diagnoses" | "register_consultation";
+            /** Format: uuid */
+            consultationId: string | null;
+            /** Format: date-time */
+            at: string;
+        };
         AppointmentDto: {
             /** Format: uuid */
             id: string;
@@ -1065,6 +1090,7 @@ export type MedicationDto = components['schemas']['MedicationDto'];
 export type RegisterConsultationRequestDto = components['schemas']['RegisterConsultationRequestDto'];
 export type MedicationInputDto = components['schemas']['MedicationInputDto'];
 export type DiagnosisHistoryEntryDto = components['schemas']['DiagnosisHistoryEntryDto'];
+export type RecordAccessDto = components['schemas']['RecordAccessDto'];
 export type AppointmentDto = components['schemas']['AppointmentDto'];
 export type ScheduleAppointmentRequestDto = components['schemas']['ScheduleAppointmentRequestDto'];
 export type RescheduleAppointmentRequestDto = components['schemas']['RescheduleAppointmentRequestDto'];
@@ -2592,6 +2618,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DiagnosisHistoryEntryDto"][];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Patient or consultation not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getRecordAccessLog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                patientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Access log */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecordAccessDto"][];
                 };
             };
             /** @description Missing or invalid session */

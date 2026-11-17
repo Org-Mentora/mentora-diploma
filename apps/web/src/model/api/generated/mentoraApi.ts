@@ -311,6 +311,15 @@ const injectedRtkApi = api
         }),
         providesTags: ["ClinicalRecords"],
       }),
+      getRecordAccessLog: build.query<
+        GetRecordAccessLogApiResponse,
+        GetRecordAccessLogApiArg
+      >({
+        query: (queryArg) => ({
+          url: `/patients/${queryArg.patientId}/clinical-record/access-log`,
+        }),
+        providesTags: ["ClinicalRecords"],
+      }),
       listAppointments: build.query<
         ListAppointmentsApiResponse,
         ListAppointmentsApiArg
@@ -551,6 +560,11 @@ export type GetConsultationApiArg = {
 export type GetDiagnosisHistoryApiResponse =
   /** status 200 Diagnosis history */ DiagnosisHistoryEntryDto[];
 export type GetDiagnosisHistoryApiArg = {
+  patientId: string;
+};
+export type GetRecordAccessLogApiResponse =
+  /** status 200 Access log */ RecordAccessDto[];
+export type GetRecordAccessLogApiArg = {
   patientId: string;
 };
 export type ListAppointmentsApiResponse =
@@ -890,6 +904,15 @@ export type DiagnosisHistoryEntryDto = {
   consultationDate: string;
   diagnosis: AssignedDiagnosisDto;
 };
+export type RecordAccessDto = {
+  action:
+    | "view_record"
+    | "view_consultation"
+    | "view_diagnoses"
+    | "register_consultation";
+  consultationId: string | null;
+  at: string;
+};
 export type AppointmentDto = {
   id: string;
   patientId: string;
@@ -985,6 +1008,7 @@ export const {
   useRegisterConsultationMutation,
   useGetConsultationQuery,
   useGetDiagnosisHistoryQuery,
+  useGetRecordAccessLogQuery,
   useListAppointmentsQuery,
   useScheduleAppointmentMutation,
   useGetAppointmentQuery,

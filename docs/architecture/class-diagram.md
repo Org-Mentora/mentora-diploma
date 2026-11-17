@@ -1015,7 +1015,7 @@ classDiagram
 
 ## API module: Clinical records (CU-07, CU-08, CU-09)
 
-22 classes.
+25 classes.
 
 ```mermaid
 classDiagram
@@ -1076,7 +1076,9 @@ classDiagram
     -activity: ClinicalActivityRecorder
     -diagnoses: DiagnosisResolver
     -clock: Clock
+    -accesses: RecordAccessLog
     +getRecord(professionalId, patientId) Promise~ClinicalRecord~
+    +accessLog(professionalId, patientId) Promise~RecordAccess[]~
     +registerConsultation(professionalId, patientId, data) Promise~Consultation~
     +getConsultation(professionalId, patientId, consultationId) Promise~Consultation~
     +diagnosisHistory(professionalId, patientId) Promise~DiagnosisHistoryEntry[]~
@@ -1092,6 +1094,7 @@ classDiagram
     +registerConsultation(view) RegisterConsultationPresenter
     +getConsultation(view) GetConsultationPresenter
     +getDiagnosisHistory(view) GetDiagnosisHistoryPresenter
+    +listRecordAccess(view) ListRecordAccessPresenter
   }
   class ClinicalRecordViewModel {
     +record(record)$ ClinicalRecordDto
@@ -1130,6 +1133,11 @@ classDiagram
     -records: ClinicalRecordService
     #execute(input) Promise~DiagnosisHistoryEntryDto[]~
   }
+  class ListRecordAccessPresenter {
+    <<Presenter>>
+    -records: ClinicalRecordService
+    #execute(input) Promise~RecordAccessDto[]~
+  }
   class Medication {
     <<Value Object>>
     +prescribe(data, now)$ Medication
@@ -1145,6 +1153,12 @@ classDiagram
     <<Repository, Adapter>>
     +findByPatient(professionalId, patientId) Promise~ClinicalRecord | null~
   }
+  class MongooseRecordAccessLog {
+    <<Adapter>>
+    -context: TransactionContext
+    +append(access) Promise~void~
+    +findByPatient(professionalId, patientId, limit) Promise~RecordAccess[]~
+  }
   class PatientActivityRecorder {
     <<Adapter>>
     -activity: PatientActivity
@@ -1158,6 +1172,11 @@ classDiagram
   class PatientLookup {
     <<abstract>>
     +exists(professionalId, patientId)* Promise~boolean~
+  }
+  class RecordAccessLog {
+    <<abstract>>
+    +append(access)* Promise~void~
+    +findByPatient(professionalId, patientId, limit)* Promise~RecordAccess[]~
   }
   class RegisterConsultationPresenter {
     <<Presenter>>
@@ -1210,6 +1229,7 @@ classDiagram
   ClinicalRecordService --> Clock
   ClinicalRecordService --> DiagnosisResolver
   ClinicalRecordService --> PatientLookup
+  ClinicalRecordService --> RecordAccessLog
   ClinicalRecordService --> TransactionManager
   DiagnosisResolver <|-- CatalogDiagnosisResolver
   Entity <|-- ClinicalRecord
@@ -1217,7 +1237,9 @@ classDiagram
   GetClinicalRecordPresenter --> ClinicalRecordService
   GetConsultationPresenter --> ClinicalRecordService
   GetDiagnosisHistoryPresenter --> ClinicalRecordService
+  ListRecordAccessPresenter --> ClinicalRecordService
   MongooseClinicalRecordRepository --> TransactionContext
+  MongooseRecordAccessLog --> TransactionContext
   MongooseRepository <|-- MongooseClinicalRecordRepository
   PatientActivityRecorder --> PatientActivity
   PatientDirectoryLookup --> PatientDirectory
@@ -1225,7 +1247,9 @@ classDiagram
   Presenter <|-- GetClinicalRecordPresenter
   Presenter <|-- GetConsultationPresenter
   Presenter <|-- GetDiagnosisHistoryPresenter
+  Presenter <|-- ListRecordAccessPresenter
   Presenter <|-- RegisterConsultationPresenter
+  RecordAccessLog <|.. MongooseRecordAccessLog
   RegisterConsultationPresenter --> ClinicalRecordService
   Repository <|-- ClinicalRecordRepository
   ValueObject <|-- AssignedDiagnosis
@@ -2244,7 +2268,7 @@ classDiagram
 
 ## Web model and store
 
-18 classes.
+19 classes.
 
 ```mermaid
 classDiagram
@@ -2325,6 +2349,10 @@ classDiagram
     <<Adapter>>
     +render(prescription)$ jsPDF
     +download(prescription)$ void
+  }
+  class RecordAccessAdapter {
+    <<Adapter>>
+    +toItems(dtos)$ RecordAccessItem[]
   }
   class SessionAdapter {
     <<Adapter>>

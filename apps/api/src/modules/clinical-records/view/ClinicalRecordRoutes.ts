@@ -10,6 +10,7 @@ import {
   ConsultationParamsSchema,
   type DiagnosisHistoryEntryDto,
   PatientRecordParamsSchema,
+  type RecordAccessDto,
   RegisterConsultationRequestSchema,
 } from '../contracts/clinical-records.contracts';
 import type { ClinicalRecordPresenterFactory } from '../presenter/ClinicalRecordPresenterFactory';
@@ -55,6 +56,14 @@ export class ClinicalRecordRoutes {
       const { patientId } = InputParser.parse(PatientRecordParamsSchema, req.params);
       await this.presenters
         .getDiagnosisHistory(view)
+        .present({ actor: ActorReader.from(res), patientId });
+    });
+
+    router.get(`${base}/access-log`, async (req, res) => {
+      const view = new JsonHttpView<RecordAccessDto[]>(new ExpressResponderAdapter(res));
+      const { patientId } = InputParser.parse(PatientRecordParamsSchema, req.params);
+      await this.presenters
+        .listRecordAccess(view)
         .present({ actor: ActorReader.from(res), patientId });
     });
 
