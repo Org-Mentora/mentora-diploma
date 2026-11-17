@@ -2,7 +2,7 @@ import type { MongoConnection } from '#infrastructure/database/MongoConnection';
 import { ComponentHealth } from '../model/ComponentHealth';
 import { HealthIndicator } from '../model/HealthIndicator';
 
-/** Adapter (ADR-0007): exposes the Mongo connection singleton as a `HealthIndicator`. */
+// Adapter
 export class MongoHealthIndicator extends HealthIndicator {
   readonly name = 'mongodb';
 

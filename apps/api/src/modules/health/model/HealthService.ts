@@ -3,11 +3,12 @@ import { ComponentHealth } from './ComponentHealth';
 import type { HealthIndicator } from './HealthIndicator';
 import { HealthReport } from './HealthReport';
 
+export type HealthScope = 'process' | 'dependencies';
+
 export interface UptimeSource {
   uptimeSeconds(): number;
 }
 
-/** Model service: runs every indicator and builds a `HealthReport`. */
 export class HealthService {
   constructor(
     private readonly indicators: readonly HealthIndicator[],
@@ -15,10 +16,11 @@ export class HealthService {
     private readonly uptime: UptimeSource,
   ) {}
 
-  async getReport(): Promise<HealthReport> {
-    const components = await Promise.all(
-      this.indicators.map((indicator) => this.safeCheck(indicator)),
-    );
+  async getReport(scope: HealthScope = 'dependencies'): Promise<HealthReport> {
+    const components =
+      scope === 'process'
+        ? []
+        : await Promise.all(this.indicators.map((indicator) => this.safeCheck(indicator)));
     return HealthReport.create({
       components,
       uptimeSeconds: this.uptime.uptimeSeconds(),

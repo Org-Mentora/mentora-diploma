@@ -9,7 +9,7 @@ interface ComponentHealthProps {
   error: string | null;
 }
 
-/** Health of a single dependency (database, cache, external service...). */
+// Value Object
 export class ComponentHealth extends ValueObject<ComponentHealthProps> {
   static up(name: string, latencyMs: number): ComponentHealth {
     return new ComponentHealth({ name, status: 'up', latencyMs, error: null });

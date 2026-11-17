@@ -9,7 +9,7 @@ interface HealthReportProps {
   checkedAt: Date;
 }
 
-/** Aggregated health of the service. The overall status is a business rule of the Model. */
+// Value Object
 export class HealthReport extends ValueObject<HealthReportProps> {
   static create(props: HealthReportProps): HealthReport {
     return new HealthReport(props);
