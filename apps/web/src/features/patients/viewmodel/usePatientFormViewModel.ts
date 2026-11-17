@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { type UseFormReturn, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
 import {
   useCreatePatientMutation,
@@ -14,6 +13,7 @@ import {
   type PatientFormValues,
   patientFormSchema,
 } from '@/model/domain/patients/patient.form';
+import { useUserFeedback } from '@/model/platform/Platform';
 
 export interface PatientFormViewModel {
   form: UseFormReturn<PatientFormValues>;
@@ -30,6 +30,7 @@ interface Options {
 
 // ViewModel
 export function usePatientFormViewModel({ patientId, onSaved }: Options): PatientFormViewModel {
+  const feedback = useUserFeedback();
   const isEdit = Boolean(patientId);
   const { data: patient } = useGetPatientQuery({ id: patientId ?? '' }, { skip: !patientId });
   const [createPatient, creating] = useCreatePatientMutation();
@@ -54,7 +55,7 @@ export function usePatientFormViewModel({ patientId, onSaved }: Options): Patien
         isEdit && patientId
           ? await updatePatient({ id: patientId, patientInputDto }).unwrap()
           : await createPatient({ patientInputDto }).unwrap();
-      toast.success(isEdit ? 'Patient updated' : `${saved.fullName} was registered`);
+      feedback.success(isEdit ? 'Patient updated' : `${saved.fullName} was registered`);
       form.reset(emptyPatientForm);
       onSaved(saved.id);
     } catch (caught) {

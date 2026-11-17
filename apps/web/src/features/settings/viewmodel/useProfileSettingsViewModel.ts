@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { type UseFormReturn, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { ApiErrorAdapter } from '@/model/api/ApiErrorAdapter';
 import {
   useGetCurrentProfessionalQuery,
@@ -16,6 +15,7 @@ import {
   profileFormSchema,
 } from '@/model/domain/session/auth.forms';
 import { LogoFile } from '@/model/domain/session/LogoFile';
+import { useUserFeedback } from '@/model/platform/Platform';
 import { readFileAsDataUrl } from '@/shared/lib/readFileAsDataUrl';
 
 export type { ProfileFormValues };
@@ -41,6 +41,7 @@ const FIELDS = new Set<keyof ProfileFormValues>(['email', 'licenseNumber', 'offi
 
 // ViewModel
 export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
+  const feedback = useUserFeedback();
   const { data: session, isLoading } = useGetCurrentProfessionalQuery();
   const { data: logo } = useGetLogoQuery();
   const [update, updating] = useUpdateProfileMutation();
@@ -64,7 +65,7 @@ export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
     save: form.handleSubmit(async (values) => {
       try {
         await update({ updateProfileRequestDto: AuthForms.toProfileRequest(values) }).unwrap();
-        toast.success('Your data was updated');
+        feedback.success('Your data was updated');
       } catch (caught) {
         const error = ApiErrorAdapter.toUiError(caught);
         const field = error?.field as keyof ProfileFormValues | undefined;
@@ -93,7 +94,7 @@ export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
       }
       try {
         await upload({ uploadLogoRequestDto: { dataUrl: await readFileAsDataUrl(file) } }).unwrap();
-        toast.success('Logo updated');
+        feedback.success('Logo updated');
       } catch (caught) {
         setLogoError(ApiErrorAdapter.toUiError(caught)?.message ?? 'The logo could not be saved');
       }
@@ -102,7 +103,7 @@ export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
       setLogoError(null);
       try {
         await remove().unwrap();
-        toast.success('Logo removed. Prescriptions will use the default logo.');
+        feedback.success('Logo removed. Prescriptions will use the default logo.');
       } catch (caught) {
         setLogoError(ApiErrorAdapter.toUiError(caught)?.message ?? 'The logo could not be removed');
       }

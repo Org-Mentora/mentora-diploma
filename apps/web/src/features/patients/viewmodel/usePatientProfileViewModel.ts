@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
-import { toast } from 'sonner';
 import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
 import {
   useChangePatientStatusMutation,
@@ -11,6 +10,7 @@ import {
   type PatientProfile,
   type PatientStatus,
 } from '@/model/domain/patients/PatientAdapter';
+import { useUserFeedback } from '@/model/platform/Platform';
 
 type ManualStatus = Exclude<PatientStatus, 'inactive'>;
 
@@ -51,6 +51,7 @@ function actionFor(status: PatientStatus, fullName: string): StatusAction {
 
 // ViewModel
 export function usePatientProfileViewModel(): PatientProfileViewModel {
+  const feedback = useUserFeedback();
   const { patientId = '' } = useParams();
   const { data, isLoading, error } = useGetPatientQuery({ id: patientId });
   const [changeStatus, { isLoading: isChangingStatus }] = useChangePatientStatusMutation();
@@ -81,9 +82,9 @@ export function usePatientProfileViewModel(): PatientProfileViewModel {
           id: patientId,
           changePatientStatusRequestDto: { status: pendingStatus.status },
         }).unwrap();
-        toast.success(`Status changed to ${PatientAdapter.statusLabel(updated.status)}`);
+        feedback.success(`Status changed to ${PatientAdapter.statusLabel(updated.status)}`);
       } catch (caught) {
-        toast.error(ApiErrorAdapter.toUiError(caught)?.message ?? 'Could not change the status');
+        feedback.error(ApiErrorAdapter.toUiError(caught)?.message ?? 'Could not change the status');
       } finally {
         setPendingStatus(null);
       }

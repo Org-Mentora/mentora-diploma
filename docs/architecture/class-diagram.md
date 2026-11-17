@@ -2341,7 +2341,7 @@ classDiagram
 
 ## Web model and store
 
-19 classes.
+21 classes.
 
 ```mermaid
 classDiagram
@@ -2432,6 +2432,12 @@ classDiagram
     +toUiModel(dto)$ SessionUiModel
     +subscription(subscription)$ Pick~SessionUiModel, string~
   }
+  class SonnerUserFeedback {
+    <<Adapter>>
+    +success(message) void
+    +error(message) void
+    +warning(message) void
+  }
   class SubscriptionAdapter {
     <<Adapter>>
     +money(amount, currency)$ string
@@ -2450,5 +2456,10 @@ classDiagram
   class VirtualMeetingAdapter {
     <<Adapter>>
     +toItem(dto)$ VirtualMeetingItem
+  }
+  class WindowBrowserActions {
+    <<Adapter>>
+    +print() void
+    +copyText(text) Promise~void~
   }
 ```

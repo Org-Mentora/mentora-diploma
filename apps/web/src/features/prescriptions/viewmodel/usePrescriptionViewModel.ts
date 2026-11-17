@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router';
-import { toast } from 'sonner';
 import {
   useGetCurrentProfessionalQuery,
   useGetLogoQuery,
   useGetPatientQuery,
 } from '@/model/api/generated/mentoraApi';
 import { type Letterhead, PrescriptionBuilder } from '@/model/domain/prescriptions/Prescription';
+import { useBrowserActions, useUserFeedback } from '@/model/platform/Platform';
 
 export type { Letterhead };
 
@@ -27,6 +27,8 @@ export interface PrescriptionViewModel {
 
 // ViewModel
 export function usePrescriptionViewModel(): PrescriptionViewModel {
+  const feedback = useUserFeedback();
+  const browser = useBrowserActions();
   const { patientId = '' } = useParams();
   const { data: patient, isLoading: loadingPatient } = useGetPatientQuery({ id: patientId });
   const { data: session, isLoading: loadingSession } = useGetCurrentProfessionalQuery();
@@ -56,7 +58,7 @@ export function usePrescriptionViewModel(): PrescriptionViewModel {
     setContent,
     canGenerate: content.trim().length > 0,
     isGenerating,
-    print: () => window.print(),
+    print: () => browser.print(),
     downloadPdf: async () => {
       if (!prescription?.content) {
         return;
@@ -68,7 +70,7 @@ export function usePrescriptionViewModel(): PrescriptionViewModel {
         );
         PrescriptionPdfAdapter.download(prescription);
       } catch {
-        toast.error('The PDF could not be generated');
+        feedback.error('The PDF could not be generated');
       } finally {
         setGenerating(false);
       }

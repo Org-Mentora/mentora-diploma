@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMemo, useState } from 'react';
 import { type UseFormReturn, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { ApiErrorAdapter } from '@/model/api/ApiErrorAdapter';
 import {
   useListPaymentsQuery,
@@ -17,6 +16,7 @@ import {
   manualPaymentFormSchema,
   SubscriptionForms,
 } from '@/model/domain/subscriptions/subscription.forms';
+import { useUserFeedback } from '@/model/platform/Platform';
 
 export type { ManualPaymentFormValues, PaymentItem };
 
@@ -42,6 +42,7 @@ const FIELDS = new Set<keyof ManualPaymentFormValues>(['amount', 'paidAt']);
 
 // ViewModel
 export function usePaymentHistoryViewModel(planPrice: number | null): PaymentHistoryViewModel {
+  const feedback = useUserFeedback();
   const { data, isLoading } = useListPaymentsQuery();
   const [register, registering] = useRegisterManualPaymentMutation();
   const [isManualOpen, setManualOpen] = useState(false);
@@ -68,7 +69,7 @@ export function usePaymentHistoryViewModel(planPrice: number | null): PaymentHis
         await register({
           manualPaymentRequestDto: SubscriptionForms.toManualPayment(values),
         }).unwrap();
-        toast.success('Payment registered. Your access was renewed.');
+        feedback.success('Payment registered. Your access was renewed.');
         setManualOpen(false);
       } catch (caught) {
         const error = ApiErrorAdapter.toUiError(caught);
