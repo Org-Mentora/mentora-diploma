@@ -7,7 +7,7 @@ Each gap says what to do next. Review this page before every major release.
 
 | Section | Status | Main gap |
 | --- | --- | --- |
-| [Security](#security) | ⚠️ | No external security review; rate limits per instance |
+| [Security](#security) | ⚠️ | No external security review |
 | [Reliability](#reliability) | ⚠️ | One MongoDB node, one host |
 | [Observability](#observability) | ⚠️ | Logs only on the host; no metrics or tracing |
 | [Data](#data) | ✅ | Offsite copy is a manual setup step |
@@ -32,11 +32,11 @@ Each gap says what to do next. Review this page before every major release.
 | Secrets only in git-ignored env files; production refuses the development `JWT_SECRET` | ✅ | `AppConfig`, [configuration.md](configuration.md) |
 | Dependency audit, dependency review, CodeQL, Dependabot, actions pinned by SHA | ✅ | ADR-0036 |
 | HTTPS with HSTS | ⚠️ | Done by the TLS proxy in front ([deployment.md](deployment.md#tls-in-front-of-the-web-container)); not part of the stack |
-| Shared rate-limit store across API instances | ❌ | Mongo TTL collection or Redis when the API runs on more than one instance |
+| Shared rate-limit store across API instances | ✅ | `MongoRateLimitStore` (ADR-0040) |
 | Card data never reaches the API | ⚠️ | The simulated gateway receives card numbers; a real provider must tokenize in the browser (ADR-0029) |
 | Container image vulnerability scanning | ❌ | Re-evaluate a scanner (Grype, Docker Scout) pinned by digest; Trivy action excluded (ADR-0036) |
 | Penetration test / external review | ❌ | Before onboarding real patients |
-| Audit log of who read which clinical record | ❌ | Needed for health data; add an append-only access log |
+| Audit log of who read which clinical record | ✅ | `clinical_record_access`, Access log tab (ADR-0040); IP and device not stored |
 
 ## Reliability
 
@@ -51,7 +51,7 @@ Each gap says what to do next. Review this page before every major release.
 | Restart policy and memory limits on every container | ✅ | `docker-compose.prod.yml` |
 | Database failover | ❌ | Single node. Move to a 3-member replica set or MongoDB Atlas |
 | Host failover | ❌ | Single host. RTO 1 h by restore ([backup-and-restore.md](backup-and-restore.md)) |
-| Double booking of the same slot under concurrency | ⚠️ | Checked in the transaction but not locked; add a per-professional slot lock (mvp-scope known limits) |
+| Double booking of the same slot under concurrency | ✅ | Agenda lock per professional inside the booking transaction (ADR-0040) |
 | Load test | ❌ | Run k6 against staging before launch to size the host |
 
 ## Observability
