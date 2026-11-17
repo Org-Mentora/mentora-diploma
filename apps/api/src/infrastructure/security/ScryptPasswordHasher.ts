@@ -12,10 +12,7 @@ function derive(plain: string, salt: Buffer): Promise<Buffer> {
   });
 }
 
-/**
- * Adapter (ADR-0007): `PasswordHasher` on top of Node's built-in scrypt, so no native
- * dependency is needed. Stored format: `scrypt$<salt base64>$<hash base64>`.
- */
+// Adapter
 export class ScryptPasswordHasher extends PasswordHasher {
   async hash(plain: string): Promise<string> {
     const salt = randomBytes(16);

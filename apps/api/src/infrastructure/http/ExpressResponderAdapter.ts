@@ -1,7 +1,7 @@
 import type { Response } from 'express';
 import type { CookieOptions, HttpResponder } from '#core/view/HttpResponder';
 
-/** Adapter (ADR-0007): lets passive views write to an Express `Response`. */
+// Adapter
 export class ExpressResponderAdapter implements HttpResponder {
   constructor(private readonly response: Response) {}
 
