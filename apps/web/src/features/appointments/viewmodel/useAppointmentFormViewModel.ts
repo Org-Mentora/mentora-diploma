@@ -31,6 +31,7 @@ export interface AppointmentFormViewModel {
   isEdit: boolean;
   isCancelled: boolean;
   patientName: string;
+  virtualMeeting: { patientId: string; appointmentId: string } | null;
   patientSearch: string;
   setPatientSearch: (term: string) => void;
   patientOptions: Option[];
@@ -54,7 +55,7 @@ interface Options {
 const toOptions = (labels: Record<string, string>): Option[] =>
   Object.entries(labels).map(([value, label]) => ({ value, label }));
 
-/** CU-10 steps 7, 9 and 10: create, modify or cancel one appointment. */
+// ViewModel
 export function useAppointmentFormViewModel({
   appointmentId,
   day,
@@ -82,7 +83,6 @@ export function useAppointmentFormViewModel({
     }
   }, [appointment, form]);
 
-  // Patient picker (create only): the agenda only accepts registered patients.
   const [patientSearch, setPatientSearch] = useState('');
   const term = useDebouncedValue(patientSearch.trim());
   const { data: patients } = useSearchPatientsQuery(term ? { q: term } : {}, { skip: isEdit });
@@ -132,6 +132,10 @@ export function useAppointmentFormViewModel({
     isEdit,
     isCancelled: appointment?.status === 'cancelled',
     patientName: appointment?.patientName ?? '',
+    virtualMeeting:
+      appointment && appointment.modality === 'virtual' && appointment.status === 'scheduled'
+        ? { patientId: appointment.patientId, appointmentId: appointment.id }
+        : null,
     patientSearch,
     setPatientSearch,
     patientOptions,

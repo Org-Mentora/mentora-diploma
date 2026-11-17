@@ -8,7 +8,6 @@ interface MonthCalendarProps {
   onSelectDay: (day: Date) => void;
 }
 
-/** CU-10 step 2: month grid; a dot marks days with scheduled appointments. */
 export function MonthCalendar({ title, weekdays, weeks, onSelectDay }: MonthCalendarProps) {
   return (
     <table className="w-full table-fixed border-separate border-spacing-1">
