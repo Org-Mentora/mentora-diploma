@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router';
 import { AppProviders } from '@/app/AppProviders';
 import { router } from '@/app/router';
+import { LanguageBoundary } from '@/shared/i18n/LanguageBoundary';
 import './index.css';
 
 const container = document.getElementById('root');
@@ -13,7 +14,9 @@ if (!container) {
 createRoot(container).render(
   <StrictMode>
     <AppProviders>
-      <RouterProvider router={router} />
+      <LanguageBoundary>
+        <RouterProvider router={router} />
+      </LanguageBoundary>
     </AppProviders>
   </StrictMode>,
 );
