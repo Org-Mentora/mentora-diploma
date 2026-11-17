@@ -36,6 +36,7 @@ import {
   InMemorySubscriptionRepository,
   InMemoryTransactionManager,
   InMemoryVirtualMeetingRepository,
+  SpyAgendaLock,
   SpyNotifier,
   SpySeeder,
 } from '../support/inMemory';
@@ -46,6 +47,7 @@ const TRIAL_DAYS = 14;
 const TEST_JWT_SECRET = 'in-memory-test-secret-0123456789-abcdef';
 
 interface Fakes {
+  lock: SpyAgendaLock;
   notifier: SpyNotifier;
   seeder: SpySeeder;
   transactions: InMemoryTransactionManager;
@@ -112,6 +114,7 @@ function buildApplication(fakes: Fakes): Application {
     context,
     repository: new InMemoryAppointmentRepository(),
     notifier: fakes.notifier,
+    lock: fakes.lock,
   });
 
   return new Application([
@@ -164,6 +167,7 @@ function buildApplication(fakes: Fakes): Application {
 
 describe('API on in-memory adapters (dependency inversion)', () => {
   const fakes: Fakes = {
+    lock: new SpyAgendaLock(),
     notifier: new SpyNotifier(),
     seeder: new SpySeeder(),
     transactions: new InMemoryTransactionManager(),
@@ -238,6 +242,7 @@ describe('API on in-memory adapters (dependency inversion)', () => {
       .expect(201);
     await agent.post(`/api/appointments/${appointment.id}/cancel`).expect(200);
 
+    expect(fakes.lock.acquired).toHaveLength(1);
     expect(fakes.notifier.sent).toEqual([
       { event: 'scheduled', appointmentId: appointment.id },
       { event: 'cancelled', appointmentId: appointment.id },

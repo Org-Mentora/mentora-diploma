@@ -391,11 +391,15 @@ classDiagram
 
 ## API module: Appointments (CU-10, CU-11, CU-12, CU-13, CU-14)
 
-18 classes.
+20 classes.
 
 ```mermaid
 classDiagram
   direction LR
+  class AgendaLock {
+    <<abstract>>
+    +acquire(professionalId)* Promise~void~
+  }
   class Appointment {
     <<Aggregate Root>>
     +MIN_DURATION$
@@ -455,6 +459,7 @@ classDiagram
     -patients: PatientNames
     -notifier: AppointmentNotifier
     -clock: Clock
+    -lock: AgendaLock
     +list(professionalId, from, to) Promise~AgendaEntry[]~
     +get(professionalId, appointmentId) Promise~AgendaEntry~
     +schedule(professionalId, patientId, slot) Promise~AgendaEntry~
@@ -494,6 +499,11 @@ classDiagram
     <<Presenter>>
     -agenda: AppointmentService
     #execute(input) Promise~AppointmentDto[]~
+  }
+  class MongooseAgendaLock {
+    <<Adapter>>
+    -context: TransactionContext
+    +acquire(professionalId) Promise~void~
   }
   class MongooseAppointmentRepository {
     <<Repository, Adapter>>
@@ -563,10 +573,12 @@ classDiagram
   class TransactionManager {
     <<external>>
   }
+  AgendaLock <|.. MongooseAgendaLock
   AppointmentDirectory --> AppointmentRepository
   AppointmentNotifier <|-- WhatsAppAppointmentNotifier
   AppointmentRepository <|.. MongooseAppointmentRepository
   AppointmentRoutes --> AuthGuard
+  AppointmentService --> AgendaLock
   AppointmentService --> AppointmentNotifier
   AppointmentService --> AppointmentRepository
   AppointmentService --> Clock
@@ -577,6 +589,7 @@ classDiagram
   Entity <|-- Appointment
   GetAppointmentPresenter --> AppointmentService
   ListAppointmentsPresenter --> AppointmentService
+  MongooseAgendaLock --> TransactionContext
   MongooseAppointmentRepository --> TransactionContext
   MongooseRepository <|-- MongooseAppointmentRepository
   PatientDirectoryNames --> PatientDirectory

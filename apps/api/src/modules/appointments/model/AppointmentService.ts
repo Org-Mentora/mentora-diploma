@@ -1,6 +1,7 @@
 import { ConflictError, NotFoundError, ValidationError } from '#core/errors/ApplicationError';
 import type { Clock } from '#core/model/Clock';
 import type { TransactionManager } from '#core/model/TransactionManager';
+import type { AgendaLock } from './AgendaLock';
 import { Appointment, type AppointmentSlot } from './Appointment';
 import type { AppointmentEvent, AppointmentNotifier } from './AppointmentNotifier';
 import type { AppointmentRepository } from './AppointmentRepository';
@@ -22,6 +23,7 @@ export class AppointmentService {
     private readonly patients: PatientNames,
     private readonly notifier: AppointmentNotifier,
     private readonly clock: Clock,
+    private readonly lock: AgendaLock,
   ) {}
 
   async list(professionalId: string, from: Date, to: Date): Promise<AgendaEntry[]> {
@@ -51,6 +53,7 @@ export class AppointmentService {
       if (!(await this.patients.exists(professionalId, patientId))) {
         throw new NotFoundError('Patient', patientId);
       }
+      await this.lock.acquire(professionalId);
       const scheduled = Appointment.schedule(professionalId, patientId, slot, this.clock.now());
       await this.assertSlotIsFree(scheduled);
       await this.appointments.save(scheduled);
@@ -66,6 +69,7 @@ export class AppointmentService {
     slot: AppointmentSlot,
   ): Promise<AgendaEntry> {
     const appointment = await this.transactions.run(async () => {
+      await this.lock.acquire(professionalId);
       const found = await this.getOwned(professionalId, appointmentId);
       found.reschedule(slot, this.clock.now());
       await this.assertSlotIsFree(found);

@@ -1,5 +1,6 @@
 import type { Entity } from '#core/model/Entity';
 import { TransactionManager } from '#core/model/TransactionManager';
+import { AgendaLock } from '../../src/modules/appointments/model/AgendaLock';
 import type { Appointment } from '../../src/modules/appointments/model/Appointment';
 import {
   type AppointmentEvent,
@@ -224,6 +225,14 @@ export class InMemoryClinicalRecordRepository extends ClinicalRecordRepository {
           (record) => record.professionalId === professionalId && record.patientId === patientId,
         ) ?? null
     );
+  }
+}
+
+export class SpyAgendaLock extends AgendaLock {
+  readonly acquired: string[] = [];
+
+  async acquire(professionalId: string): Promise<void> {
+    this.acquired.push(professionalId);
   }
 }
 
