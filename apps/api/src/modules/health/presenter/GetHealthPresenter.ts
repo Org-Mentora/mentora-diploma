@@ -1,19 +1,20 @@
 import { Presenter } from '#core/presenter/Presenter';
 import type { View } from '#core/view/View';
 import type { HealthDto } from '../contracts/health.contracts';
-import type { HealthService } from '../model/HealthService';
+import type { HealthScope, HealthService } from '../model/HealthService';
 
-/** Use case "get service health": Model `HealthReport` → `HealthDto` view model. */
+// Presenter
 export class GetHealthPresenter extends Presenter<void, HealthDto> {
   constructor(
     view: View<HealthDto>,
     private readonly service: HealthService,
+    private readonly scope: HealthScope = 'dependencies',
   ) {
     super(view);
   }
 
   protected async execute(): Promise<HealthDto> {
-    const report = await this.service.getReport();
+    const report = await this.service.getReport(this.scope);
     return {
       status: report.status,
       uptimeSeconds: report.uptimeSeconds,

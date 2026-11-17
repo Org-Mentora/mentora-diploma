@@ -35,4 +35,23 @@ export function registerHealthContracts(registry: ContractRegistry): void {
       500: { description: 'Unexpected error', schema: ErrorResponseSchema },
     },
   });
+  registry.registerRoute({
+    method: 'get',
+    path: '/health/live',
+    operationId: 'getLiveness',
+    summary: 'Liveness probe: the process answers (no dependency checks)',
+    tags: ['Health'],
+    responses: { 200: { description: 'The process is alive', schema: HealthSchema } },
+  });
+  registry.registerRoute({
+    method: 'get',
+    path: '/health/ready',
+    operationId: 'getReadiness',
+    summary: 'Readiness probe: 503 while a dependency (MongoDB) is down',
+    tags: ['Health'],
+    responses: {
+      200: { description: 'Ready to serve traffic', schema: HealthSchema },
+      503: { description: 'A dependency is down', schema: HealthSchema },
+    },
+  });
 }

@@ -6,20 +6,18 @@ import type { View } from '#core/view/View';
 import { type HealthDto, registerHealthContracts } from './contracts/health.contracts';
 import { ProcessUptimeSource } from './infrastructure/ProcessUptimeSource';
 import type { HealthIndicator } from './model/HealthIndicator';
-import { HealthService, type UptimeSource } from './model/HealthService';
+import { type HealthScope, HealthService, type UptimeSource } from './model/HealthService';
 import { GetHealthPresenter } from './presenter/GetHealthPresenter';
 import type { HealthPresenterFactory } from './presenter/HealthPresenterFactory';
 import { HealthRoutes } from './view/HealthRoutes';
 
 export interface HealthModuleDependencies {
-  /** Probes chosen by the application composition root (e.g. `MongoHealthIndicator`). */
   indicators: readonly HealthIndicator[];
   clock: Clock;
-  /** Defaults to the Node process uptime. */
   uptime?: UptimeSource;
 }
 
-/** Composition root of the health module: the only file that sees every layer. */
+// Composition Root, Abstract Factory
 export class HealthModule implements AppModule, HealthPresenterFactory {
   readonly basePath = '/health';
   readonly #service: HealthService;
@@ -40,7 +38,7 @@ export class HealthModule implements AppModule, HealthPresenterFactory {
     return new HealthRoutes(this).build();
   }
 
-  getHealth(view: View<HealthDto>): GetHealthPresenter {
-    return new GetHealthPresenter(view, this.#service);
+  getHealth(view: View<HealthDto>, scope?: HealthScope): GetHealthPresenter {
+    return new GetHealthPresenter(view, this.#service, scope);
   }
 }

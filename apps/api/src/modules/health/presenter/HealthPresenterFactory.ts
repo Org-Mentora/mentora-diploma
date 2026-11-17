@@ -1,11 +1,9 @@
 import type { View } from '#core/view/View';
 import type { HealthDto } from '../contracts/health.contracts';
+import type { HealthScope } from '../model/HealthService';
 import type { GetHealthPresenter } from './GetHealthPresenter';
 
-/**
- * Builds presenters bound to a per-request view. Implemented by the module composition
- * root, so views never touch the Model to construct a presenter.
- */
+// Abstract Factory
 export interface HealthPresenterFactory {
-  getHealth(view: View<HealthDto>): GetHealthPresenter;
+  getHealth(view: View<HealthDto>, scope?: HealthScope): GetHealthPresenter;
 }
