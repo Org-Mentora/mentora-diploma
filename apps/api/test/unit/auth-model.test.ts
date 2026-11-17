@@ -44,7 +44,7 @@ describe('Professional (CU-03, CU-16, CU-17)', () => {
 
   it('updates the profile and records password and logo changes', () => {
     const professional = Professional.register(data, now);
-    professional.updateProfile({ ...professional.profile, specialty: 'Child psychiatry' }, days(1));
+    professional.updateProfile({ ...data, specialty: 'Child psychiatry' }, days(1));
     professional.changePasswordHash('new-hash', days(2));
     professional.markLogo(days(3), days(3));
 
