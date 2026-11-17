@@ -32,14 +32,22 @@ Every error response uses `ErrorResponseDto`:
 | unauthorized | 401 | `UNAUTHORIZED` |
 | forbidden | 403 | `FORBIDDEN`, `SUBSCRIPTION_INACTIVE` |
 | not_found | 404 | `NOT_FOUND` / `ROUTE_NOT_FOUND` |
-| conflict | 409 | `CONFLICT` |
+| conflict | 409 | `CONFLICT`, `PAYMENT_NOT_DUE`, `DUPLICATE_PAYMENT_REFERENCE`, `PAYMENT_METHOD_REQUIRED` |
+| payment_required | 402 | `PAYMENT_DECLINED` |
+| too_many_requests | 429 | `TOO_MANY_REQUESTS` (header `Retry-After`, details `{ retryAfterSeconds }`) |
+| unavailable | 503 | `SERVICE_UNAVAILABLE`, `PAYMENT_PROVIDER_UNAVAILABLE`, `MEETING_PROVIDER_UNAVAILABLE` |
 | — | 500 | `INTERNAL_ERROR` |
+
+Every response carries an `X-Request-Id` header; the same id is on the API log lines of that
+request ([ADR-0037](../adr/0037-operational-readiness.md)).
 
 ## Endpoints
 
 | Method | Path | operationId | Description |
 | --- | --- | --- | --- |
 | GET | `/api/health` | `getHealth` | Service and dependency health |
+| GET | `/api/health/live` | `getLiveness` | Liveness probe: the process answers (never checks MongoDB) |
+| GET | `/api/health/ready` | `getReadiness` | Readiness probe: 503 until MongoDB is reachable |
 | POST | `/api/auth/register` | `registerProfessional` | CU-03 register + free trial (sets cookie) |
 | POST | `/api/auth/login` | `login` | CU-01 log in (sets cookie) |
 | POST | `/api/auth/logout` | `logout` | Clear the session cookie |
