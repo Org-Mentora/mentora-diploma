@@ -1809,7 +1809,7 @@ classDiagram
   }
   class MongoosePaymentRepository {
     <<Repository, Adapter>>
-    +findByProfessional(professionalId) Promise~Payment[]~
+    +findByProfessional(professionalId, limit) Promise~Payment[]~
     +countByProfessional(professionalId) Promise~number~
     +hasChargeKey(chargeKey) Promise~boolean~
     +hasManualReference(professionalId, reference) Promise~boolean~
@@ -1864,7 +1864,7 @@ classDiagram
   }
   class PaymentRepository {
     <<abstract · Repository>>
-    +findByProfessional(professionalId)* Promise~Payment[]~
+    +findByProfessional(professionalId, limit)* Promise~Payment[]~
     +countByProfessional(professionalId)* Promise~number~
     +hasChargeKey(chargeKey)* Promise~boolean~
     +hasManualReference(professionalId, reference)* Promise~boolean~

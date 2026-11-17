@@ -36,6 +36,7 @@ const RULES = {
       return email && `${RateLimiter.byIp(req)}|${email}`;
     },
   },
+  loginPerEmail: { name: 'login-email', limit: 30, windowMs: HOUR_MS, key: RateLimiter.byEmail },
   loginPerIp: { name: 'login-ip', limit: 50, windowMs: 15 * MINUTE_MS, key: RateLimiter.byIp },
   registerPerIp: { name: 'register-ip', limit: 10, windowMs: HOUR_MS, key: RateLimiter.byIp },
   recoveryPerEmail: {
@@ -73,7 +74,7 @@ export class AuthRoutes {
 
     router.post(
       '/login',
-      limit.limit(RULES.loginPerIp, RULES.loginPerAccount),
+      limit.limit(RULES.loginPerIp, RULES.loginPerAccount, RULES.loginPerEmail),
       async (req, res) => {
         const view = new SessionHttpView(new ExpressResponderAdapter(res), this.cookie, 200);
         const input = InputParser.parse(LoginRequestSchema, req.body);

@@ -56,12 +56,12 @@ export const UpdateProfileRequestSchema = z
 export const LoginRequestSchema = z
   .object({
     email: z.email(),
-    password: z.string().min(1),
+    password: z.string().min(1).max(128),
   })
   .meta({ id: 'LoginRequestDto' });
 
 export const ChangePasswordRequestSchema = z
-  .object({ currentPassword: z.string().min(1), newPassword: passwordField })
+  .object({ currentPassword: z.string().min(1).max(128), newPassword: passwordField })
   .meta({ id: 'ChangePasswordRequestDto' });
 
 export const PasswordRecoveryRequestSchema = z

@@ -282,7 +282,8 @@
           },
           "password": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 128
           }
         },
         "required": [
@@ -358,7 +359,8 @@
         "properties": {
           "currentPassword": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "maxLength": 128
           },
           "newPassword": {
             "type": "string",
@@ -2953,7 +2955,7 @@
     "/subscription/payments": {
       "get": {
         "operationId": "listPayments",
-        "summary": "CU-18 Payment history, newest first",
+        "summary": "CU-18 Payment history, latest 100, newest first",
         "tags": [
           "Subscription"
         ],

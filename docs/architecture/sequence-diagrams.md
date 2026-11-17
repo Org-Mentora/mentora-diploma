@@ -85,7 +85,7 @@ sequenceDiagram
 
   U->>W: email + password
   W->>A: POST /api/auth/login
-  A->>L: login-ip (50/15 min) and login-account (10/15 min)
+  A->>L: login-ip (50/15 min), login-account (10/15 min, IP + email) and login-email (30/h)
   alt over the limit
     L-->>W: 429 TOO_MANY_REQUESTS + Retry-After
   end

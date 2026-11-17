@@ -337,7 +337,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** CU-18 Payment history, newest first */
+        /** CU-18 Payment history, latest 100, newest first */
         get: operations["listPayments"];
         put?: never;
         /** CU-18 Register a manual payment for the current plan */
