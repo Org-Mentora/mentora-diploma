@@ -29,10 +29,13 @@ COPY packages packages
 COPY apps/web apps/web
 RUN pnpm --filter @mentora/web build
 
-FROM nginx:1.29-alpine AS runtime
+# --- runtime: static files on unprivileged nginx (port 8080, non-root) ---
+FROM nginxinc/nginx-unprivileged:1.29-alpine AS runtime
+ARG VERSION=dev
+ARG REVISION=unknown
+LABEL org.opencontainers.image.title="mentora-web"       org.opencontainers.image.description="Mentora web (React SPA served by nginx)"       org.opencontainers.image.source="https://github.com/Org-Mentora/mentora-diploma"       org.opencontainers.image.version=$VERSION       org.opencontainers.image.revision=$REVISION
 ENV API_UPSTREAM=http://api:3000
 COPY docker/nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /repo/apps/web/dist /usr/share/nginx/html
-EXPOSE 80
-HEALTHCHECK --interval=10s --timeout=3s --retries=5 \
-  CMD wget -qO- http://127.0.0.1/ > /dev/null || exit 1
+EXPOSE 8080
+HEALTHCHECK --interval=10s --timeout=3s --retries=5   CMD wget -qO- http://127.0.0.1:8080/healthz > /dev/null || exit 1
