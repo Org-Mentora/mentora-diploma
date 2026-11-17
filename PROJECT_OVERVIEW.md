@@ -10,7 +10,7 @@ to the file or ADR that proves it.
 | Use cases of the specification | **18 / 18** implemented ([scope](docs/product/mvp-scope.md)) |
 | API modules | 9 (`apps/api/src/modules/*`) |
 | Web features | 10 (`apps/web/src/features/*`) |
-| Architecture decisions | 42 ADRs ([index](docs/adr/README.md)) |
+| Architecture decisions | 43 ADRs ([index](docs/adr/README.md)) |
 | Automated tests | 207 (API 153, web 54), plus an end-to-end smoke test of the production images |
 | Classes in the generated class diagram | 261 ([class diagram](docs/architecture/class-diagram.md)) |
 
@@ -207,6 +207,7 @@ A reviewer with limited time can follow this path.
    - [sequence diagrams](docs/architecture/sequence-diagrams.md): 11 flows.
    - [glossary](docs/architecture/glossary.md): Spanish → English domain names.
 9. **Running it:**
+   - [SETUP.md](SETUP.md): setup, demo login (`demo@mentora.test` / `Demo1234`) and test data.
    - [try every use case locally](docs/guides/try-locally.md).
    - [operations](docs/operations/): deployment, configuration, backups, runbook, CI/CD.
 

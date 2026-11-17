@@ -10,6 +10,10 @@ pnpm dev                              # web http://localhost:5173 · api http://
 
 Or the full stack in containers: `docker compose up --build` (web on <http://localhost:8080>).
 
+Both ways can start from demo data: `docker compose up` seeds it, and `pnpm seed` does it for
+`pnpm dev`. Log in with `demo@mentora.test` / `Demo1234` and skip step 1
+([SETUP.md](../../SETUP.md#demo-data)).
+
 | Where to look | What you see |
 | --- | --- |
 | <http://localhost:8025> | Mailpit: recovery codes (CU-02) and billing emails (CU-18) |

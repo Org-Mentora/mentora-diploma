@@ -11,6 +11,8 @@ Monorepo for the Mentora platform.
 
 ## Quick start
 
+Step by step, with the demo login and test data: [SETUP.md](SETUP.md).
+
 ```bash
 corepack enable        # or: npm i -g pnpm
 pnpm install
@@ -24,6 +26,9 @@ Full stack in containers:
 ```bash
 docker compose up --build   # web on :8080, api on :3000, swagger on :3000/api/docs
 ```
+
+The stack reads your `.env` and seeds a demo account: log in at <http://localhost:8080> with
+`demo@mentora.test` / `Demo1234`.
 
 All 18 use cases are implemented; external services run with local adapters
 ([product scope](docs/product/mvp-scope.md), [try it locally](docs/guides/try-locally.md)).

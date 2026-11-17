@@ -55,3 +55,4 @@ We record every architecturally significant decision as an ADR using the
 | [0040](0040-concurrency-and-audit-hardening.md) | Concurrency and audit hardening | Accepted | backend, security, data |
 | [0041](0041-pluggable-token-signing-algorithm.md) | Pluggable token signing algorithm | Accepted | backend, security |
 | [0042](0042-dependency-inversion-for-platform-services.md) | Dependency inversion for platform services | Accepted | backend, frontend, patterns |
+| [0043](0043-demo-data-seed.md) | Demo data seed through the public API | Accepted | tooling, ops, testing |

@@ -71,6 +71,9 @@ MongoDB passwords are set when the `mongo-data` volume is created. Changing them
 | --- | --- | --- |
 | `BASE_URL` | `pnpm smoke` | `http://localhost:8080` |
 | `SMOKE_WAIT_SECONDS` | `pnpm smoke` | `90` (waits for `/api/health/ready`) |
+| `SEED_DEMO_DATA` | local compose `seed`, `pnpm seed` | `true`; `false` skips the demo data (ADR-0043) |
+| `DEMO_EMAIL` / `DEMO_PASSWORD` | local compose `seed`, `pnpm seed` | `demo@mentora.test` / `Demo1234` |
+| `SEED_BASE_URL` | `pnpm seed` | `http://localhost:3000` |
 | `BACKUP_DIR` | `pnpm db:backup` | `backups` |
 | `MONGO_DATABASE` | backup and restore scripts | `mentora` |
 

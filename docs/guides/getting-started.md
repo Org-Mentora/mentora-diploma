@@ -1,5 +1,7 @@
 # Getting started
 
+The short version, with the demo account and test data, is [SETUP.md](../../SETUP.md).
+
 ## Prerequisites
 
 - Node.js 24 (`.nvmrc`)
@@ -13,6 +15,7 @@ pnpm install                 # also installs git hooks (lefthook)
 cp .env.example .env
 docker compose up -d mongo mailpit   # database (replica set, ADR-0025) + email inbox :8025
 pnpm dev                     # api :3000 (tsx watch) + web :5173 (Vite, proxies /api)
+pnpm seed                    # optional: demo@mentora.test / Demo1234 with test data
 ```
 
 - Swagger UI: <http://localhost:3000/api/docs>
@@ -21,7 +24,7 @@ pnpm dev                     # api :3000 (tsx watch) + web :5173 (Vite, proxies 
 ## Full stack in containers
 
 ```bash
-docker compose up --build        # web :8080, api :3000, mongo :27017
+docker compose up --build        # web :8080, api :3000, mongo :27017, seeds the demo data
 docker compose down              # stop (add -v to drop the database volume)
 ```
 

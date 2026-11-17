@@ -14,8 +14,9 @@ pnpm lint:fix
 pnpm codegen        # API zod contracts → openapi.json → DTO types → RTK Query hooks
 pnpm docs:classes   # regenerate docs/architecture/class-diagram.md after changing classes
 pnpm smoke          # end-to-end smoke test against BASE_URL (default http://localhost:8080)
+pnpm seed           # demo account + test data against `pnpm dev` (compose runs it on `up`)
 pnpm db:backup | pnpm db:restore <file>   # local MongoDB dump / restore into backups/
-docker compose up --build            # full stack: web :8080, api :3000 (/api/docs)
+docker compose up --build            # full stack + demo data: web :8080, api :3000 (/api/docs)
 docker compose up -d mongo           # only MongoDB for `pnpm dev`
 ```
 
@@ -87,10 +88,11 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | Ops | [0014](docs/adr/0014-containerization.md) | Multi-stage Dockerfiles (dev/build/runtime), Compose + dev watch overlay (~~root nginx :80~~ → 0038) | Amended |
 | Ops | [0036](docs/adr/0036-ci-cd-quality-gates.md) | CI gates (lint, types, tests, build, codegen + class diagram, audit, e2e smoke + restore drill), CodeQL, GHCR release with SBOM; actions pinned by SHA | Accepted |
 | Ops | [0037](docs/adr/0037-operational-readiness.md) | `/health/live` + `/health/ready`, auth rate limits (429, ~~in memory~~ → 0040), `X-Request-Id`, graceful shutdown, `MongoJobLock`, `MigrationLog` | Amended |
+| Ops | [0043](docs/adr/0043-demo-data-seed.md) | Local compose reads `.env`; one-shot `seed` service loads demo data through the public API (`demo@mentora.test`); `pnpm seed` | Accepted |
 | Ops | [0038](docs/adr/0038-production-images-and-deployment.md) | Non-root images on GHCR, nginx-unprivileged :8080, `docker-compose.prod.yml` with Mongo auth, read-only containers | Accepted |
 | Ops | [0039](docs/adr/0039-database-backup-strategy.md) | Daily `mongodump` sidecar, sha256, 14-day retention, offsite copy, restore drill in CI; RPO 24 h / RTO 1 h | Accepted |
 | Quality | [0015](docs/adr/0015-testing-strategy.md) | Vitest everywhere: SpyView presenters, supertest, in-memory Mongo, mocked ViewModels | Accepted |
 
-Product scope (all 18 CUs + external services): `docs/product/mvp-scope.md`. Local walkthrough: `docs/guides/try-locally.md`. Domain names ES→EN: `docs/architecture/glossary.md`.
+Setup and demo login: `SETUP.md`. Product scope (all 18 CUs + external services): `docs/product/mvp-scope.md`. Local walkthrough: `docs/guides/try-locally.md`. Domain names ES→EN: `docs/architecture/glossary.md`.
 Operations (deploy, config, backups, runbook, CI/CD): `docs/operations/`. Diagrams: `docs/architecture/class-diagram.md`, `docs/architecture/sequence-diagrams.md`.
 More: `docs/README.md` (architecture overviews, guides, API reference).
