@@ -1,22 +1,43 @@
 # Full stack (ADR-0014): `docker compose up --build`
 #   web     http://localhost:8080
 #   api     http://localhost:3000/api   (Swagger UI at /api/docs)
-#   mongo   mongodb://localhost:27017
+#   mongo   mongodb://localhost:27017/?directConnection=true  (single-node replica set, ADR-0025)
+#   mailpit http://localhost:8025   (inbox of every email the API sends, ADR-0027)
 name: mentora
 
 services:
   mongo:
     image: mongo:8
     restart: unless-stopped
+    # Single-node replica set: MongoDB only supports transactions on replica sets (ADR-0025).
+    command: ["--replSet", "rs0", "--bind_ip_all"]
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
     healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      # Initiates the replica set on first boot, then reports healthy once it has a primary.
+      test:
+        - CMD
+        - mongosh
+        - --quiet
+        - --eval
+        - >-
+          try { rs.status() } catch (e) {
+          rs.initiate({ _id: 'rs0', members: [{ _id: 0, host: 'localhost:27017' }] }) }
+          quit(db.hello().isWritablePrimary ? 0 : 1)
+      interval: 5s
+      timeout: 10s
+      start_period: 10s
+      retries: 20
+
+  # Local SMTP server + web inbox: recovery codes and billing emails land here (ADR-0027).
+  mailpit:
+    image: axllent/mailpit:v1.28
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
   api:
     build:
@@ -27,17 +48,29 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      MONGO_URI: mongodb://mongo:27017/mentora
+      MONGO_URI: mongodb://mongo:27017/mentora?directConnection=true
       LOG_LEVEL: info
       CORS_ORIGIN: http://localhost:8080
       # Local default only: set JWT_SECRET in .env for any shared deployment (ADR-0018).
       JWT_SECRET: ${JWT_SECRET:-compose-local-jwt-secret-change-me-0123456789}
       TRIAL_DAYS: ${TRIAL_DAYS:-14}
+      APP_URL: http://localhost:8080
+      SMTP_URL: smtp://mailpit:1025
+      # External providers stay local unless configured (ADR-0029..0031).
+      WHATSAPP_PROVIDER: ${WHATSAPP_PROVIDER:-local}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      MEETING_PROVIDER: ${MEETING_PROVIDER:-jitsi}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REFRESH_TOKEN: ${GOOGLE_REFRESH_TOKEN:-}
     ports:
       - "3000:3000"
     depends_on:
       mongo:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   web:
     build:
@@ -48,7 +81,7 @@ services:
     environment:
       API_UPSTREAM: http://api:3000
     ports:
-      - "8080:80"
+      - "8080:8080"
     depends_on:
       api:
         condition: service_healthy
