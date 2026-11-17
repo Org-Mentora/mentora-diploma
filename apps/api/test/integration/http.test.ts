@@ -35,6 +35,22 @@ describe('HTTP API', () => {
     });
   });
 
+  it('splits liveness from readiness', async () => {
+    const live = await request(app).get('/api/health/live').expect(200);
+    expect(live.body).toMatchObject({ status: 'ok', components: [] });
+
+    const ready = await request(app).get('/api/health/ready').expect(503);
+    expect(ready.body.status).toBe('degraded');
+  });
+
+  it('tags every response with a request id, keeping a valid incoming one', async () => {
+    const generated = await request(app).get('/api/health/live');
+    expect(generated.headers['x-request-id']).toMatch(/^[0-9a-f-]{36}$/);
+
+    const kept = await request(app).get('/api/health/live').set('X-Request-Id', 'trace-42');
+    expect(kept.headers['x-request-id']).toBe('trace-42');
+  });
+
   it('unknown routes answer with the standard error body', async () => {
     const response = await request(app).get('/api/nope').expect(404);
     expect(response.body.error.code).toBe('ROUTE_NOT_FOUND');
