@@ -9,4 +9,8 @@ export class WindowBrowserActions implements BrowserActions {
   copyText(text: string): Promise<void> {
     return navigator.clipboard.writeText(text);
   }
+
+  absoluteUrl(path: string): string {
+    return new URL(path, window.location.origin).toString();
+  }
 }

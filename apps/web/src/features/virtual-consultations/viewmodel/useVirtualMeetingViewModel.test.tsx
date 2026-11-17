@@ -16,7 +16,11 @@ vi.mock('@/model/api/generated/mentoraApi', () => ({
 const startMeeting = vi.fn();
 const platform = {
   feedback: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
-  browser: { print: vi.fn(), copyText: vi.fn(() => Promise.resolve()) },
+  browser: {
+    print: vi.fn(),
+    copyText: vi.fn(() => Promise.resolve()),
+    absoluteUrl: (path: string) => `http://localhost${path}`,
+  },
 } satisfies Platform;
 
 const wrapper = ({ children }: { children: ReactNode }) => (

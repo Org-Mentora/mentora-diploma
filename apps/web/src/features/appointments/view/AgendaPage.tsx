@@ -1,4 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { BookingRequestsPanel } from '@/features/booking';
+import { useTranslation } from '@/shared/i18n';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { useAgendaViewModel } from '../viewmodel/useAgendaViewModel';
@@ -7,26 +9,32 @@ import { DayAgenda } from './DayAgenda';
 import { MonthCalendar } from './MonthCalendar';
 
 export function AgendaPage() {
+  const { t } = useTranslation();
   const vm = useAgendaViewModel();
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,420px)_1fr]">
       <Card>
         <CardHeader className="flex items-center justify-between">
-          <CardTitle className="capitalize">{vm.monthTitle}</CardTitle>
+          <CardTitle className="first-letter:uppercase">{vm.monthTitle}</CardTitle>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              aria-label="Previous month"
+              aria-label={t('agenda.previousMonth')}
               onClick={vm.previousMonth}
             >
               <ChevronLeft />
             </Button>
             <Button variant="outline" size="sm" onClick={vm.goToToday}>
-              Today
+              {t('agenda.today')}
             </Button>
-            <Button variant="ghost" size="icon" aria-label="Next month" onClick={vm.nextMonth}>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t('agenda.nextMonth')}
+              onClick={vm.nextMonth}
+            >
               <ChevronRight />
             </Button>
           </div>
@@ -46,20 +54,23 @@ export function AgendaPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent>
-          {vm.isLoading ? (
-            <p className="text-muted-foreground text-sm">Loading agenda…</p>
-          ) : (
-            <DayAgenda
-              title={vm.dayTitle}
-              items={vm.dayItems}
-              onOpen={vm.openAppointment}
-              onCreate={vm.openCreate}
-            />
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid content-start gap-6">
+        <Card>
+          <CardContent>
+            {vm.isLoading ? (
+              <p className="text-muted-foreground text-sm">{t('agenda.loading')}</p>
+            ) : (
+              <DayAgenda
+                title={vm.dayTitle}
+                items={vm.dayItems}
+                onOpen={vm.openAppointment}
+                onCreate={vm.openCreate}
+              />
+            )}
+          </CardContent>
+        </Card>
+        <BookingRequestsPanel />
+      </div>
 
       {vm.dialog && (
         <AppointmentDialog
