@@ -22,6 +22,8 @@ interface EventResponse {
 
 const MINUTE_MS = 60_000;
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 // Adapter
 export class GoogleMeetLinkProvider extends MeetingLinkProvider {
   readonly provider = 'google_meet' as const;
@@ -95,7 +97,7 @@ export class GoogleMeetLinkProvider extends MeetingLinkProvider {
 
   private async call(url: string, init: RequestInit): Promise<Response> {
     try {
-      return await this.#fetch(url, init);
+      return await this.#fetch(url, { ...init, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
     } catch (error) {
       throw new MeetingProviderError(
         `Google is unreachable: ${error instanceof Error ? error.message : 'unknown'}`,
