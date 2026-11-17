@@ -1,3 +1,4 @@
+# Quality gates (ADR-0036). Every job is a required status check on `main`.
 name: CI
 
 on:
@@ -9,39 +10,153 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  quality:
-    name: Lint, typecheck, test, build
+  lint:
+    name: Lint (Biome, architecture, comments)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm exec biome ci .
+      - run: pnpm lint:comments
 
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v5
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Biome (format + lint + architecture rules)
-        run: pnpm exec biome ci .
-
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
       - run: pnpm typecheck
 
-      - run: pnpm test
-
-      - name: Generated API client is up to date
-        run: pnpm codegen:check
-
-      - run: pnpm build
-
-  docker:
-    name: Docker images
-    needs: quality
+  test:
+    name: Unit and integration tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: docker/setup-buildx-action@v3
-      - run: docker compose build
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm test
+
+  generated:
+    name: Generated code and docs are up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm codegen:check
+      - run: pnpm docs:check
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm build
+
+  audit:
+    name: Dependency audit (production, high and critical)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm audit --prod --audit-level high
+
+  commits:
+    name: Conventional commits
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Check every commit message of the pull request
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          for sha in $(git rev-list --no-merges "$BASE..$HEAD"); do
+            git log -1 --format=%B "$sha" > "$RUNNER_TEMP/msg"
+            node tools/git/commit-msg.mjs "$RUNNER_TEMP/msg" || { echo "::error::commit $sha"; exit 1; }
+          done
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+
+  e2e:
+    name: Production images, smoke test and restore drill
+    needs: [lint, typecheck, test, build]
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE: docker compose -p mentora-ci -f docker-compose.prod.yml --env-file .env.ci
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build the API image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: docker/api.Dockerfile
+          target: runtime
+          load: true
+          tags: ghcr.io/org-mentora/mentora-api:ci
+          build-args: |
+            VERSION=ci
+            REVISION=${{ github.sha }}
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+      - name: Build the web image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: docker/web.Dockerfile
+          target: runtime
+          load: true
+          tags: ghcr.io/org-mentora/mentora-web:ci
+          build-args: |
+            VERSION=ci
+            REVISION=${{ github.sha }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,scope=web,mode=max
+      - name: Production settings with throwaway secrets
+        run: |
+          {
+            echo "MENTORA_VERSION=ci"
+            echo "APP_URL=http://localhost:8080"
+            echo "PUBLIC_PORT=8080"
+            echo "JWT_SECRET=$(openssl rand -hex 32)"
+            echo "MONGO_ROOT_PASSWORD=$(openssl rand -hex 16)"
+            echo "MONGO_APP_PASSWORD=$(openssl rand -hex 16)"
+            echo "MONGO_BACKUP_PASSWORD=$(openssl rand -hex 16)"
+            echo "SMTP_URL=smtp://localhost:1025"
+            echo "MAIL_FROM=Mentora CI <ci@mentora.test>"
+            echo "BACKUP_DIR=./backups"
+          } > .env.ci
+      - run: $COMPOSE up -d --wait
+      - name: Smoke test
+        run: node tools/smoke/smoke.mjs
+        env:
+          BASE_URL: http://localhost:8080
+      - name: Backup and restore drill
+        run: bash tools/ops/restore-drill.sh -p mentora-ci -f docker-compose.prod.yml --env-file .env.ci
+      - name: Smoke test after the restore
+        run: node tools/smoke/smoke.mjs
+        env:
+          BASE_URL: http://localhost:8080
+      - name: Logs on failure
+        if: failure()
+        run: $COMPOSE logs --no-color --tail 200
+      - if: always()
+        run: $COMPOSE down -v
