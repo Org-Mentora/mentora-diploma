@@ -256,12 +256,13 @@ classDiagram
   }
   class MigrationLog {
     +COLLECTION$
+    -database: MongoConnection
     +runOnce(name, work) Promise~boolean~
   }
   class MongoConnection {
     <<Singleton>>
     +getInstance()$ MongoConnection
-    +connect(uri) Promise~void~
+    +connect(uri, maxPoolSize) Promise~void~
     +disconnect() Promise~void~
     +isConnected: boolean
     +connection: Connection
@@ -270,6 +271,7 @@ classDiagram
   class MongoJobLock {
     <<Adapter>>
     +owner
+    -database: MongoConnection
     +acquire(job, leaseMs) Promise~boolean~
     +release(job) Promise~void~
   }
@@ -287,6 +289,7 @@ classDiagram
   class MongoRateLimitStore {
     <<Adapter>>
     +COLLECTION$
+    -database: MongoConnection
     +hit(id, windowMs, now) Promise~RateLimitWindow~
   }
   class MongoTransactionManager {
@@ -372,6 +375,9 @@ classDiagram
   IntervalJobScheduler --> JobLock
   JobLock <|-- MongoJobLock
   MailTransport <|-- SmtpMailTransport
+  MigrationLog --> MongoConnection
+  MongoJobLock --> MongoConnection
+  MongoRateLimitStore --> MongoConnection
   MongoTransactionManager --> MongoConnection
   MongoTransactionManager --> TransactionContext
   MongooseRepository --> TransactionContext

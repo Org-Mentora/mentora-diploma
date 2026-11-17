@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import mongoose from 'mongoose';
 import { JobLock } from '#core/scheduling/JobLock';
+import type { MongoConnection } from '#infrastructure/database/MongoConnection';
 
 interface LockDocument {
   _id: string;
@@ -14,8 +14,12 @@ const DUPLICATE_KEY = 11000;
 export class MongoJobLock extends JobLock {
   readonly owner = randomUUID();
 
+  constructor(private readonly database: MongoConnection) {
+    super();
+  }
+
   private get locks() {
-    return mongoose.connection.collection<LockDocument>('job_locks');
+    return this.database.connection.collection<LockDocument>('job_locks');
   }
 
   async acquire(job: string, leaseMs: number): Promise<boolean> {

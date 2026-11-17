@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import type { MongoConnection } from '#infrastructure/database/MongoConnection';
 import { RateLimitStore, type RateLimitWindow } from './RateLimitStore';
 
 interface WindowDocument {
@@ -14,8 +14,12 @@ export class MongoRateLimitStore extends RateLimitStore {
   static readonly COLLECTION = 'rate_limits';
   #indexed: Promise<string> | undefined;
 
+  constructor(private readonly database: MongoConnection) {
+    super();
+  }
+
   private get windows() {
-    return mongoose.connection.collection<WindowDocument>(MongoRateLimitStore.COLLECTION);
+    return this.database.connection.collection<WindowDocument>(MongoRateLimitStore.COLLECTION);
   }
 
   async hit(id: string, windowMs: number, now: number): Promise<RateLimitWindow> {

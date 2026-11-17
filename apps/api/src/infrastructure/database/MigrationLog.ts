@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import type { MongoConnection } from './MongoConnection';
 
 interface MigrationRecord {
   _id: string;
@@ -8,8 +8,12 @@ interface MigrationRecord {
 export class MigrationLog {
   static readonly COLLECTION = 'migrations';
 
+  constructor(private readonly database: MongoConnection) {}
+
   async runOnce(name: string, work: () => Promise<unknown>): Promise<boolean> {
-    const migrations = mongoose.connection.collection<MigrationRecord>(MigrationLog.COLLECTION);
+    const migrations = this.database.connection.collection<MigrationRecord>(
+      MigrationLog.COLLECTION,
+    );
     if (await migrations.findOne({ _id: name })) {
       return false;
     }
