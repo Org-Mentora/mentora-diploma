@@ -15,6 +15,8 @@ interface GraphResponse {
 
 const PERMANENT_CODES = new Set([100, 131009, 131026, 131030]);
 
+const REQUEST_TIMEOUT_MS = 10_000;
+
 // Adapter
 export class WhatsAppCloudApiGateway extends WhatsAppGateway {
   readonly #fetch: typeof fetch;
@@ -30,6 +32,7 @@ export class WhatsAppCloudApiGateway extends WhatsAppGateway {
     try {
       response = await this.#fetch(url, {
         method: 'POST',
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
         headers: {
           authorization: `Bearer ${this.options.token}`,
           'content-type': 'application/json',
