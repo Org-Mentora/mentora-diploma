@@ -1,6 +1,6 @@
 # ADR-0014: Containerization with Docker and Compose
 
-- **Status:** Accepted
+- **Status:** Accepted — runtime images and production deployment amended by [ADR-0038](0038-production-images-and-deployment.md)
 - **Date:** 2026-10-13
 - **Deciders:** Mentora team
 - **Tags:** ops
