@@ -3,7 +3,7 @@ import { HttpView } from '#core/view/HttpView';
 import type { SessionCookie } from '#infrastructure/http/SessionCookie';
 import type { SessionResult } from '../presenter/SessionViewModel';
 
-/** Passive view: puts the token in the httpOnly cookie and only the session in the body. */
+// Passive View
 export class SessionHttpView extends HttpView<SessionResult> {
   constructor(
     responder: HttpResponder,

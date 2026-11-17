@@ -1,70 +1,79 @@
-import { ConflictError, UnauthorizedError } from '#core/errors/ApplicationError';
+import { ConflictError, UnauthorizedError, ValidationError } from '#core/errors/ApplicationError';
 import type { Clock } from '#core/model/Clock';
+import type { TransactionManager } from '#core/model/TransactionManager';
 import type { PasswordHasher } from '#core/security/PasswordHasher';
 import type { TokenService } from '#core/security/TokenService';
 import { PasswordPolicy } from './PasswordPolicy';
-import { Professional } from './Professional';
+import { Professional, type ProfessionalProfile } from './Professional';
+import type { AccessState, ProfessionalAccess } from './ProfessionalAccess';
 import type { ProfessionalRepository } from './ProfessionalRepository';
 
-export interface RegisterProfessionalData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  specialty: string;
-  licenseNumber: string;
+export interface RegisterProfessionalData extends ProfessionalProfile {
   password: string;
 }
 
-/** Model service for CU-01 (log in) and CU-03 (register professional). */
+export interface SessionSubject {
+  professional: Professional;
+  access: AccessState;
+}
+
+const NO_ACCESS: AccessState = {
+  status: 'expired',
+  hasAccess: false,
+  accessEndsAt: new Date(0),
+  daysLeft: 0,
+};
+
 export class AuthService {
   constructor(
     private readonly professionals: ProfessionalRepository,
+    private readonly access: ProfessionalAccess,
+    private readonly transactions: TransactionManager,
     private readonly hasher: PasswordHasher,
     private readonly tokens: TokenService,
     private readonly clock: Clock,
-    private readonly trialDays: number,
   ) {}
 
   get now(): Date {
     return this.clock.now();
   }
 
-  async register(data: RegisterProfessionalData): Promise<Professional> {
+  async register(data: RegisterProfessionalData): Promise<SessionSubject> {
     PasswordPolicy.assertSatisfiedBy(data.password);
-
-    if (await this.professionals.findByEmail(Professional.normalizeEmail(data.email))) {
-      throw new ConflictError('This email is already registered. Log in or use another email.', {
-        field: 'email',
-      });
-    }
-    const license = Professional.normalizeLicense(data.licenseNumber);
-    if (await this.professionals.findByLicenseNumber(license)) {
-      throw new ConflictError('This license number is already registered.', {
-        field: 'licenseNumber',
-      });
-    }
-
-    const professional = Professional.register(
-      { ...data, passwordHash: await this.hasher.hash(data.password) },
-      this.clock.now(),
-      this.trialDays,
-    );
-    await this.professionals.save(professional);
-    return professional;
+    const passwordHash = await this.hasher.hash(data.password);
+    return this.transactions.run(async () => {
+      const professional = Professional.register({ ...data, passwordHash }, this.clock.now());
+      await this.assertUnique(professional.email, professional.licenseNumber);
+      await this.professionals.save(professional);
+      const access = await this.access.startTrial(
+        professional.id,
+        AuthService.contactOf(professional),
+      );
+      return { professional, access };
+    });
   }
 
-  /** Same error for unknown email and wrong password, so accounts cannot be enumerated. */
-  async authenticate(email: string, password: string): Promise<Professional> {
+  async authenticate(email: string, password: string): Promise<SessionSubject> {
     const professional = await this.professionals.findByEmail(Professional.normalizeEmail(email));
     const valid = professional && (await this.hasher.verify(password, professional.passwordHash));
     if (!professional || !valid) {
       throw new UnauthorizedError('Invalid email or password');
     }
-    return professional;
+    return this.subject(professional);
   }
 
-  async getProfile(professionalId: string): Promise<Professional> {
+  async getSession(professionalId: string, credentialsVersion?: number): Promise<SessionSubject> {
+    const professional = await this.getProfessional(professionalId);
+    if (
+      credentialsVersion !== undefined &&
+      credentialsVersion !== professional.credentialsVersion
+    ) {
+      throw new UnauthorizedError('Your password was changed. Log in again.');
+    }
+    return this.subject(professional);
+  }
+
+  async getProfessional(professionalId: string): Promise<Professional> {
     const professional = await this.professionals.findById(professionalId);
     if (!professional) {
       throw new UnauthorizedError('Your account no longer exists');
@@ -72,10 +81,59 @@ export class AuthService {
     return professional;
   }
 
-  issueSessionToken(professional: Professional): Promise<string> {
+  async changePassword(
+    professionalId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<SessionSubject> {
+    const professional = await this.getProfessional(professionalId);
+    if (!(await this.hasher.verify(currentPassword, professional.passwordHash))) {
+      throw new ValidationError(
+        'The current password is incorrect',
+        { field: 'currentPassword' },
+        'INVALID_CURRENT_PASSWORD',
+      );
+    }
+    PasswordPolicy.assertSatisfiedBy(newPassword, 'newPassword');
+    const hash = await this.hasher.hash(newPassword);
+    const changed = await this.transactions.run(async () => {
+      const current = await this.getProfessional(professionalId);
+      current.changePasswordHash(hash, this.clock.now());
+      await this.professionals.save(current);
+      return current;
+    });
+    return this.subject(changed);
+  }
+
+  issueSessionToken({ professional, access }: SessionSubject): Promise<string> {
     return this.tokens.issue({
       professionalId: professional.id,
-      accessEndsAt: professional.subscription.accessEndsAt,
+      accessEndsAt: access.accessEndsAt,
+      credentialsVersion: professional.credentialsVersion,
     });
+  }
+
+  async assertUnique(email: string, licenseNumber: string, ownerId?: string): Promise<void> {
+    const byEmail = await this.professionals.findByEmail(email);
+    if (byEmail && byEmail.id !== ownerId) {
+      throw new ConflictError('This email is already registered. Log in or use another email.', {
+        field: 'email',
+      });
+    }
+    const byLicense = await this.professionals.findByLicenseNumber(licenseNumber);
+    if (byLicense && byLicense.id !== ownerId) {
+      throw new ConflictError('This license number is already registered.', {
+        field: 'licenseNumber',
+      });
+    }
+  }
+
+  static contactOf(professional: Professional): { email: string; name: string } {
+    return { email: professional.email, name: professional.fullName };
+  }
+
+  private async subject(professional: Professional): Promise<SessionSubject> {
+    const access = (await this.access.accessOf(professional.id)) ?? NO_ACCESS;
+    return { professional, access };
   }
 }

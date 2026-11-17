@@ -1,21 +1,23 @@
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
 import type { View } from '#core/view/View';
-import type { SessionDto } from '../contracts/auth.contracts';
 import type { AuthService } from '../model/AuthService';
-import { SessionViewModel } from './SessionViewModel';
+import { type SessionResult, SessionViewModel } from './SessionViewModel';
 
-/** Returns the current session so the SPA can restore it after a reload. */
-export class GetCurrentProfessionalPresenter extends Presenter<AuthenticatedActor, SessionDto> {
+// Presenter
+export class GetCurrentProfessionalPresenter extends Presenter<AuthenticatedActor, SessionResult> {
   constructor(
-    view: View<SessionDto>,
+    view: View<SessionResult>,
     private readonly auth: AuthService,
   ) {
     super(view);
   }
 
-  protected async execute(actor: AuthenticatedActor): Promise<SessionDto> {
-    const professional = await this.auth.getProfile(actor.professionalId);
-    return SessionViewModel.from(professional, this.auth.now);
+  protected async execute(actor: AuthenticatedActor): Promise<SessionResult> {
+    const subject = await this.auth.getSession(actor.professionalId, actor.credentialsVersion);
+    return {
+      token: await this.auth.issueSessionToken(subject),
+      session: SessionViewModel.from(subject),
+    };
   }
 }
