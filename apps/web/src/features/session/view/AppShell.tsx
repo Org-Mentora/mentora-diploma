@@ -1,26 +1,28 @@
-import { CalendarDays, LogOut, Users } from 'lucide-react';
-import { NavLink, Outlet } from 'react-router';
+import { AlertTriangle, CalendarDays, LogOut, Settings, Users } from 'lucide-react';
+import { Link, NavLink, Outlet } from 'react-router';
 import { cn } from '@/shared/lib/utils';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
-import { useSessionViewModel } from '../viewmodel/useSessionViewModel';
+import { PLAN_PATH, useSessionViewModel } from '../viewmodel/useSessionViewModel';
 
 const NAV = [
-  { to: '/patients', label: 'Patients', icon: Users },
-  { to: '/agenda', label: 'Agenda', icon: CalendarDays },
+  { to: '/patients', label: 'Patients', icon: Users, needsAccess: true },
+  { to: '/agenda', label: 'Agenda', icon: CalendarDays, needsAccess: true },
+  { to: '/settings', label: 'Settings', icon: Settings, needsAccess: false },
 ];
 
-/** Layout of the protected area: navigation, professional and subscription status. */
 export function AppShell() {
-  const { session, logout, isLoggingOut } = useSessionViewModel();
+  const { state, session, logout, isLoggingOut } = useSessionViewModel();
+  const restricted = state === 'restricted';
+  const nav = NAV.filter((item) => !restricted || !item.needsAccess);
 
   return (
     <div className="min-h-dvh bg-muted/30 text-foreground">
-      <header className="border-b bg-background">
+      <header className="border-b bg-background print:hidden">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4">
           <span className="font-semibold tracking-tight">Mentora</span>
           <nav className="flex items-center gap-1">
-            {NAV.map(({ to, label, icon: Icon }) => (
+            {nav.map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}
@@ -32,15 +34,15 @@ export function AppShell() {
                 }
               >
                 <Icon className="size-4" />
-                {label}
+                <span className="hidden sm:inline">{label}</span>
               </NavLink>
             ))}
           </nav>
           {session && (
             <div className="ml-auto flex items-center gap-3">
-              <Badge variant={session.subscriptionTone} className="hidden sm:inline-flex">
-                {session.subscriptionLabel}
-              </Badge>
+              <Link to={PLAN_PATH} className="hidden sm:inline-flex">
+                <Badge variant={session.subscriptionTone}>{session.subscriptionLabel}</Badge>
+              </Link>
               <div className="hidden text-right text-sm leading-tight md:block">
                 <p className="font-medium">{session.professionalName}</p>
                 <p className="text-muted-foreground text-xs">{session.specialty}</p>
@@ -61,7 +63,24 @@ export function AppShell() {
           )}
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">
+      {restricted && session && (
+        <div
+          role="alert"
+          className="border-amber-300 border-b bg-amber-50 text-amber-900 print:hidden"
+        >
+          <div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-2 text-sm">
+            <AlertTriangle className="size-4 shrink-0" />
+            <span>
+              {session.subscriptionLabel}. Your data is safe: choose a plan or regularize the
+              payment to use the practice again.
+            </span>
+            <Link to={PLAN_PATH} className="ml-auto font-medium underline">
+              Manage plan
+            </Link>
+          </div>
+        </div>
+      )}
+      <main className="mx-auto max-w-6xl px-4 py-6 print:max-w-none print:p-0">
         <Outlet />
       </main>
     </div>

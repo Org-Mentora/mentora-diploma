@@ -26,8 +26,15 @@ const session = {
     phone: '1',
     specialty: 'Psychiatry',
     licenseNumber: 'MN-1',
+    offices: [],
+    hasLogo: false,
   },
-  subscription: { status: 'trial', accessEndsAt: null, daysLeft: 2 },
+  subscription: {
+    status: 'trial',
+    hasAccess: true,
+    accessEndsAt: '2030-01-03T00:00:00.000Z',
+    daysLeft: 2,
+  },
 };
 
 const logout = vi.fn();
@@ -38,6 +45,10 @@ function wrapper({ children }: { children: ReactNode }) {
       <MemoryRouter>{children}</MemoryRouter>
     </Provider>
   );
+}
+
+function withAccess(status: string, hasAccess: boolean) {
+  return { ...session, subscription: { ...session.subscription, status, hasAccess, daysLeft: 0 } };
 }
 
 function givenMe(result: Record<string, unknown>) {
@@ -62,12 +73,9 @@ describe('useSessionViewModel', () => {
     [{ isLoading: true }, 'loading'],
     [{ isError: true }, 'anonymous'],
     [{ data: session }, 'active'],
-    [
-      {
-        data: { ...session, subscription: { status: 'expired', accessEndsAt: null, daysLeft: 0 } },
-      },
-      'expired',
-    ],
+    [{ data: withAccess('expired', false) }, 'restricted'],
+    [{ data: withAccess('suspended', false) }, 'restricted'],
+    [{ data: withAccess('cancelled', true) }, 'active'],
   ])('%j → %s', (result, state) => {
     givenMe(result);
     const { result: vm } = renderHook(() => useSessionViewModel(), { wrapper });
