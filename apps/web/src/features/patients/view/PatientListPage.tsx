@@ -8,7 +8,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { usePatientListViewModel } from '../viewmodel/usePatientListViewModel';
 import { PatientFormDialog } from './PatientFormDialog';
 
-/** CU-05 Search patients. */
 export function PatientListPage() {
   const vm = usePatientListViewModel();
 

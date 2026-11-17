@@ -55,7 +55,6 @@ const OPTIONAL: { name: FieldName; label: string; type?: string; hint?: string }
   { name: 'allergies', label: 'Allergies', hint: 'Separate with commas' },
 ];
 
-/** CU-04 (create) and CU-06 (edit) form. */
 export function PatientFormDialog({
   open,
   onOpenChange,

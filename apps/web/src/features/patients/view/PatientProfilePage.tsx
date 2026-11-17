@@ -1,8 +1,10 @@
-import { ArrowLeft, Pencil, Stethoscope } from 'lucide-react';
+import { ArrowLeft, FileText, Pencil, Stethoscope } from 'lucide-react';
 import { Link } from 'react-router';
 import { ClinicalRecordPanel, DiagnosisHistoryPanel } from '@/features/clinical-records';
+import { NotificationsPanel } from '@/features/notifications';
+import { VirtualMeetingButton, VirtualMeetingsPanel } from '@/features/virtual-consultations';
 import { Badge } from '@/shared/ui/badge';
-import { Button } from '@/shared/ui/button';
+import { Button, buttonVariants } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import {
   Dialog,
@@ -17,7 +19,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { usePatientProfileViewModel } from '../viewmodel/usePatientProfileViewModel';
 import { PatientFormDialog } from './PatientFormDialog';
 
-/** Patient profile: data (CU-06), status (CU-07), clinical record (CU-08) and diagnoses (CU-11). */
 export function PatientProfilePage() {
   const vm = usePatientProfileViewModel();
 
@@ -69,6 +70,13 @@ export function PatientProfilePage() {
                 {vm.statusAction.label}
               </Button>
             )}
+            <VirtualMeetingButton patientId={vm.patientId} />
+            <Link
+              to={`/patients/${vm.patientId}/prescriptions/new`}
+              className={buttonVariants({ variant: 'outline' })}
+            >
+              <FileText /> New prescription
+            </Link>
             <Link
               to={`/patients/${vm.patientId}/consultations/new`}
               className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 font-medium text-primary-foreground text-sm hover:bg-primary/90"
@@ -84,6 +92,8 @@ export function PatientProfilePage() {
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="record">Clinical record</TabsTrigger>
           <TabsTrigger value="diagnoses">Diagnoses</TabsTrigger>
+          <TabsTrigger value="meetings">Virtual consultations</TabsTrigger>
+          <TabsTrigger value="messages">Messages</TabsTrigger>
         </TabsList>
         <TabsContent value="overview">
           <Card>
@@ -124,6 +134,12 @@ export function PatientProfilePage() {
         </TabsContent>
         <TabsContent value="diagnoses">
           <DiagnosisHistoryPanel patientId={vm.patientId} />
+        </TabsContent>
+        <TabsContent value="meetings">
+          <VirtualMeetingsPanel patientId={vm.patientId} />
+        </TabsContent>
+        <TabsContent value="messages">
+          <NotificationsPanel patientId={vm.patientId} />
         </TabsContent>
       </Tabs>
 
