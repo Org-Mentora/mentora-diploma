@@ -13,6 +13,7 @@ import { SessionCookie } from '#infrastructure/http/SessionCookie';
 import { Logger } from '#infrastructure/logger/Logger';
 import type { MailTransport } from '#infrastructure/mail/MailTransport';
 import { SmtpMailTransport } from '#infrastructure/mail/SmtpMailTransport';
+import { HmacSha256SigningAlgorithm } from '#infrastructure/security/HmacSha256SigningAlgorithm';
 import { JoseTokenService } from '#infrastructure/security/JoseTokenService';
 import { ScryptPasswordHasher } from '#infrastructure/security/ScryptPasswordHasher';
 import { AppointmentsModule } from '#modules/appointments';
@@ -77,7 +78,10 @@ export function createModules(options: ModuleOptions = {}): AppModule[] {
   const { env } = config;
   const logger = Logger.getInstance();
   const clock = options.clock ?? new SystemClock();
-  const tokens = new JoseTokenService(env.JWT_SECRET, env.SESSION_TTL_SECONDS);
+  const tokens = new JoseTokenService(
+    new HmacSha256SigningAlgorithm(env.JWT_SECRET),
+    env.SESSION_TTL_SECONDS,
+  );
   const guard = new AuthGuard(tokens, clock);
   const context = new TransactionContext();
   const database = MongoConnection.getInstance();

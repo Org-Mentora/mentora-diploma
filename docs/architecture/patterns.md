@@ -29,7 +29,7 @@ instance injected.
 | `HealthIndicator` | `MongoHealthIndicator` | `MongoConnection` |
 | `UptimeSource` | `ProcessUptimeSource` | `process.uptime()` |
 | `PasswordHasher` | `ScryptPasswordHasher` | `node:crypto` scrypt |
-| `TokenService` | `JoseTokenService` | `jose` (JWT HS256) |
+| `TokenService` | `JoseTokenService` | `jose` (JWT, algorithm injected as a `TokenSigningAlgorithm`) |
 | `PatientLookup` / `PatientNames` | `PatientDirectoryLookup` / `PatientDirectoryNames` | patients module query service |
 | `DiagnosisResolver` | `CatalogDiagnosisResolver` | DSM-5 catalog module |
 | `AppointmentNotifier` | `NotificationAppointmentNotifier` | notifications module (CU-14) |
@@ -63,7 +63,7 @@ lists them.
 | **Data Mapper** | `DataMapper<Entity, Document>` and every `*Mapper` |
 | **Composition Root** | `<Name>Module.ts`, `Application.ts`, `createModules`, `main.ts` |
 | **Unit of Work** | `TransactionManager.run` + `TransactionContext` (ADR-0025) |
-| **Strategy** | `PaymentGateway`, `WhatsAppGateway`, `MeetingLinkProvider`: implementation picked by configuration |
+| **Strategy** | `PaymentGateway`, `WhatsAppGateway`, `MeetingLinkProvider`: implementation picked by configuration; `TokenSigningAlgorithm` (`HmacSha256SigningAlgorithm`) for JWTs (ADR-0041) |
 | **Facade** | `NotificationCenter`: delivery, retry and log behind one call (ADR-0030) |
 | **Command** | `ScheduledJob` (ADR-0026) |
 | **State** | `Subscription` phases and `statusAt` (ADR-0029) |

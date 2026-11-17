@@ -8,6 +8,7 @@ import { RateLimiter } from '#infrastructure/http/RateLimiter';
 import { SessionCookie } from '#infrastructure/http/SessionCookie';
 import { Logger } from '#infrastructure/logger/Logger';
 import { OpenApiRegistry } from '#infrastructure/openapi/OpenApiRegistry';
+import { HmacSha256SigningAlgorithm } from '#infrastructure/security/HmacSha256SigningAlgorithm';
 import { JoseTokenService } from '#infrastructure/security/JoseTokenService';
 import { ScryptPasswordHasher } from '#infrastructure/security/ScryptPasswordHasher';
 import { AppointmentsModule } from '#modules/appointments';
@@ -58,7 +59,10 @@ interface Fakes {
 
 function buildApplication(fakes: Fakes): Application {
   const clock = new MutableClock(TestApp.START);
-  const tokens = new JoseTokenService(TEST_JWT_SECRET, SESSION_TTL_SECONDS);
+  const tokens = new JoseTokenService(
+    new HmacSha256SigningAlgorithm(TEST_JWT_SECRET),
+    SESSION_TTL_SECONDS,
+  );
   const guard = new AuthGuard(tokens, clock);
   const logger = Logger.getInstance();
   const context = new TransactionContext();
