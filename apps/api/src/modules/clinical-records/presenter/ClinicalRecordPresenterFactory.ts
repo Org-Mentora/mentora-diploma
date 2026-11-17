@@ -9,6 +9,7 @@ import type { GetConsultationPresenter } from './GetConsultationPresenter';
 import type { GetDiagnosisHistoryPresenter } from './GetDiagnosisHistoryPresenter';
 import type { RegisterConsultationPresenter } from './RegisterConsultationPresenter';
 
+// Abstract Factory
 export interface ClinicalRecordPresenterFactory {
   getClinicalRecord(view: View<ClinicalRecordDto>): GetClinicalRecordPresenter;
   registerConsultation(view: View<ConsultationDto>): RegisterConsultationPresenter;

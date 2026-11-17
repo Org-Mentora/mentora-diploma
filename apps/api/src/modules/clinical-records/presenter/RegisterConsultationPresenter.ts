@@ -8,7 +8,7 @@ import type { ClinicalRecordService } from '../model/ClinicalRecordService';
 import { ClinicalRecordViewModel } from './ClinicalRecordViewModel';
 import type { PatientRecordRef } from './GetClinicalRecordPresenter';
 
-/** CU-09 Register consultation, including CU-11 (diagnosis) and CU-12 (medication). */
+// Presenter
 export class RegisterConsultationPresenter extends Presenter<
   PatientRecordRef & { data: RegisterConsultationRequestDto },
   ConsultationDto

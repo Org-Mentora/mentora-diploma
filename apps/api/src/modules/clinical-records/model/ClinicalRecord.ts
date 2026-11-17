@@ -16,11 +16,7 @@ export interface DiagnosisHistoryEntry {
   diagnosis: AssignedDiagnosis;
 }
 
-/**
- * Aggregate root of a patient's clinical history (`HistoriaClinica`, ADR-0020). Consultations,
- * with their evolution, diagnosis and medications, only change through this class and are
- * never removed, so the history is append-only.
- */
+// Aggregate Root
 export class ClinicalRecord extends Entity<ClinicalRecordProps> {
   static open(professionalId: string, patientId: string, now: Date): ClinicalRecord {
     return new ClinicalRecord(crypto.randomUUID(), {
@@ -36,7 +32,6 @@ export class ClinicalRecord extends Entity<ClinicalRecordProps> {
     return new ClinicalRecord(id, props);
   }
 
-  /** CU-09 step 9: incorporate the consultation into the history. */
   addConsultation(consultation: Consultation, now: Date): void {
     this.props = {
       ...this.props,
@@ -45,7 +40,6 @@ export class ClinicalRecord extends Entity<ClinicalRecordProps> {
     };
   }
 
-  /** CU-08: newest first. */
   consultationsChronological(): Consultation[] {
     return [...this.props.consultations].sort((a, b) => b.date.getTime() - a.date.getTime());
   }
@@ -54,10 +48,6 @@ export class ClinicalRecord extends Entity<ClinicalRecordProps> {
     return this.props.consultations.find((c) => c.id === consultationId) ?? null;
   }
 
-  /**
-   * CU-11 step 10: every diagnosis ever assigned, newest consultation first. Nothing is
-   * overwritten: changing the diagnosis means a new consultation.
-   */
   diagnosisHistory(): DiagnosisHistoryEntry[] {
     return this.props.consultations
       .flatMap((consultation) =>

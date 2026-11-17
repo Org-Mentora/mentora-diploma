@@ -5,6 +5,7 @@ import { Consultation } from '../model/Consultation';
 import { Medication } from '../model/Medication';
 import type { ClinicalRecordDocument, ConsultationDocument } from './ClinicalRecordSchema';
 
+// Data Mapper
 export class ClinicalRecordMapper implements DataMapper<ClinicalRecord, ClinicalRecordDocument> {
   toDomain(record: ClinicalRecordDocument): ClinicalRecord {
     return ClinicalRecord.restore(record._id, {

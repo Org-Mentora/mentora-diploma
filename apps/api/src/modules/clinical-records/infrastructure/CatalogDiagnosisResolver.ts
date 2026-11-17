@@ -1,7 +1,7 @@
 import type { DiagnosisCatalog } from '#modules/diagnosis-catalog';
 import { DiagnosisResolver, type ResolvedDiagnosis } from '../model/DiagnosisResolver';
 
-/** Adapter (ADR-0007, ADR-0022): resolves codes against the DSM-5 catalog module. */
+// Adapter
 export class CatalogDiagnosisResolver extends DiagnosisResolver {
   constructor(private readonly catalog: DiagnosisCatalog) {
     super();

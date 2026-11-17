@@ -7,7 +7,6 @@ import type { AssignedDiagnosis } from '../model/AssignedDiagnosis';
 import type { ClinicalRecord, DiagnosisHistoryEntry } from '../model/ClinicalRecord';
 import type { Consultation } from '../model/Consultation';
 
-/** Model → DTO translations shared by the clinical record presenters. */
 export class ClinicalRecordViewModel {
   static record(record: ClinicalRecord): ClinicalRecordDto {
     return {

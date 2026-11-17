@@ -5,7 +5,7 @@ import type { ClinicalRecordService } from '../model/ClinicalRecordService';
 import { ClinicalRecordViewModel } from './ClinicalRecordViewModel';
 import type { PatientRecordRef } from './GetClinicalRecordPresenter';
 
-/** CU-08 step 6: full detail of one consultation. */
+// Presenter
 export class GetConsultationPresenter extends Presenter<
   PatientRecordRef & { consultationId: string },
   ConsultationDto

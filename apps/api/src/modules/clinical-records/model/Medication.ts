@@ -13,7 +13,7 @@ interface MedicationProps extends MedicationData {
   prescribedAt: Date;
 }
 
-/** Medication indicated in a consultation (CU-12). Prescriptions are never edited in place. */
+// Value Object
 export class Medication extends ValueObject<MedicationProps> {
   static prescribe(data: MedicationData, now: Date): Medication {
     const required = {

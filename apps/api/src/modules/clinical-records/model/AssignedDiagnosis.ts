@@ -6,7 +6,7 @@ interface AssignedDiagnosisProps {
   assignedAt: Date;
 }
 
-/** A DSM-5 catalog diagnosis attached to a consultation, with its assignment date (CU-11). */
+// Value Object
 export class AssignedDiagnosis extends ValueObject<AssignedDiagnosisProps> {
   static assign(code: string, name: string, at: Date): AssignedDiagnosis {
     return new AssignedDiagnosis({ code, name, assignedAt: at });

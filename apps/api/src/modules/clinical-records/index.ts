@@ -1,4 +1,3 @@
-/** Public API of the clinical record module. */
 export {
   ClinicalRecordsModule,
   type ClinicalRecordsModuleDependencies,

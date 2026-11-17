@@ -1,6 +1,8 @@
 import { NotFoundError, ValidationError } from '#core/errors/ApplicationError';
 import type { Clock } from '#core/model/Clock';
+import type { TransactionManager } from '#core/model/TransactionManager';
 import { AssignedDiagnosis } from './AssignedDiagnosis';
+import type { ClinicalActivityRecorder } from './ClinicalActivityRecorder';
 import { ClinicalRecord, type DiagnosisHistoryEntry } from './ClinicalRecord';
 import type { ClinicalRecordRepository } from './ClinicalRecordRepository';
 import { Consultation, type ConsultationType } from './Consultation';
@@ -14,29 +16,35 @@ export interface RegisterConsultationData {
   reason: string;
   observations: string | null;
   evolution: string | null;
-  /** DSM-5 code chosen in CU-11; `null` when no diagnosis is assigned (step 8 alternative). */
   diagnosisCode: string | null;
   medications: MedicationData[];
 }
 
-/** Model service for CU-08, CU-09, CU-11 and CU-12. */
 export class ClinicalRecordService {
   constructor(
     private readonly records: ClinicalRecordRepository,
+    private readonly transactions: TransactionManager,
     private readonly patients: PatientLookup,
+    private readonly activity: ClinicalActivityRecorder,
     private readonly diagnoses: DiagnosisResolver,
     private readonly clock: Clock,
   ) {}
 
-  /** CU-08. A patient without consultations gets an empty, unsaved record. */
   async getRecord(professionalId: string, patientId: string): Promise<ClinicalRecord> {
     await this.assertPatient(professionalId, patientId);
     const record = await this.records.findByPatient(professionalId, patientId);
     return record ?? ClinicalRecord.open(professionalId, patientId, this.clock.now());
   }
 
-  /** CU-09 (+ CU-11 diagnosis, CU-12 medications). */
-  async registerConsultation(
+  registerConsultation(
+    professionalId: string,
+    patientId: string,
+    data: RegisterConsultationData,
+  ): Promise<Consultation> {
+    return this.transactions.run(() => this.appendConsultation(professionalId, patientId, data));
+  }
+
+  private async appendConsultation(
     professionalId: string,
     patientId: string,
     data: RegisterConsultationData,
@@ -62,6 +70,7 @@ export class ClinicalRecordService {
       ClinicalRecord.open(professionalId, patientId, now);
     record.addConsultation(consultation, now);
     await this.records.save(record);
+    await this.activity.record(professionalId, patientId, consultation.date);
     return consultation;
   }
 
@@ -78,7 +87,6 @@ export class ClinicalRecordService {
     return consultation;
   }
 
-  /** CU-11 step 10. */
   async diagnosisHistory(
     professionalId: string,
     patientId: string,
