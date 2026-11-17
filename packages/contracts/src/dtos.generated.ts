@@ -21,6 +21,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/health/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Liveness probe: the process answers (no dependency checks) */
+        get: operations["getLiveness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/health/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Readiness probe: 503 while a dependency (MongoDB) is down */
+        get: operations["getReadiness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/register": {
         parameters: {
             query?: never;
@@ -79,10 +113,235 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Current session (works with an expired subscription) */
+        /** Current session; refreshes the cookie with the current access */
         get: operations["getCurrentProfessional"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password-recovery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CU-02 Email a recovery code (same answer whether the email exists or not) */
+        post: operations["requestPasswordRecovery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password-recovery/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CU-02 Check a recovery code before asking for the new password */
+        post: operations["verifyRecoveryCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password-recovery/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CU-02 Set a new password with a valid recovery code */
+        post: operations["resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** CU-17 Change the password (requires the current one) */
+        put: operations["changePassword"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** CU-16 Update the professional data and offices */
+        put: operations["updateProfile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-13/CU-16 The professional logo used on prescriptions */
+        get: operations["getLogo"];
+        /** CU-16 Upload or replace the logo (PNG or JPEG, up to 512 KB) */
+        put: operations["uploadLogo"];
+        post?: never;
+        /** CU-16 Remove the logo (prescriptions use the default one) */
+        delete: operations["removeLogo"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-18 Subscription panel: status, plan, payment methods and available plans */
+        get: operations["getSubscription"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subscription/plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** CU-18 Select or change the plan (charges now when there is no access) */
+        put: operations["choosePlan"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subscription/payment-methods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CU-18 Register a card (only a gateway token is stored) */
+        post: operations["addPaymentMethod"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subscription/payment-methods/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** CU-18 Remove a card */
+        delete: operations["removePaymentMethod"];
+        options?: never;
+        head?: never;
+        /** CU-18 Update holder, expiry or default card */
+        patch: operations["updatePaymentMethod"];
+        trace?: never;
+    };
+    "/subscription/auto-debit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** CU-18 Turn automatic debit on or off */
+        put: operations["setAutoDebit"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subscription/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** CU-18 Cancel the subscription (access lasts until the paid period ends) */
+        post: operations["cancelSubscription"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subscription/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-18 Payment history, newest first */
+        get: operations["listPayments"];
+        put?: never;
+        /** CU-18 Register a manual payment for the current plan */
+        post: operations["registerManualPayment"];
         delete?: never;
         options?: never;
         head?: never;
@@ -280,6 +539,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-14 WhatsApp messages sent to a patient and their delivery result */
+        get: operations["listNotifications"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/virtual-meetings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** CU-15 A patient's virtual meeting history, or the meeting of an appointment */
+        get: operations["listVirtualMeetings"];
+        put?: never;
+        /** CU-15 Create the video call link and send it to the patient */
+        post: operations["startVirtualMeeting"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -328,13 +622,17 @@ export interface components {
             phone: string;
             specialty: string;
             licenseNumber: string;
+            offices: string[];
+            hasLogo: boolean;
         };
         SubscriptionDto: {
             /** @enum {string} */
-            status: "trial" | "active" | "expired";
+            status: "trial" | "active" | "pending_payment" | "suspended" | "cancelled" | "expired";
+            /** @description false: only the plan page is available */
+            hasAccess: boolean;
             /** Format: date-time */
-            accessEndsAt: string | null;
-            daysLeft: number | null;
+            accessEndsAt: string;
+            daysLeft: number;
         };
         RegisterProfessionalRequestDto: {
             firstName: string;
@@ -345,11 +643,139 @@ export interface components {
             specialty: string;
             licenseNumber: string;
             password: string;
+            offices?: string[];
         };
         LoginRequestDto: {
             /** Format: email */
             email: string;
             password: string;
+        };
+        RecoveryRequestedDto: {
+            message: string;
+        };
+        PasswordRecoveryRequestDto: {
+            /** Format: email */
+            email: string;
+        };
+        VerifyRecoveryCodeRequestDto: {
+            /** Format: email */
+            email: string;
+            code: string;
+        };
+        ResetPasswordRequestDto: {
+            /** Format: email */
+            email: string;
+            code: string;
+            newPassword: string;
+        };
+        ChangePasswordRequestDto: {
+            currentPassword: string;
+            newPassword: string;
+        };
+        UpdateProfileRequestDto: {
+            firstName: string;
+            lastName: string;
+            /** Format: email */
+            email: string;
+            phone: string;
+            specialty: string;
+            licenseNumber: string;
+            offices: string[];
+        };
+        LogoDto: {
+            /** @description PNG or JPEG data URL; null when the default logo is used */
+            dataUrl: string | null;
+        };
+        UploadLogoRequestDto: {
+            /** @description data:image/png;base64,... or data:image/jpeg;base64,... (512 KB) */
+            dataUrl: string;
+        };
+        /** @description CU-18 subscription panel */
+        SubscriptionDetailDto: {
+            /** @enum {string} */
+            status: "trial" | "active" | "pending_payment" | "suspended" | "cancelled" | "expired";
+            hasAccess: boolean;
+            plan: components["schemas"]["PlanDto"] | null;
+            /** Format: date-time */
+            currentPeriodEndsAt: string;
+            daysLeft: number;
+            autoDebit: boolean;
+            paymentMethods: components["schemas"]["PaymentMethodDto"][];
+            /** Format: date-time */
+            cancelledAt: string | null;
+            availablePlans: components["schemas"]["PlanDto"][];
+        };
+        PlanDto: {
+            /** @enum {string} */
+            id: "monthly" | "annual";
+            name: string;
+            description: string;
+            months: number;
+            price: number;
+            currency: string;
+        };
+        PaymentMethodDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            brand: "visa" | "mastercard" | "amex" | "other";
+            /** @example Visa •••• 4242 */
+            label: string;
+            last4: string;
+            expMonth: number;
+            expYear: number;
+            holderName: string;
+            isDefault: boolean;
+        };
+        ChoosePlanRequestDto: {
+            /** @enum {string} */
+            planId: "monthly" | "annual";
+        };
+        AddPaymentMethodRequestDto: {
+            holderName: string;
+            /** @example 4242 4242 4242 4242 */
+            cardNumber: string;
+            expMonth: number;
+            expYear: number;
+            cvc: string;
+            makeDefault?: boolean;
+        };
+        UpdatePaymentMethodRequestDto: {
+            holderName?: string;
+            expMonth?: number;
+            expYear?: number;
+            makeDefault?: boolean;
+        };
+        AutoDebitRequestDto: {
+            enabled: boolean;
+        };
+        PaymentDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            planId: "monthly" | "annual";
+            amount: number;
+            currency: string;
+            /** @enum {string} */
+            kind: "automatic" | "plan_change" | "manual";
+            /** @enum {string} */
+            status: "approved" | "declined" | "failed";
+            methodLabel: string;
+            reference: string | null;
+            failureReason: string | null;
+            /** Format: date-time */
+            paidAt: string;
+        };
+        ManualPaymentRequestDto: {
+            amount: number;
+            /**
+             * Format: date
+             * @description Day the payment was made
+             */
+            paidAt: string;
+            /** @enum {string} */
+            method: "bank_transfer" | "cash" | "card" | "other";
+            reference?: string | null;
         };
         PatientDto: {
             /** Format: uuid */
@@ -379,6 +805,8 @@ export interface components {
             statusOrigin: "manual" | "automatic";
             /** Format: date-time */
             registeredAt: string;
+            /** Format: date-time */
+            lastConsultationAt: string | null;
         };
         FamilyContactDto: {
             name: string;
@@ -547,6 +975,50 @@ export interface components {
             modality: "in_person" | "virtual";
             notes?: string | null;
         };
+        NotificationDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            patientId: string;
+            /** @enum {string} */
+            channel: "whatsapp";
+            /** @enum {string} */
+            topic: "appointment_scheduled" | "appointment_rescheduled" | "appointment_cancelled" | "appointment_reminder" | "virtual_meeting";
+            recipient: string | null;
+            body: string;
+            /** @enum {string} */
+            status: "sent" | "failed" | "skipped";
+            attempts: number;
+            error: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        VirtualMeetingDto: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            patientId: string;
+            /** Format: uuid */
+            appointmentId: string | null;
+            /** @enum {string} */
+            provider: "jitsi" | "google_meet";
+            /** Format: uri */
+            joinUrl: string;
+            /** @enum {string} */
+            invitationStatus: "pending" | "sent" | "failed" | "skipped";
+            invitationError: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        StartVirtualMeetingRequestDto: {
+            /** Format: uuid */
+            patientId: string;
+            /**
+             * Format: uuid
+             * @description Virtual appointment the call belongs to; omit from the patient file
+             */
+            appointmentId?: string | null;
+        };
     };
     responses: never;
     parameters: never;
@@ -562,6 +1034,23 @@ export type ProfessionalDto = components['schemas']['ProfessionalDto'];
 export type SubscriptionDto = components['schemas']['SubscriptionDto'];
 export type RegisterProfessionalRequestDto = components['schemas']['RegisterProfessionalRequestDto'];
 export type LoginRequestDto = components['schemas']['LoginRequestDto'];
+export type RecoveryRequestedDto = components['schemas']['RecoveryRequestedDto'];
+export type PasswordRecoveryRequestDto = components['schemas']['PasswordRecoveryRequestDto'];
+export type VerifyRecoveryCodeRequestDto = components['schemas']['VerifyRecoveryCodeRequestDto'];
+export type ResetPasswordRequestDto = components['schemas']['ResetPasswordRequestDto'];
+export type ChangePasswordRequestDto = components['schemas']['ChangePasswordRequestDto'];
+export type UpdateProfileRequestDto = components['schemas']['UpdateProfileRequestDto'];
+export type LogoDto = components['schemas']['LogoDto'];
+export type UploadLogoRequestDto = components['schemas']['UploadLogoRequestDto'];
+export type SubscriptionDetailDto = components['schemas']['SubscriptionDetailDto'];
+export type PlanDto = components['schemas']['PlanDto'];
+export type PaymentMethodDto = components['schemas']['PaymentMethodDto'];
+export type ChoosePlanRequestDto = components['schemas']['ChoosePlanRequestDto'];
+export type AddPaymentMethodRequestDto = components['schemas']['AddPaymentMethodRequestDto'];
+export type UpdatePaymentMethodRequestDto = components['schemas']['UpdatePaymentMethodRequestDto'];
+export type AutoDebitRequestDto = components['schemas']['AutoDebitRequestDto'];
+export type PaymentDto = components['schemas']['PaymentDto'];
+export type ManualPaymentRequestDto = components['schemas']['ManualPaymentRequestDto'];
 export type PatientDto = components['schemas']['PatientDto'];
 export type FamilyContactDto = components['schemas']['FamilyContactDto'];
 export type PatientInputDto = components['schemas']['PatientInputDto'];
@@ -579,6 +1068,9 @@ export type DiagnosisHistoryEntryDto = components['schemas']['DiagnosisHistoryEn
 export type AppointmentDto = components['schemas']['AppointmentDto'];
 export type ScheduleAppointmentRequestDto = components['schemas']['ScheduleAppointmentRequestDto'];
 export type RescheduleAppointmentRequestDto = components['schemas']['RescheduleAppointmentRequestDto'];
+export type NotificationDto = components['schemas']['NotificationDto'];
+export type VirtualMeetingDto = components['schemas']['VirtualMeetingDto'];
+export type StartVirtualMeetingRequestDto = components['schemas']['StartVirtualMeetingRequestDto'];
 export type $defs = Record<string, never>;
 export interface operations {
     getHealth: {
@@ -606,6 +1098,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getLiveness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The process is alive */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthDto"];
+                };
+            };
+        };
+    };
+    getReadiness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ready to serve traffic */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthDto"];
+                };
+            };
+            /** @description A dependency is down */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthDto"];
                 };
             };
         };
@@ -728,6 +1269,803 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    requestPasswordRecovery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PasswordRecoveryRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Code sent if the account exists */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryRequestedDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    verifyRecoveryCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["VerifyRecoveryCodeRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Valid code */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Password changed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    changePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Password changed; the session cookie is re-issued */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    updateProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdateProfileRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Profile updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Email or license number already registered */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Logo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogoDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    uploadLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UploadLogoRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Logo saved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    removeLogo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Logo removed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    getSubscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Subscription */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionDetailDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    choosePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ChoosePlanRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Plan applied */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionDetailDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Payment declined */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description A payment method is required */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Payment provider unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    addPaymentMethod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AddPaymentMethodRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Card registered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionDetailDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    removePaymentMethod: {
+        parameters: {
+            query?: {
+                /** @description Required to remove the only card used for automatic debit */
+                confirm?: "true" | "false";
+            };
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Card removed */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionDetailDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Confirmation required */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    updatePaymentMethod: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["UpdatePaymentMethodRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Card updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionDetailDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    setAutoDebit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["AutoDebitRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Automatic debit updated */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionDetailDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    cancelSubscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Subscription cancelled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubscriptionDetailDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Already cancelled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    listPayments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Payments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentDto"][];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    registerManualPayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ManualPaymentRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Payment registered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentDto"];
+                };
+            };
+            /** @description Invalid data */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
                 };
             };
             /** @description Missing or invalid session */
@@ -1575,6 +2913,165 @@ export interface operations {
             };
             /** @description Time slot already taken, or appointment cancelled */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    listNotifications: {
+        parameters: {
+            query: {
+                patientId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationDto"][];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    listVirtualMeetings: {
+        parameters: {
+            query?: {
+                patientId?: string;
+                appointmentId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VirtualMeetingDto"][];
+                };
+            };
+            /** @description Missing filter */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+        };
+    };
+    startVirtualMeeting: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["StartVirtualMeetingRequestDto"];
+            };
+        };
+        responses: {
+            /** @description Meeting created (or the existing one of the appointment) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VirtualMeetingDto"];
+                };
+            };
+            /** @description Not a scheduled virtual appointment */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Missing or invalid session */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Subscription inactive */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description Patient or appointment not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponseDto"];
+                };
+            };
+            /** @description The video platform is not available */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
