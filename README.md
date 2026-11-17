@@ -48,5 +48,8 @@ reports: [SECURITY.md](SECURITY.md).
 
 ## Documentation
 
+Start with the [project overview](PROJECT_OVERVIEW.md): what was built, SOLID, design and architecture
+patterns with references to the code.
+
 Everything lives in [`docs/`](docs/README.md): architecture decision records, architecture
 overviews, class and sequence diagrams, step-by-step guides and operations. AI agents start from [`CLAUDE.md`](CLAUDE.md).
