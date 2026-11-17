@@ -64,7 +64,12 @@ export class AppointmentsModule implements AppModule, AppointmentPresenterFactor
       deps.transactions,
       new PatientDirectoryNames(deps.patients),
       deps.notifier ??
-        new NotificationAppointmentNotifier(deps.patients, deps.notifications, deps.dates),
+        new NotificationAppointmentNotifier(
+          deps.patients,
+          deps.notifications,
+          deps.dates,
+          this.#logger,
+        ),
       deps.clock,
       deps.lock ?? new MongooseAgendaLock(deps.context),
     );
