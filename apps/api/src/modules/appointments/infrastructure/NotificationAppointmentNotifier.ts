@@ -1,3 +1,4 @@
+import type { AppLogger } from '#core/logging/AppLogger';
 import type { DateTimeFormatter } from '#infrastructure/format/DateTimeFormatter';
 import type { NotificationCenter, NotificationTopic } from '#modules/notifications';
 import type { PatientDirectory } from '#modules/patients';
@@ -17,11 +18,25 @@ export class NotificationAppointmentNotifier extends AppointmentNotifier {
     private readonly patients: PatientDirectory,
     private readonly notifications: NotificationCenter,
     private readonly dates: DateTimeFormatter,
+    private readonly logger: AppLogger,
   ) {
     super();
   }
 
   async notify(event: AppointmentEvent, appointment: Appointment): Promise<void> {
+    try {
+      await this.deliver(event, appointment);
+    } catch (error) {
+      this.logger.warn('Appointment message could not be delivered', {
+        event,
+        appointmentId: appointment.id,
+        err: error,
+      });
+      throw error;
+    }
+  }
+
+  private async deliver(event: AppointmentEvent, appointment: Appointment): Promise<void> {
     const contacts = await this.patients.contacts(appointment.professionalId, [
       appointment.patientId,
     ]);

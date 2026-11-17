@@ -536,6 +536,7 @@ classDiagram
     -patients: PatientDirectory
     -notifications: NotificationCenter
     -dates: DateTimeFormatter
+    -logger: AppLogger
     +notify(event, appointment) Promise~void~
   }
   class PatientDirectoryNames {
