@@ -1,8 +1,12 @@
 import type { Router } from 'express';
+import type { AppLogger } from '#core/logging/AppLogger';
 import type { Clock } from '#core/model/Clock';
+import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
+import type { ScheduledJob } from '#core/scheduling/ScheduledJob';
 import type { View } from '#core/view/View';
+import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import {
   type PatientDto,
@@ -10,6 +14,7 @@ import {
   registerPatientContracts,
 } from './contracts/patients.contracts';
 import { MongoosePatientRepository } from './infrastructure/MongoosePatientRepository';
+import { PatientActivity } from './model/PatientActivity';
 import { PatientDirectory } from './model/PatientDirectory';
 import type { PatientRepository } from './model/PatientRepository';
 import { PatientService } from './model/PatientService';
@@ -24,21 +29,26 @@ import { PatientRoutes } from './view/PatientRoutes';
 export interface PatientsModuleDependencies {
   guard: AuthGuard;
   clock: Clock;
-  /** Defaults to MongoDB; tests may pass an in-memory implementation. */
+  transactions: TransactionManager;
+  context: TransactionContext;
+  logger: AppLogger;
   repository?: PatientRepository;
 }
 
-/** Composition root of the patients module (CU-04..CU-07). */
+const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
+
+// Composition Root, Abstract Factory
 export class PatientsModule implements AppModule, PatientPresenterFactory {
   readonly basePath = '/patients';
-  /** Query service other modules depend on (ADR-0022). */
   readonly directory: PatientDirectory;
+  readonly activity: PatientActivity;
   readonly #service: PatientService;
 
   constructor(private readonly deps: PatientsModuleDependencies) {
-    const repository = deps.repository ?? new MongoosePatientRepository();
-    this.#service = new PatientService(repository, deps.clock);
+    const repository = deps.repository ?? new MongoosePatientRepository(deps.context);
+    this.#service = new PatientService(repository, deps.transactions, deps.clock);
     this.directory = new PatientDirectory(repository);
+    this.activity = new PatientActivity(repository);
   }
 
   registerContracts(registry: ContractRegistry): void {
@@ -47,6 +57,21 @@ export class PatientsModule implements AppModule, PatientPresenterFactory {
 
   createRouter(): Router {
     return new PatientRoutes(this, this.deps.guard).build();
+  }
+
+  scheduledJobs(): ScheduledJob[] {
+    return [
+      {
+        name: 'patients.inactivate-dormant',
+        intervalMs: SIX_HOURS_MS,
+        run: async () => {
+          const count = await this.#service.inactivateDormant();
+          if (count > 0) {
+            this.deps.logger.info('Dormant patients marked inactive', { count });
+          }
+        },
+      },
+    ];
   }
 
   createPatient(view: View<PatientDto>): CreatePatientPresenter {

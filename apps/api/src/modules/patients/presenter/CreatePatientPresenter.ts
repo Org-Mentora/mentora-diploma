@@ -5,7 +5,7 @@ import type { PatientDto, PatientInputDto } from '../contracts/patients.contract
 import type { PatientService } from '../model/PatientService';
 import { PatientViewModel } from './PatientViewModel';
 
-/** CU-04 Register patient. */
+// Presenter
 export class CreatePatientPresenter extends Presenter<
   { actor: AuthenticatedActor; data: PatientInputDto },
   PatientDto

@@ -22,7 +22,7 @@ export interface PatientDocument extends MongoDocument {
   statusOrigin: 'manual' | 'automatic';
   registeredAt: Date;
   updatedAt: Date;
-  /** Denormalized, accent-free "first last dni" used by CU-05. */
+  lastClinicalActivityAt?: Date | null;
   searchText: string;
 }
 
@@ -54,12 +54,13 @@ const schema = new Schema<PatientDocument>(
     statusOrigin: { type: String, enum: ['manual', 'automatic'], required: true },
     registeredAt: { type: Date, required: true },
     updatedAt: { type: Date, required: true },
+    lastClinicalActivityAt: { type: Date, default: null },
     searchText: { type: String, required: true },
   },
   { versionKey: false },
 );
 
-// DNI is unique per professional, not globally (ADR-0019).
 schema.index({ professionalId: 1, dni: 1 }, { unique: true });
+schema.index({ status: 1, statusChangedAt: 1 });
 
 export const PatientModel = mongoose.model<PatientDocument>('Patient', schema, 'patients');

@@ -5,7 +5,7 @@ import type { PatientService } from '../model/PatientService';
 import type { PatientRef } from './GetPatientPresenter';
 import { PatientViewModel } from './PatientViewModel';
 
-/** CU-07 Change patient status (manual flow). */
+// Presenter
 export class ChangePatientStatusPresenter extends Presenter<
   PatientRef & { data: ChangePatientStatusDto },
   PatientDto

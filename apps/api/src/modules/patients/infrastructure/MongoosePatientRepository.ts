@@ -1,4 +1,5 @@
 import { MongooseRepository } from '#infrastructure/database/MongooseRepository';
+import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { Patient } from '../model/Patient';
 import type { PatientRepository } from '../model/PatientRepository';
 import { PatientMapper } from './PatientMapper';
@@ -10,29 +11,36 @@ function escapeRegex(term: string): string {
   return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/** Adapter (ADR-0007): `PatientRepository` on MongoDB. */
+// Repository, Adapter
 export class MongoosePatientRepository
   extends MongooseRepository<Patient, PatientDocument>
   implements PatientRepository
 {
-  constructor() {
-    super(PatientModel, new PatientMapper());
+  constructor(context: TransactionContext) {
+    super(PatientModel, new PatientMapper(), context);
   }
 
   async findOwned(professionalId: string, id: string): Promise<Patient | null> {
-    const record = await this.model.findOne({ _id: id, professionalId }).lean<PatientDocument>();
+    const record = await this.model
+      .findOne({ _id: id, professionalId })
+      .session(this.session)
+      .lean<PatientDocument>();
     return record ? this.mapper.toDomain(record) : null;
   }
 
   async findOwnedMany(professionalId: string, ids: readonly string[]): Promise<Patient[]> {
     const records = await this.model
       .find({ _id: { $in: [...ids] }, professionalId })
+      .session(this.session)
       .lean<PatientDocument[]>();
     return records.map((record) => this.mapper.toDomain(record));
   }
 
   async findByDni(professionalId: string, dni: string): Promise<Patient | null> {
-    const record = await this.model.findOne({ professionalId, dni }).lean<PatientDocument>();
+    const record = await this.model
+      .findOne({ professionalId, dni })
+      .session(this.session)
+      .lean<PatientDocument>();
     return record ? this.mapper.toDomain(record) : null;
   }
 
@@ -48,6 +56,21 @@ export class MongoosePatientRepository
       .find(filter)
       .sort({ lastName: 1, firstName: 1 })
       .limit(SEARCH_LIMIT)
+      .session(this.session)
+      .lean<PatientDocument[]>();
+    return records.map((record) => this.mapper.toDomain(record));
+  }
+
+  async findDormant(cutoff: Date, limit: number): Promise<Patient[]> {
+    const records = await this.model
+      .find({
+        status: 'active',
+        statusChangedAt: { $lt: cutoff },
+        registeredAt: { $lt: cutoff },
+        $or: [{ lastClinicalActivityAt: null }, { lastClinicalActivityAt: { $lt: cutoff } }],
+      })
+      .limit(limit)
+      .session(this.session)
       .lean<PatientDocument[]>();
     return records.map((record) => this.mapper.toDomain(record));
   }

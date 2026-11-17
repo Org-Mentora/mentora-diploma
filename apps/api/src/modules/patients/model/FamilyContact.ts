@@ -6,7 +6,7 @@ interface FamilyContactProps {
   phone: string;
 }
 
-/** Emergency / family contact of a patient (`ContactoFamiliar`). */
+// Value Object
 export class FamilyContact extends ValueObject<FamilyContactProps> {
   static create(name: string, phone: string): FamilyContact {
     if (name.trim().length === 0 || phone.trim().length === 0) {

@@ -4,6 +4,7 @@ import { Patient } from '../model/Patient';
 import { PatientSearch } from '../model/PatientSearch';
 import type { PatientDocument } from './PatientSchema';
 
+// Data Mapper
 export class PatientMapper implements DataMapper<Patient, PatientDocument> {
   toDomain(record: PatientDocument): Patient {
     return Patient.restore(record._id, {
@@ -29,6 +30,7 @@ export class PatientMapper implements DataMapper<Patient, PatientDocument> {
       statusOrigin: record.statusOrigin,
       registeredAt: record.registeredAt,
       updatedAt: record.updatedAt,
+      lastClinicalActivityAt: record.lastClinicalActivityAt ?? null,
     });
   }
 
@@ -57,6 +59,7 @@ export class PatientMapper implements DataMapper<Patient, PatientDocument> {
       statusOrigin: patient.statusOrigin,
       registeredAt: patient.registeredAt,
       updatedAt: patient.updatedAt,
+      lastClinicalActivityAt: patient.lastClinicalActivityAt,
       searchText: PatientSearch.indexText(patient.firstName, patient.lastName, patient.dni),
     };
   }

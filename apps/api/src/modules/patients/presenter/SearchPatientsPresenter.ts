@@ -5,7 +5,7 @@ import type { PatientSummaryDto } from '../contracts/patients.contracts';
 import type { PatientService } from '../model/PatientService';
 import { PatientViewModel } from './PatientViewModel';
 
-/** CU-05 Search patients. */
+// Presenter
 export class SearchPatientsPresenter extends Presenter<
   { actor: AuthenticatedActor; query: string | undefined },
   PatientSummaryDto[]
