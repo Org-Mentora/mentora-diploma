@@ -18,16 +18,13 @@ import { DiagnosisCatalogRoutes } from './view/DiagnosisCatalogRoutes';
 
 export interface DiagnosisCatalogModuleDependencies {
   guard: AuthGuard;
-  /** Defaults to MongoDB; tests may pass an in-memory implementation. */
   repository?: DiagnosisCatalogRepository;
-  /** Defaults to upserting the DSM-5 seed into MongoDB. */
   seeder?: DiagnosisCatalogSeeder;
 }
 
-/** Composition root of the DSM-5 catalog (CU-11). */
+// Composition Root, Abstract Factory
 export class DiagnosisCatalogModule implements AppModule, DiagnosisCatalogPresenterFactory {
   readonly basePath = '/diagnoses';
-  /** Query service other modules depend on (ADR-0022). */
   readonly catalog: DiagnosisCatalog;
   readonly #seeder: DiagnosisCatalogSeeder;
 

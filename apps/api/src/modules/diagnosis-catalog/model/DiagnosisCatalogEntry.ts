@@ -6,10 +6,7 @@ interface DiagnosisCatalogEntryProps {
   active: boolean;
 }
 
-/**
- * One DSM-5 diagnosis (`CatalogoDiagnostico`). Identified by its ICD-10-CM code.
- * The catalog is read-only for professionals (CU-11, alternative flow of step 1).
- */
+// Entity
 export class DiagnosisCatalogEntry extends Entity<DiagnosisCatalogEntryProps> {
   static restore(code: string, props: DiagnosisCatalogEntryProps): DiagnosisCatalogEntry {
     return new DiagnosisCatalogEntry(code, props);

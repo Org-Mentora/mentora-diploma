@@ -1,7 +1,3 @@
-/**
- * Initial DSM-5 catalog (ICD-10-CM codes as listed in DSM-5-TR). It is a curated subset of the
- * diagnoses most used in outpatient psychiatry; extend it here and it is upserted at boot.
- */
 export interface Dsm5SeedEntry {
   code: string;
   name: string;

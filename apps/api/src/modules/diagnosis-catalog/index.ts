@@ -1,4 +1,3 @@
-/** Public API of the DSM-5 diagnosis catalog. */
 export type { DiagnosisCatalogEntryDto } from './contracts/diagnosis-catalog.contracts';
 export {
   DiagnosisCatalogModule,

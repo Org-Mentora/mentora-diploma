@@ -6,7 +6,7 @@ export interface DiagnosisSearchCriteria {
   limit: number;
 }
 
-/** Read-only access to the catalog: professionals can never write to it. */
+// Repository
 export abstract class DiagnosisCatalogRepository {
   abstract search(criteria: DiagnosisSearchCriteria): Promise<DiagnosisCatalogEntry[]>;
   abstract findByCode(code: string): Promise<DiagnosisCatalogEntry | null>;
