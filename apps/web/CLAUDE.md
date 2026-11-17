@@ -9,6 +9,7 @@ Reference slice to copy: `src/features/health`. Recipe: `.claude/skills/new-fron
 src/app/                    AppStore (singleton), AppProviders, router.tsx, RootLayout
 src/model/api/              baseApi.ts, generated/mentoraApi.ts (DO NOT EDIT), ApiErrorAdapter
 src/model/domain/<f>/       DTO → UI model adapters (formatting and client rules)
+src/model/platform/         UserFeedback + BrowserActions ports, adapters and PlatformContext
 src/features/<f>/viewmodel/ use<Name>ViewModel.ts → { state, commands }
 src/features/<f>/view/      <Name>Page.tsx + feature components (JSX only)
 src/features/<f>/index.ts   public API (pages)
@@ -34,6 +35,9 @@ src/shared/ui | lib         shadcn components, cn()
 - `baseApi` refetches `/auth/me` on `403 SUBSCRIPTION_INACTIVE` (refreshes the cookie, ADR-0029).
 - Third-party engines (jsPDF) live in `model/domain` adapters, loaded with `import()` by ViewModels (ADR-0032).
 - Confirmations: `ConfirmDialog` from `@/shared/ui/confirm-dialog`.
+- Toasts, printing and the clipboard (ADR-0042): ViewModels call `useUserFeedback()` / `useBrowserActions()`
+  from `@/model/platform/Platform`, never `sonner`, `window` or `navigator`. `AppProviders` provides the
+  browser implementation; tests wrap the hook in `<PlatformContext value={fake}>`.
 
 ## Workflow
 

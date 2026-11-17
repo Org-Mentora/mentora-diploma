@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo, useState } from 'react';
 import { type UseFormReturn, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
 import {
   useCancelAppointmentMutation,
@@ -17,6 +16,7 @@ import {
   appointmentFormSchema,
 } from '@/model/domain/appointments/appointment.form';
 import { PatientAdapter } from '@/model/domain/patients/PatientAdapter';
+import { useUserFeedback } from '@/model/platform/Platform';
 import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
 
 export type { AppointmentFormValues };
@@ -61,6 +61,7 @@ export function useAppointmentFormViewModel({
   day,
   onDone,
 }: Options): AppointmentFormViewModel {
+  const feedback = useUserFeedback();
   const isEdit = Boolean(appointmentId);
   const { data: appointment } = useGetAppointmentQuery(
     { id: appointmentId ?? '' },
@@ -114,12 +115,12 @@ export function useAppointmentFormViewModel({
           id: appointmentId,
           rescheduleAppointmentRequestDto: AppointmentForm.toReschedule(values),
         }).unwrap();
-        toast.success('Appointment updated. The patient will be notified.');
+        feedback.success('Appointment updated. The patient will be notified.');
       } else {
         await schedule({
           scheduleAppointmentRequestDto: AppointmentForm.toSchedule(values),
         }).unwrap();
-        toast.success('Appointment scheduled. The patient will be notified.');
+        feedback.success('Appointment scheduled. The patient will be notified.');
       }
       onDone();
     } catch (caught) {
@@ -153,7 +154,7 @@ export function useAppointmentFormViewModel({
       }
       try {
         await cancel({ id: appointmentId }).unwrap();
-        toast.success('Appointment cancelled. The patient will be notified.');
+        feedback.success('Appointment cancelled. The patient will be notified.');
         onDone();
       } catch (caught) {
         fail(caught);

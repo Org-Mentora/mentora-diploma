@@ -308,7 +308,8 @@
                   "@reduxjs/toolkit": "[arch][MVVM] Views bind to their ViewModel, never to the store (ADR-0011).",
                   "react-redux": "[arch][MVVM] Views bind to their ViewModel, never to the store (ADR-0011).",
                   "@mentora/contracts": "[arch][MVVM] Views render UI models exposed by the ViewModel, not DTOs (ADR-0011).",
-                  "jspdf": "[arch][MVVM] PDF rendering is a Model adapter (model/domain), loaded by the ViewModel (ADR-0032)."
+                  "jspdf": "[arch][MVVM] PDF rendering is a Model adapter (model/domain), loaded by the ViewModel (ADR-0032).",
+                  "sonner": "[arch][DIP] Show messages through useUserFeedback() from @/model/platform/Platform (ADR-0042)."
                 },
                 "patterns": [
                   {
@@ -337,7 +338,8 @@
                 "paths": {
                   "react-dom": "[arch][MVVM] ViewModels expose state and commands; rendering is the View's job (ADR-0011).",
                   "@/model/api/baseApi": "[arch] Use the generated hooks from @/model/api/generated (ADR-0010).",
-                  "jspdf": "[arch][MVVM] Use the PDF adapter in model/domain, never jspdf directly (ADR-0032)."
+                  "jspdf": "[arch][MVVM] Use the PDF adapter in model/domain, never jspdf directly (ADR-0032).",
+                  "sonner": "[arch][DIP] Show messages through useUserFeedback() from @/model/platform/Platform (ADR-0042)."
                 },
                 "patterns": [
                   {

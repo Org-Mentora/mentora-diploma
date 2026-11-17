@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { ApiErrorAdapter } from '@/model/api/ApiErrorAdapter';
 import {
   useListVirtualMeetingsQuery,
@@ -9,6 +8,7 @@ import {
   VirtualMeetingAdapter,
   type VirtualMeetingItem,
 } from '@/model/domain/virtual-consultations/VirtualMeetingAdapter';
+import { useBrowserActions, useUserFeedback } from '@/model/platform/Platform';
 
 export type { VirtualMeetingItem };
 
@@ -31,6 +31,8 @@ export function useVirtualMeetingViewModel({
   patientId,
   appointmentId,
 }: Options): VirtualMeetingViewModel {
+  const feedback = useUserFeedback();
+  const browser = useBrowserActions();
   const { data } = useListVirtualMeetingsQuery(
     { appointmentId: appointmentId ?? '' },
     { skip: !appointmentId },
@@ -53,15 +55,15 @@ export function useVirtualMeetingViewModel({
         }).unwrap();
         setStarted(VirtualMeetingAdapter.toItem(meeting));
       } catch (caught) {
-        toast.error(
+        feedback.error(
           ApiErrorAdapter.toUiError(caught)?.message ?? 'The video call could not be created',
         );
       }
     },
     close: () => setStarted(null),
     copyLink: async (url) => {
-      await navigator.clipboard.writeText(url);
-      toast.success('Link copied');
+      await browser.copyText(url);
+      feedback.success('Link copied');
     },
   };
 }

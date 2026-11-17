@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type UseFormReturn, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { ApiErrorAdapter } from '@/model/api/ApiErrorAdapter';
 import { useChangePasswordMutation } from '@/model/api/generated/mentoraApi';
 import {
@@ -10,6 +9,7 @@ import {
   changePasswordFormSchema,
   PASSWORD_HINT,
 } from '@/model/domain/session/auth.forms';
+import { useUserFeedback } from '@/model/platform/Platform';
 
 export type { ChangePasswordFormValues };
 
@@ -23,6 +23,7 @@ export interface ChangePasswordViewModel {
 
 // ViewModel
 export function useChangePasswordViewModel(): ChangePasswordViewModel {
+  const feedback = useUserFeedback();
   const form = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordFormSchema),
     defaultValues: changePasswordDefaults,
@@ -38,7 +39,7 @@ export function useChangePasswordViewModel(): ChangePasswordViewModel {
         await change({
           changePasswordRequestDto: AuthForms.toChangePasswordRequest(values),
         }).unwrap();
-        toast.success('Your password was changed');
+        feedback.success('Your password was changed');
         form.reset(changePasswordDefaults);
       } catch (caught) {
         const error = ApiErrorAdapter.toUiError(caught);

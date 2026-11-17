@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { type UseFormReturn, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { ApiErrorAdapter } from '@/model/api/ApiErrorAdapter';
 import {
   useAddPaymentMethodMutation,
@@ -17,6 +16,7 @@ import {
   emptyCardForm,
   SubscriptionForms,
 } from '@/model/domain/subscriptions/subscription.forms';
+import { useUserFeedback } from '@/model/platform/Platform';
 
 export type { CardFormValues, EditCardFormValues, PaymentMethodItem };
 
@@ -50,6 +50,7 @@ const CARD_FIELDS = new Set(['holderName', 'cardNumber', 'cvc']);
 
 // ViewModel
 export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentMethodsViewModel {
+  const feedback = useUserFeedback();
   const [add, adding] = useAddPaymentMethodMutation();
   const [update, updating] = useUpdatePaymentMethodMutation();
   const [remove, removing] = useRemovePaymentMethodMutation();
@@ -88,7 +89,7 @@ export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentM
     submitAdd: addForm.handleSubmit(async (values) => {
       try {
         await add({ addPaymentMethodRequestDto: SubscriptionForms.toAddCard(values) }).unwrap();
-        toast.success('Card registered');
+        feedback.success('Card registered');
         closeAdd();
       } catch (caught) {
         const error = ApiErrorAdapter.toUiError(caught);
@@ -118,7 +119,7 @@ export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentM
           id: editing.id,
           updatePaymentMethodRequestDto: SubscriptionForms.toEditCard(values),
         }).unwrap();
-        toast.success('Card updated');
+        feedback.success('Card updated');
         setEditing(null);
       } catch (caught) {
         editForm.setError('expiry', {
@@ -132,9 +133,11 @@ export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentM
           id: item.id,
           updatePaymentMethodRequestDto: { makeDefault: true },
         }).unwrap();
-        toast.success(`${item.label} is now the default card`);
+        feedback.success(`${item.label} is now the default card`);
       } catch (caught) {
-        toast.error(ApiErrorAdapter.toUiError(caught)?.message ?? 'The card could not be updated');
+        feedback.error(
+          ApiErrorAdapter.toUiError(caught)?.message ?? 'The card could not be updated',
+        );
       }
     },
     removal,
@@ -149,14 +152,14 @@ export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentM
           id: removal.item.id,
           ...(removal.warning ? { confirm: 'true' as const } : {}),
         }).unwrap();
-        toast.success('Card removed');
+        feedback.success('Card removed');
         setRemoval(null);
       } catch (caught) {
         const error = ApiErrorAdapter.toUiError(caught);
         if (error?.code === 'CONFIRMATION_REQUIRED') {
           setRemoval({ item: removal.item, warning: error.message });
         } else {
-          toast.error(error?.message ?? 'The card could not be removed');
+          feedback.error(error?.message ?? 'The card could not be removed');
           setRemoval(null);
         }
       }

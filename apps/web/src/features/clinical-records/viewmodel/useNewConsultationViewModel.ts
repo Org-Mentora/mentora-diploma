@@ -7,7 +7,6 @@ import {
   useForm,
 } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router';
-import { toast } from 'sonner';
 import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
 import {
   useGetPatientQuery,
@@ -24,6 +23,7 @@ import {
   consultationFormSchema,
   emptyMedication,
 } from '@/model/domain/clinical-records/consultation.form';
+import { useUserFeedback } from '@/model/platform/Platform';
 import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
 
 export type { ConsultationFormValues };
@@ -52,6 +52,7 @@ export interface NewConsultationViewModel {
 
 // ViewModel
 export function useNewConsultationViewModel(): NewConsultationViewModel {
+  const feedback = useUserFeedback();
   const { patientId = '' } = useParams();
   const navigate = useNavigate();
   const { data: patient } = useGetPatientQuery({ id: patientId });
@@ -85,7 +86,7 @@ export function useNewConsultationViewModel(): NewConsultationViewModel {
         patientId,
         registerConsultationRequestDto: ConsultationForm.toRequest(values),
       }).unwrap();
-      toast.success('Consultation added to the clinical record');
+      feedback.success('Consultation added to the clinical record');
       navigate(profilePath);
     } catch (caught) {
       setError(ApiErrorAdapter.toUiError(caught));

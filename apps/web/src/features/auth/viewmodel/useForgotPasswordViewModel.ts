@@ -2,7 +2,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { type UseFormReturn, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router';
-import { toast } from 'sonner';
 import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
 import {
   useRequestPasswordRecoveryMutation,
@@ -18,6 +17,7 @@ import {
   recoveryEmailSchema,
   recoveryPasswordSchema,
 } from '@/model/domain/session/auth.forms';
+import { useUserFeedback } from '@/model/platform/Platform';
 
 export type { RecoveryCodeValues, RecoveryEmailValues, RecoveryPasswordValues };
 
@@ -42,6 +42,7 @@ export interface ForgotPasswordViewModel {
 
 // ViewModel
 export function useForgotPasswordViewModel(): ForgotPasswordViewModel {
+  const feedback = useUserFeedback();
   const [step, setStep] = useState<RecoveryStep>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
@@ -118,7 +119,7 @@ export function useForgotPasswordViewModel(): ForgotPasswordViewModel {
         await reset({
           resetPasswordRequestDto: { email, code, newPassword: values.newPassword },
         }).unwrap();
-        toast.success('Your password was changed. Log in with the new one.');
+        feedback.success('Your password was changed. Log in with the new one.');
         navigate('/login', { replace: true });
       } catch (caught) {
         failOn('newPassword', caught);
