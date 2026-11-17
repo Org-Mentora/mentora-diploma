@@ -14,7 +14,7 @@ export function NotificationsPanel({ patientId }: { patientId: string }) {
     return (
       <EmptyState
         title="No messages yet"
-        description="Appointment confirmations, changes, reminders and video call links are sent by WhatsApp."
+        description="Appointment confirmations, changes, reminders and video call links are sent by WhatsApp, or by email when the patient has no phone or WhatsApp fails."
       />
     );
   }
@@ -29,7 +29,7 @@ export function NotificationsPanel({ patientId }: { patientId: string }) {
               <span className="font-medium">{item.topicLabel}</span>
               <Badge variant={item.statusTone}>{item.statusLabel}</Badge>
               <span className="ml-auto text-muted-foreground text-xs">
-                {item.when} · {item.recipient}
+                {item.when} · {item.channelLabel} · {item.recipient}
               </span>
             </div>
             <p className="text-muted-foreground text-sm">{item.body}</p>

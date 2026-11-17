@@ -90,6 +90,7 @@ describe('NotificationAdapter (CU-14)', () => {
     });
     expect(item).toMatchObject({
       topicLabel: 'Reminder',
+      channelLabel: 'WhatsApp',
       statusLabel: 'Failed',
       detail: 'provider error (2 attempts)',
     });

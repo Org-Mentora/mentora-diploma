@@ -6,6 +6,7 @@ export interface NotificationItem {
   id: string;
   when: string;
   topicLabel: string;
+  channelLabel: string;
   body: string;
   recipient: string;
   statusLabel: string;
@@ -19,6 +20,11 @@ const TOPIC: Record<NotificationDto['topic'], string> = {
   appointment_cancelled: 'Appointment cancelled',
   appointment_reminder: 'Reminder',
   virtual_meeting: 'Video call link',
+};
+
+const CHANNEL: Record<NotificationDto['channel'], string> = {
+  whatsapp: 'WhatsApp',
+  email: 'Email',
 };
 
 const STATUS: Record<NotificationDto['status'], { label: string; tone: DeliveryTone }> = {
@@ -42,8 +48,9 @@ export class NotificationAdapter {
       id: dto.id,
       when: dateTime.format(new Date(dto.createdAt)),
       topicLabel: TOPIC[dto.topic],
+      channelLabel: CHANNEL[dto.channel],
       body: dto.body,
-      recipient: dto.recipient ?? 'No phone',
+      recipient: dto.recipient ?? 'No phone or email',
       statusLabel: STATUS[dto.status].label,
       statusTone: STATUS[dto.status].tone,
       detail: dto.error ? `${dto.error}${attempts}` : attempts.trim() || null,
