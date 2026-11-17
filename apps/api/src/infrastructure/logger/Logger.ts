@@ -2,7 +2,7 @@ import { pino } from 'pino';
 import { AppConfig } from '#infrastructure/config/AppConfig';
 import { PinoLoggerAdapter } from './PinoLoggerAdapter';
 
-/** Singleton (ADR-0006): the process-wide logger, configured from `AppConfig`. */
+// Singleton
 export class Logger {
   static #instance: PinoLoggerAdapter | undefined;
 

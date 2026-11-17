@@ -15,12 +15,7 @@ function json(schema: ZodType) {
 
 type OpenApiDocument = ReturnType<OpenApiGeneratorV31['generateDocument']>;
 
-/**
- * Singleton (ADR-0006) + Adapter (ADR-0007): collects every module's `RouteContract`s and
- * translates them to `@asteasolutions/zod-to-openapi`. Schemas become components through
- * their `.meta({ id })`, so there is no separate schema registration. The generator produces
- * the Swagger document served at `/api/docs` and consumed by the frontend codegen (ADR-0009, ADR-0010).
- */
+// Singleton, Adapter
 export class OpenApiRegistry implements ContractRegistry {
   static #instance: OpenApiRegistry | undefined;
 
