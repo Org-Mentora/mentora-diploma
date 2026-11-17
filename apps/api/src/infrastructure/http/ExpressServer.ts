@@ -72,6 +72,9 @@ export class ExpressServer {
     });
     app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(openApiDocument));
 
+    for (const handler of modules.flatMap((module) => module.requestHandlers?.() ?? [])) {
+      app.use('/api', handler);
+    }
     for (const module of modules) {
       app.use(`/api${module.basePath}`, module.createRouter());
     }

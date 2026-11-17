@@ -10,4 +10,8 @@ export class ActorReader {
     }
     return actor;
   }
+
+  static optional(res: Response): AuthenticatedActor | null {
+    return (res.locals.actor as AuthenticatedActor | undefined) ?? null;
+  }
 }

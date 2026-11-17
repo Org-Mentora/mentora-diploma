@@ -16,6 +16,15 @@ export class AuthGuard {
     next();
   };
 
+  readonly readSession: RequestHandler = async (req, res, next) => {
+    try {
+      await this.authenticate(req.cookies?.[SESSION_COOKIE_NAME], res);
+    } catch {
+      res.locals.actor = undefined;
+    }
+    next();
+  };
+
   readonly requireActiveSubscription: RequestHandler = async (req, res, next) => {
     const accessEndsAt = await this.authenticate(req.cookies?.[SESSION_COOKIE_NAME], res);
     if (accessEndsAt && accessEndsAt.getTime() <= this.clock.now().getTime()) {
