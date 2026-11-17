@@ -9,7 +9,13 @@ use these English names consistently ([ADR-0016](../adr/0016-english-only.md)).
 | Psiquiatra / Profesional médico | `Professional` | `modules/auth` |
 | Matrícula profesional | `licenseNumber` | `Professional` |
 | Especialidad | `specialty` | `Professional` |
-| Suscripción / período de prueba | `Subscription` (`trial`, `active`, `expired`) | `modules/auth` |
+| Suscripción / período de prueba | `Subscription` (`trial`, `active`, `pending_payment`, `suspended`, `cancelled`, `expired`) | `modules/subscriptions` |
+| Plan / medio de pago / débito automático | `Plan`, `PaymentMethod`, `autoDebit` | `modules/subscriptions` |
+| Pago / historial de pagos / pago manual | `Payment` (`automatic`, `plan_change`, `manual`) | `modules/subscriptions` |
+| Código de recuperación | `PasswordRecovery` | `modules/auth` |
+| Membrete / logo / dirección de consultorio | Letterhead, `ProfessionalLogo`, `offices` | `modules/auth`, `features/prescriptions` |
+| Receta médica | Prescription (`PrescriptionDocument`) | `features/prescriptions` |
+| Consulta virtual / enlace de videollamada | `VirtualMeeting` (`joinUrl`) | `modules/virtual-consultations` |
 | Paciente | `Patient` | `modules/patients` |
 | Obra social / número de afiliado | `healthInsurance` / `memberNumber` | `Patient` |
 | Contacto familiar | `FamilyContact` | `Patient` |
@@ -28,6 +34,7 @@ use these English names consistently ([ADR-0016](../adr/0016-english-only.md)).
 | Agenda / calendario | Agenda (`AgendaEntry`, `AgendaPage`) | `modules/appointments`, `features/appointments` |
 | Tipo de consulta: primera consulta / control / seguimiento / medicación / otra | `first_visit` / `control` / `follow_up` / `medication` / `other` | `Appointment.type` |
 | Reprogramar / cancelar turno | `reschedule` / `cancel` | `Appointment` |
-| Recordatorio / notificación por WhatsApp | `AppointmentNotifier` | `modules/appointments` (logging adapter in the MVP) |
-| Institución, Consultorio | `Institution`, `Office` (not implemented yet) | — |
-| Pago, Liquidación, Obra social (entidad) | `Payment`, `Settlement`, `HealthInsurer` (not implemented yet) | — |
+| Recordatorio / notificación por WhatsApp | `Notification`, `NotificationCenter`, `AppointmentNotifier` | `modules/notifications`, `modules/appointments` |
+| Inactivación automática (3 meses) | `Patient.isDormantAt`, `lastClinicalActivityAt` | `modules/patients` |
+| Institución | `Institution` (not implemented yet) | — |
+| Liquidación, Obra social (entidad) | `Settlement`, `HealthInsurer` (not implemented yet) | — |
