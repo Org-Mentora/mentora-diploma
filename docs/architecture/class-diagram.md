@@ -22,7 +22,9 @@ API modules only talk through the public `index.ts` of another module (ADR-0022,
 ```mermaid
 flowchart LR
   appointments["appointments"]
+  audit["audit"]
   auth["auth"]
+  booking["booking"]
   clinical_records["clinical-records"]
   diagnosis_catalog["diagnosis-catalog"]
   health["health"]
@@ -33,6 +35,10 @@ flowchart LR
   appointments --> notifications
   appointments --> patients
   auth --> subscriptions
+  booking --> appointments
+  booking --> auth
+  booking --> patients
+  booking --> subscriptions
   clinical_records --> diagnosis_catalog
   clinical_records --> patients
   virtual_consultations --> appointments
@@ -42,7 +48,7 @@ flowchart LR
 
 ## API core (shared kernel)
 
-29 classes.
+30 classes.
 
 ```mermaid
 classDiagram
@@ -52,6 +58,10 @@ classDiagram
     +kind: ErrorKind
     +code: string
     +details: unknown
+  }
+  class AuditTrail {
+    <<abstract>>
+    +record(entry)* Promise~void~
   }
   class CalendarMonths {
     +add(date, months)$ Date
@@ -195,13 +205,14 @@ classDiagram
 
 ## API infrastructure
 
-28 classes.
+29 classes.
 
 ```mermaid
 classDiagram
   direction LR
   class ActorReader {
     +from(res)$ AuthenticatedActor
+    +optional(res)$ AuthenticatedActor | null
   }
   class AppConfig {
     <<Singleton>>
@@ -214,6 +225,7 @@ classDiagram
     -tokens: TokenService
     -clock: Clock
     +requireSession: RequestHandler
+    +readSession: RequestHandler
     +requireActiveSubscription: RequestHandler
   }
   class ErrorHttpView {
@@ -343,6 +355,10 @@ classDiagram
     <<abstract>>
     +hit(id, windowMs, now)* Promise~RateLimitWindow~
   }
+  class RequestOriginContext {
+    +current: RequestOrigin | null
+    +capture: RequestHandler
+  }
   class ScryptPasswordHasher {
     <<Adapter>>
     +hash(plain) Promise~string~
@@ -437,7 +453,7 @@ classDiagram
 
 ## API module: Appointments (CU-10, CU-11, CU-12, CU-13, CU-14)
 
-20 classes.
+32 classes.
 
 ```mermaid
 classDiagram
@@ -451,7 +467,8 @@ classDiagram
     +MIN_DURATION$
     +MAX_DURATION$
     +REMINDER_WINDOW_MS$
-    +schedule(id, professionalId, patientId, slot, now)$
+    +MAX_FEE$
+    +schedule(id, professionalId, patientId, slot, now, source)$
     +restore(id, props)$ Appointment
     +endOf(startsAt, durationMinutes)$ Date
     +reschedule(slot, now) void
@@ -467,12 +484,20 @@ classDiagram
     +type: AppointmentType
     +modality: AppointmentModality
     +notes: string | null
+    +fee: number | null
+    +source: AppointmentSource
     +status: AppointmentStatus
     +isScheduled: boolean
     +createdAt: Date
     +updatedAt: Date
     +cancelledAt: Date | null
     +reminderSentAt: Date | null
+  }
+  class AppointmentBooking {
+    -agenda: AppointmentService
+    +busyIntervals(professionalId, from, to) Promise~BusyInterval[]~
+    +book(professionalId, patientId, slot) Promise~string~
+    +confirm(professionalId, appointmentId) Promise~void~
   }
   class AppointmentDirectory {
     -appointments: AppointmentRepository
@@ -493,6 +518,7 @@ classDiagram
     +findStartingBetween(professionalId, from, to)* Promise~Appointment[]~
     +findScheduledOverlapping(professionalId, startsAt, endsAt)* Promise~Appointment[]~
     +findNeedingReminder(from, to, limit)* Promise~Appointment[]~
+    +earnings(professionalId, from, to, now)* Promise~EarningsRow[]~
   }
   class AppointmentRoutes {
     -presenters: AppointmentPresenterFactory
@@ -507,10 +533,15 @@ classDiagram
     -clock: Clock
     -lock: AgendaLock
     -ids: IdGenerator
+    -fees: ConsultationFeesRepository
+    -audit: AuditTrail
     +list(professionalId, from, to) Promise~AgendaEntry[]~
     +get(professionalId, appointmentId) Promise~AgendaEntry~
-    +schedule(professionalId, patientId, slot) Promise~AgendaEntry~
-    +reschedule(professionalId, appointmentId, slot) Promise~AgendaEntry~
+    +schedule(professionalId, patientId, request) Promise~AgendaEntry~
+    +book(professionalId, patientId, request) Promise~Appointment~
+    +confirmBooked(professionalId, appointmentId) Promise~void~
+    +busyIntervals(professionalId, from, to) Promise~BusyInterval[]~
+    +reschedule(professionalId, appointmentId, request) Promise~AgendaEntry~
     +cancel(professionalId, appointmentId) Promise~AgendaEntry~
     +sendDueReminders() Promise~number~
   }
@@ -518,6 +549,7 @@ classDiagram
     <<Composition Root, Abstract Factory>>
     +basePath
     +directory: AppointmentDirectory
+    +booking: AppointmentBooking
     -deps: AppointmentsModuleDependencies
     +registerContracts(registry) void
     +createRouter() Router
@@ -527,20 +559,69 @@ classDiagram
     +scheduleAppointment(view) ScheduleAppointmentPresenter
     +rescheduleAppointment(view) RescheduleAppointmentPresenter
     +cancelAppointment(view) CancelAppointmentPresenter
+    +getConsultationFees(view) GetConsultationFeesPresenter
+    +updateConsultationFees(view) UpdateConsultationFeesPresenter
+    +getEarningsReport(view) GetEarningsReportPresenter
   }
   class AppointmentViewModel {
     +toDto(appointment,patientName)$ AppointmentDto
-    +toSlot(input)$ AppointmentSlot
+    +toSlot(input)$ SlotRequest
   }
   class CancelAppointmentPresenter {
     <<Presenter>>
     -agenda: AppointmentService
     #execute(input) Promise~AppointmentDto~
   }
+  class ConsultationFees {
+    <<Entity>>
+    +CURRENCY$
+    +empty(professionalId, now)$ ConsultationFees
+    +restore(professionalId, props)$ ConsultationFees
+    +update(amounts, now) void
+    +feeFor(type) number | null
+    +professionalId: string
+    +currency: string
+    +amounts: FeeTable
+    +updatedAt: Date
+  }
+  class ConsultationFeesMapper {
+    <<Data Mapper>>
+    +toDomain(record) ConsultationFees
+    +toPersistence(fees) ConsultationFeesDocument
+  }
+  class ConsultationFeesRepository {
+    <<abstract · Repository>>
+  }
+  class EarningsCalculator {
+    +summarize(range, currency, rows)$ EarningsReport
+  }
+  class EarningsService {
+    -fees: ConsultationFeesRepository
+    -appointments: AppointmentRepository
+    -transactions: TransactionManager
+    -clock: Clock
+    -audit: AuditTrail
+    +getFees(professionalId) Promise~ConsultationFees~
+    +updateFees(professionalId, amounts) Promise~ConsultationFees~
+    +report(professionalId, from, to) Promise~EarningsReport~
+  }
+  class FeesViewModel {
+    +toDto(fees)$ ConsultationFeesDto
+  }
   class GetAppointmentPresenter {
     <<Presenter>>
     -agenda: AppointmentService
     #execute(input) Promise~AppointmentDto~
+  }
+  class GetConsultationFeesPresenter {
+    <<Presenter>>
+    -earnings: EarningsService
+    #execute(actor) Promise~ConsultationFeesDto~
+  }
+  class GetEarningsReportPresenter {
+    <<Presenter>>
+    -earnings: EarningsService
+    #execute(actor,from,to) Promise~EarningsReportDto~
   }
   class ListAppointmentsPresenter {
     <<Presenter>>
@@ -554,10 +635,25 @@ classDiagram
   }
   class MongooseAppointmentRepository {
     <<Repository, Adapter>>
+    -timezone: string
     +findOwned(professionalId, id) Promise~Appointment | null~
     +findStartingBetween(professionalId, from, to) Promise~Appointment[]~
     +findScheduledOverlapping(professionalId, startsAt, endsAt) Promise~Appointment[]~
     +findNeedingReminder(from, to, limit) Promise~Appointment[]~
+    +earnings(professionalId, from, to, now) Promise~EarningsRow[]~
+  }
+  class MongooseConsultationFeesRepository {
+    <<Repository, Adapter>>
+  }
+  class MonthRange {
+    <<Value Object>>
+    +MAX_MONTHS$
+    +from: string
+    +to: string
+    +months: string[]
+    +of(from, to)$ MonthRange
+    +window: object
+    +includes(month) boolean
   }
   class NotificationAppointmentNotifier {
     <<Adapter>>
@@ -587,6 +683,14 @@ classDiagram
     <<Presenter>>
     -agenda: AppointmentService
     #execute(actor,data) Promise~AppointmentDto~
+  }
+  class UpdateConsultationFeesPresenter {
+    <<Presenter>>
+    -earnings: EarningsService
+    #execute(actor,data,) Promise~ConsultationFeesDto~
+  }
+  class AuditTrail {
+    <<external>>
   }
   class AuthGuard {
     <<external>>
@@ -625,6 +729,7 @@ classDiagram
     <<external>>
   }
   AgendaLock <|.. MongooseAgendaLock
+  AppointmentBooking --> AppointmentService
   AppointmentDirectory --> AppointmentRepository
   AppointmentNotifier <|-- NotificationAppointmentNotifier
   AppointmentRepository <|.. MongooseAppointmentRepository
@@ -632,18 +737,32 @@ classDiagram
   AppointmentService --> AgendaLock
   AppointmentService --> AppointmentNotifier
   AppointmentService --> AppointmentRepository
+  AppointmentService --> AuditTrail
   AppointmentService --> Clock
+  AppointmentService --> ConsultationFeesRepository
   AppointmentService --> IdGenerator
   AppointmentService --> PatientNames
   AppointmentService --> TransactionManager
+  AppointmentsModule --> AppointmentBooking
   AppointmentsModule --> AppointmentDirectory
   CancelAppointmentPresenter --> AppointmentService
+  ConsultationFeesRepository <|.. MongooseConsultationFeesRepository
+  EarningsService --> AppointmentRepository
+  EarningsService --> AuditTrail
+  EarningsService --> Clock
+  EarningsService --> ConsultationFeesRepository
+  EarningsService --> TransactionManager
   Entity <|-- Appointment
+  Entity <|-- ConsultationFees
   GetAppointmentPresenter --> AppointmentService
+  GetConsultationFeesPresenter --> EarningsService
+  GetEarningsReportPresenter --> EarningsService
   ListAppointmentsPresenter --> AppointmentService
   MongooseAgendaLock --> TransactionContext
   MongooseAppointmentRepository --> TransactionContext
+  MongooseConsultationFeesRepository --> TransactionContext
   MongooseRepository <|-- MongooseAppointmentRepository
+  MongooseRepository <|-- MongooseConsultationFeesRepository
   NotificationAppointmentNotifier --> DateFormatter
   NotificationAppointmentNotifier --> NotificationCenter
   NotificationAppointmentNotifier --> PatientDirectory
@@ -651,17 +770,151 @@ classDiagram
   PatientNames <|-- PatientDirectoryNames
   Presenter <|-- CancelAppointmentPresenter
   Presenter <|-- GetAppointmentPresenter
+  Presenter <|-- GetConsultationFeesPresenter
+  Presenter <|-- GetEarningsReportPresenter
   Presenter <|-- ListAppointmentsPresenter
   Presenter <|-- RescheduleAppointmentPresenter
   Presenter <|-- ScheduleAppointmentPresenter
+  Presenter <|-- UpdateConsultationFeesPresenter
   Repository <|-- AppointmentRepository
+  Repository <|-- ConsultationFeesRepository
   RescheduleAppointmentPresenter --> AppointmentService
   ScheduleAppointmentPresenter --> AppointmentService
+  UpdateConsultationFeesPresenter --> EarningsService
+```
+
+## API module: audit
+
+11 classes.
+
+```mermaid
+classDiagram
+  direction LR
+  class AuditEvent {
+    <<Entity>>
+    +ACTION_PATTERN$
+    +occur(id, props)$ AuditEvent
+    +restore(id, props)$ AuditEvent
+    +categoryOf(action)$ string
+    +professionalId: string
+    +actor: AuditActor
+    +action: string
+    +category: string
+    +targetType: string | null
+    +targetId: string | null
+    +details: Record~string, AuditDetailValue~
+    +origin: AuditOrigin | null
+    +occurredAt: Date
+  }
+  class AuditEventMapper {
+    <<Data Mapper>>
+    +toDomain(record) AuditEvent
+    +toPersistence(event) AuditEventDocument
+  }
+  class AuditEventRepository {
+    <<abstract · Repository>>
+    +search(professionalId, filter)* Promise~AuditEvent[]~
+  }
+  class AuditLog {
+    <<Adapter>>
+    -events: AuditEventRepository
+    -origins: RequestOriginSource
+    -clock: Clock
+    -ids: IdGenerator
+    +record(entry) Promise~void~
+  }
+  class AuditModule {
+    <<Composition Root, Abstract Factory>>
+    +basePath
+    +trail: AuditTrail
+    -deps: AuditModuleDependencies
+    +registerContracts(registry) void
+    +requestHandlers() RequestHandler[]
+    +createRouter() Router
+    +listAuditEvents(view) ListAuditEventsPresenter
+  }
+  class AuditRoutes {
+    -presenters: AuditPresenterFactory
+    -guard: AuthGuard
+    +build() Router
+  }
+  class AuditService {
+    +DEFAULT_LIMIT$
+    +MAX_LIMIT$
+    -events: AuditEventRepository
+    +list(professionalId, query) Promise~AuditPage~
+  }
+  class ListAuditEventsPresenter {
+    <<Presenter>>
+    -audit: AuditService
+    #execute(actor,query) Promise~AuditEventPageDto~
+  }
+  class MongooseAuditEventRepository {
+    <<Repository, Adapter>>
+    +save(event) Promise~void~
+    +search(professionalId, filter) Promise~AuditEvent[]~
+  }
+  class RequestOriginContextSource {
+    <<Adapter>>
+    -context: RequestOriginContext
+    +current() AuditOrigin | null
+  }
+  class RequestOriginSource {
+    <<abstract>>
+    +current()* AuditOrigin | null
+  }
+  class AuditTrail {
+    <<external>>
+  }
+  class AuthGuard {
+    <<external>>
+  }
+  class Clock {
+    <<external>>
+  }
+  class Entity {
+    <<external>>
+  }
+  class IdGenerator {
+    <<external>>
+  }
+  class MongooseRepository {
+    <<external>>
+  }
+  class Presenter {
+    <<external>>
+  }
+  class Repository {
+    <<external>>
+  }
+  class RequestOriginContext {
+    <<external>>
+  }
+  class TransactionContext {
+    <<external>>
+  }
+  AuditEventRepository <|.. MongooseAuditEventRepository
+  AuditLog --> AuditEventRepository
+  AuditLog --> Clock
+  AuditLog --> IdGenerator
+  AuditLog --> RequestOriginSource
+  AuditModule --> AuditTrail
+  AuditRoutes --> AuthGuard
+  AuditService --> AuditEventRepository
+  AuditTrail <|-- AuditLog
+  Entity <|-- AuditEvent
+  ListAuditEventsPresenter --> AuditService
+  MongooseAuditEventRepository --> TransactionContext
+  MongooseRepository <|-- MongooseAuditEventRepository
+  Presenter <|-- ListAuditEventsPresenter
+  Repository <|-- AuditEventRepository
+  RequestOriginContextSource --> RequestOriginContext
+  RequestOriginSource <|-- RequestOriginContextSource
 ```
 
 ## API module: Auth and account (CU-01, CU-02, CU-03, CU-16, CU-17)
 
-37 classes.
+40 classes.
 
 ```mermaid
 classDiagram
@@ -669,12 +922,14 @@ classDiagram
   class AuthModule {
     <<Composition Root, Abstract Factory>>
     +basePath
+    +directory: ProfessionalDirectory
     -deps: AuthModuleDependencies
     +registerContracts(registry) void
     +createRouter() Router
     +migrations() DataMigration[]
     +registerProfessional(view) RegisterProfessionalPresenter
     +login(view) LoginPresenter
+    +logout(view) LogoutPresenter
     +getCurrentProfessional(view) GetCurrentProfessionalPresenter
     +requestPasswordRecovery(view) RequestPasswordRecoveryPresenter
     +verifyRecoveryCode(view) VerifyRecoveryCodePresenter
@@ -700,9 +955,11 @@ classDiagram
     -tokens: TokenService
     -clock: Clock
     -ids: IdGenerator
+    -audit: AuditTrail
     +now: Date
     +register(data) Promise~SessionSubject~
     +authenticate(email, password) Promise~SessionSubject~
+    +logout(professionalId) Promise~void~
     +getSession(professionalId, credentialsVersion) Promise~SessionSubject~
     +getProfessional(professionalId) Promise~Professional~
     +changePassword(professionalId, currentPassword, newPassword) Promise~SessionSubject~
@@ -752,6 +1009,16 @@ classDiagram
     +find(professionalId)* Promise~ProfessionalLogo | null~
     +save(professionalId, logo, at)* Promise~void~
     +delete(professionalId)* Promise~void~
+  }
+  class LogoutHttpView {
+    <<Passive View>>
+    -cookie: SessionCookie
+    +render() void
+  }
+  class LogoutPresenter {
+    <<Presenter>>
+    -auth: AuthService
+    #execute(actor) Promise~void~
   }
   class MongooseLogoRepository {
     <<Repository, Adapter>>
@@ -812,6 +1079,7 @@ classDiagram
     -transactions: TransactionManager
     -clock: Clock
     -ids: IdGenerator
+    -audit: AuditTrail
     +request(email) Promise~void~
     +verify(email, code) Promise~void~
     +reset(email, code, newPassword) Promise~void~
@@ -845,6 +1113,10 @@ classDiagram
     +accessOf(professionalId)* Promise~AccessState | null~
     +updateContact(professionalId, contact)* Promise~void~
   }
+  class ProfessionalDirectory {
+    -professionals: ProfessionalRepository
+    +publicProfile(professionalId) Promise~PublicProfessionalProfile | null~
+  }
   class ProfessionalLogo {
     <<Value Object>>
     +MAX_BYTES$
@@ -872,6 +1144,7 @@ classDiagram
     -access: ProfessionalAccess
     -transactions: TransactionManager
     -clock: Clock
+    -audit: AuditTrail
     +updateProfile(professionalId, profile) Promise~SessionSubject~
     +uploadLogo(professionalId, dataUrl) Promise~void~
     +removeLogo(professionalId) Promise~void~
@@ -932,6 +1205,9 @@ classDiagram
     -recovery: PasswordRecoveryService
     #execute(input) Promise~void~
   }
+  class AuditTrail {
+    <<external>>
+  }
   class AuthGuard {
     <<external>>
   }
@@ -989,9 +1265,11 @@ classDiagram
   class ValueObject {
     <<external>>
   }
+  AuthModule --> ProfessionalDirectory
   AuthRoutes --> AuthGuard
   AuthRoutes --> RateLimiter
   AuthRoutes --> SessionCookie
+  AuthService --> AuditTrail
   AuthService --> Clock
   AuthService --> IdGenerator
   AuthService --> PasswordHasher
@@ -1005,10 +1283,13 @@ classDiagram
   Entity <|-- PasswordRecovery
   GetCurrentProfessionalPresenter --> AuthService
   GetLogoPresenter --> ProfileService
+  HttpView <|-- LogoutHttpView
   HttpView <|-- SessionHttpView
   LegacySubscriptionMigration --> SubscriptionAccess
   LoginPresenter --> AuthService
   LogoRepository <|-- MongooseLogoRepository
+  LogoutHttpView --> SessionCookie
+  LogoutPresenter --> AuthService
   MongooseLogoRepository --> TransactionContext
   MongoosePasswordRecoveryRepository --> TransactionContext
   MongooseProfessionalRepository --> TransactionContext
@@ -1016,6 +1297,7 @@ classDiagram
   MongooseRepository <|-- MongooseProfessionalRepository
   PasswordRecoveryNotifier <|-- EmailPasswordRecoveryNotifier
   PasswordRecoveryRepository <|.. MongoosePasswordRecoveryRepository
+  PasswordRecoveryService --> AuditTrail
   PasswordRecoveryService --> Clock
   PasswordRecoveryService --> IdGenerator
   PasswordRecoveryService --> PasswordHasher
@@ -1029,6 +1311,7 @@ classDiagram
   Presenter <|-- GetCurrentProfessionalPresenter
   Presenter <|-- GetLogoPresenter
   Presenter <|-- LoginPresenter
+  Presenter <|-- LogoutPresenter
   Presenter <|-- RegisterProfessionalPresenter
   Presenter <|-- RemoveLogoPresenter
   Presenter <|-- RequestPasswordRecoveryPresenter
@@ -1037,7 +1320,9 @@ classDiagram
   Presenter <|-- UploadLogoPresenter
   Presenter <|-- VerifyRecoveryCodePresenter
   ProfessionalAccess <|-- SubscriptionAccessAdapter
+  ProfessionalDirectory --> ProfessionalRepository
   ProfessionalRepository <|.. MongooseProfessionalRepository
+  ProfileService --> AuditTrail
   ProfileService --> AuthService
   ProfileService --> Clock
   ProfileService --> LogoRepository
@@ -1057,6 +1342,354 @@ classDiagram
   UploadLogoPresenter --> ProfileService
   ValueObject <|-- ProfessionalLogo
   VerifyRecoveryCodePresenter --> PasswordRecoveryService
+```
+
+## API module: booking
+
+31 classes.
+
+```mermaid
+classDiagram
+  direction LR
+  class AcceptBookingRequestPresenter {
+    <<Presenter>>
+    -booking: BookingService
+    #execute(actor,requestId,data,) Promise~BookingRequestDto~
+  }
+  class AgendaBooking {
+    <<abstract>>
+    +busyIntervals(professionalId, from, to)* Promise~Interval[]~
+    +book(professionalId, patientId, slot)* Promise~string~
+    +confirm(professionalId, appointmentId)* Promise~void~
+  }
+  class AppointmentAgendaBooking {
+    <<Adapter>>
+    -appointments: AppointmentBooking
+    +busyIntervals(professionalId, from, to) Promise~Interval[]~
+    +book(professionalId, patientId, slot) Promise~string~
+    +confirm(professionalId, appointmentId) Promise~void~
+  }
+  class AuthPracticeDirectory {
+    <<Adapter>>
+    -professionals: ProfessionalDirectory
+    -access: SubscriptionAccess
+    +profile(professionalId) Promise~PracticeProfile | null~
+    +hasAccess(professionalId) Promise~boolean~
+  }
+  class BookingModule {
+    <<Composition Root, Abstract Factory>>
+    +basePath
+    -deps: BookingModuleDependencies
+    +registerContracts(registry) void
+    +createRouter() Router
+    +scheduledJobs() ScheduledJob[]
+    +getBookingSettings(view) GetBookingSettingsPresenter
+    +updateBookingSettings(view) UpdateBookingSettingsPresenter
+    +listBookingRequests(view) ListBookingRequestsPresenter
+    +acceptBookingRequest(view) AcceptBookingRequestPresenter
+    +rejectBookingRequest(view) RejectBookingRequestPresenter
+    +getPublicBookingPage(view) GetPublicBookingPagePresenter
+    +getAvailableSlots(view) GetAvailableSlotsPresenter
+    +createBookingRequest(view) CreateBookingRequestPresenter
+  }
+  class BookingNotifier {
+    <<abstract>>
+    +rejected(request, professionalName)* Promise~void~
+  }
+  class BookingPage {
+    <<Aggregate Root>>
+    +DEFAULTS: BookingSettings$
+    +open(professionalId, slug, now)$ BookingPage
+    +restore(professionalId, props)$ BookingPage
+    +slugFor(fullName, suffix)$ string
+    +configure(settings, now) void
+    +windowsOn(weekday) WeeklyWindow[]
+    +allows(modality) boolean
+    +professionalId: string
+    +slug: string
+    +settings: BookingSettings
+    +enabled: boolean
+    +slotMinutes: number
+    +minNoticeHours: number
+    +horizonDays: number
+    +modalities: BookingModality[]
+    +instructions: string | null
+    +updatedAt: Date
+  }
+  class BookingPageMapper {
+    <<Data Mapper>>
+    +toDomain(record) BookingPage
+    +toPersistence(page) BookingPageDocument
+  }
+  class BookingPageRepository {
+    <<abstract · Repository>>
+    +findBySlug(slug)* Promise~BookingPage | null~
+  }
+  class BookingRequest {
+    <<Aggregate Root>>
+    +submit(id, professionalId, data, now)$ BookingRequest
+    +restore(id, props)$ BookingRequest
+    +normalizeDni(dni)$ string
+    +accept(patientId, appointmentId, now) void
+    +reject(reason, now) void
+    +expireIfPast(now) boolean
+    +professionalId: string
+    +requester: Requester
+    +requesterName: string
+    +startsAt: Date
+    +endsAt: Date
+    +durationMinutes: number
+    +modality: BookingModality
+    +reason: string | null
+    +status: BookingRequestStatus
+    +isPending: boolean
+    +patientId: string | null
+    +appointmentId: string | null
+    +rejectionReason: string | null
+    +createdAt: Date
+    +decidedAt: Date | null
+  }
+  class BookingRequestMapper {
+    <<Data Mapper>>
+    +toDomain(record) BookingRequest
+    +toPersistence(request) BookingRequestDocument
+  }
+  class BookingRequestRepository {
+    <<abstract · Repository>>
+    +findOwned(professionalId, id)* Promise~BookingRequest | null~
+    +findPendingBetween(professionalId, from, to)* Promise~BookingRequest[]~
+    +countPendingByDni(professionalId, dni)* Promise~number~
+    +list(professionalId, status, limit)* Promise~BookingRequest[]~
+    +findExpirable(now, limit)* Promise~BookingRequest[]~
+  }
+  class BookingRoutes {
+    -presenters: BookingPresenterFactory
+    -guard: AuthGuard
+    -limiter: RateLimiter
+    +build() Router
+  }
+  class BookingService {
+    -pages: BookingPageRepository
+    -requests: BookingRequestRepository
+    -practices: PracticeDirectory
+    -patients: PatientRegistry
+    -agenda: AgendaBooking
+    -notifier: BookingNotifier
+    -calendar: LocalCalendar
+    -transactions: TransactionManager
+    -clock: Clock
+    -ids: IdGenerator
+    -audit: AuditTrail
+    +timezone: string
+    +settings(professionalId) Promise~BookingPage~
+    +configure(professionalId, settings) Promise~BookingPage~
+    +publicPage(slug) Promise~PublicBookingPage~
+    +availability(slug, from, days) Promise~DaySlots[]~
+    +request(slug, data) Promise~BookingRequest~
+    +list(professionalId, status) Promise~RequestEntry[]~
+    +accept(professionalId, requestId, decision) Promise~RequestEntry~
+    +reject(professionalId, requestId, reason) Promise~RequestEntry~
+    +expirePast() Promise~number~
+  }
+  class BookingViewModel {
+    +settings(page, timezone)$ BookingSettingsDto
+    +publicPage(page,profile, timezone)$ PublicBookingPageDto
+    +request(request,existingPatientId)$ BookingRequestDto
+  }
+  class CreateBookingRequestPresenter {
+    <<Presenter>>
+    -booking: BookingService
+    #execute(slug,data) Promise~BookingReceiptDto~
+  }
+  class EmailBookingNotifier {
+    <<Adapter>>
+    -mail: MailTransport
+    -dates: DateFormatter
+    -logger: AppLogger
+    +rejected(request, professionalName) Promise~void~
+  }
+  class GetAvailableSlotsPresenter {
+    <<Presenter>>
+    -booking: BookingService
+    #execute(slug,from,days,) Promise~AvailableSlotsDto~
+  }
+  class GetBookingSettingsPresenter {
+    <<Presenter>>
+    -booking: BookingService
+    #execute(actor) Promise~BookingSettingsDto~
+  }
+  class GetPublicBookingPagePresenter {
+    <<Presenter>>
+    -booking: BookingService
+    #execute(slug) Promise~PublicBookingPageDto~
+  }
+  class IntlLocalCalendar {
+    <<Adapter>>
+    +timezone: string
+    +dateOf(instant) string
+    +instantOf(date, time) Date
+  }
+  class ListBookingRequestsPresenter {
+    <<Presenter>>
+    -booking: BookingService
+    #execute(actor,status,) Promise~BookingRequestDto[]~
+  }
+  class LocalCalendar {
+    <<abstract>>
+    +timezone: string
+    +dateOf(instant)* string
+    +instantOf(date, time)* Date
+    +weekdayOf(date)$ IsoWeekday
+    +addDays(date, days)$ string
+  }
+  class MongooseBookingPageRepository {
+    <<Repository, Adapter>>
+    +findBySlug(slug) Promise~BookingPage | null~
+  }
+  class MongooseBookingRequestRepository {
+    <<Repository, Adapter>>
+    +findOwned(professionalId, id) Promise~BookingRequest | null~
+    +findPendingBetween(professionalId, from, to) Promise~BookingRequest[]~
+    +countPendingByDni(professionalId, dni) Promise~number~
+    +list(professionalId, status, limit) Promise~BookingRequest[]~
+    +findExpirable(now, limit) Promise~BookingRequest[]~
+  }
+  class PatientIntakeRegistry {
+    <<Adapter>>
+    -intake: PatientIntake
+    +findIdByDni(professionalId, dni) Promise~string | null~
+    +register(professionalId, requester) Promise~string~
+  }
+  class PatientRegistry {
+    <<abstract>>
+    +findIdByDni(professionalId, dni)* Promise~string | null~
+    +register(professionalId, requester)* Promise~string~
+  }
+  class PracticeDirectory {
+    <<abstract>>
+    +profile(professionalId)* Promise~PracticeProfile | null~
+    +hasAccess(professionalId)* Promise~boolean~
+  }
+  class RejectBookingRequestPresenter {
+    <<Presenter>>
+    -booking: BookingService
+    #execute(actor,requestId,data,) Promise~BookingRequestDto~
+  }
+  class SlotPlanner {
+    <<Strategy>>
+    -calendar: LocalCalendar
+    +bounds(page, now) Interval
+    +plan(page, now, from, days, busy) DaySlots[]
+    +isAvailable(page, now, startsAt, busy) boolean
+    +overlaps(a, b)$ boolean
+  }
+  class UpdateBookingSettingsPresenter {
+    <<Presenter>>
+    -booking: BookingService
+    #execute(actor,data,) Promise~BookingSettingsDto~
+  }
+  class AppointmentBooking {
+    <<external>>
+  }
+  class AuditTrail {
+    <<external>>
+  }
+  class AuthGuard {
+    <<external>>
+  }
+  class Clock {
+    <<external>>
+  }
+  class DateFormatter {
+    <<external>>
+  }
+  class Entity {
+    <<external>>
+  }
+  class IdGenerator {
+    <<external>>
+  }
+  class MailTransport {
+    <<external>>
+  }
+  class MongooseRepository {
+    <<external>>
+  }
+  class PatientIntake {
+    <<external>>
+  }
+  class Presenter {
+    <<external>>
+  }
+  class ProfessionalDirectory {
+    <<external>>
+  }
+  class RateLimiter {
+    <<external>>
+  }
+  class Repository {
+    <<external>>
+  }
+  class SubscriptionAccess {
+    <<external>>
+  }
+  class TransactionContext {
+    <<external>>
+  }
+  class TransactionManager {
+    <<external>>
+  }
+  AcceptBookingRequestPresenter --> BookingService
+  AgendaBooking <|-- AppointmentAgendaBooking
+  AppointmentAgendaBooking --> AppointmentBooking
+  AuthPracticeDirectory --> ProfessionalDirectory
+  AuthPracticeDirectory --> SubscriptionAccess
+  BookingNotifier <|-- EmailBookingNotifier
+  BookingPageRepository <|.. MongooseBookingPageRepository
+  BookingRequestRepository <|.. MongooseBookingRequestRepository
+  BookingRoutes --> AuthGuard
+  BookingRoutes --> RateLimiter
+  BookingService --> AgendaBooking
+  BookingService --> AuditTrail
+  BookingService --> BookingNotifier
+  BookingService --> BookingPageRepository
+  BookingService --> BookingRequestRepository
+  BookingService --> Clock
+  BookingService --> IdGenerator
+  BookingService --> LocalCalendar
+  BookingService --> PatientRegistry
+  BookingService --> PracticeDirectory
+  BookingService --> TransactionManager
+  CreateBookingRequestPresenter --> BookingService
+  EmailBookingNotifier --> DateFormatter
+  EmailBookingNotifier --> MailTransport
+  Entity <|-- BookingPage
+  Entity <|-- BookingRequest
+  GetAvailableSlotsPresenter --> BookingService
+  GetBookingSettingsPresenter --> BookingService
+  GetPublicBookingPagePresenter --> BookingService
+  ListBookingRequestsPresenter --> BookingService
+  LocalCalendar <|-- IntlLocalCalendar
+  MongooseBookingPageRepository --> TransactionContext
+  MongooseBookingRequestRepository --> TransactionContext
+  MongooseRepository <|-- MongooseBookingPageRepository
+  MongooseRepository <|-- MongooseBookingRequestRepository
+  PatientIntakeRegistry --> PatientIntake
+  PatientRegistry <|-- PatientIntakeRegistry
+  PracticeDirectory <|-- AuthPracticeDirectory
+  Presenter <|-- AcceptBookingRequestPresenter
+  Presenter <|-- CreateBookingRequestPresenter
+  Presenter <|-- GetAvailableSlotsPresenter
+  Presenter <|-- GetBookingSettingsPresenter
+  Presenter <|-- GetPublicBookingPagePresenter
+  Presenter <|-- ListBookingRequestsPresenter
+  Presenter <|-- RejectBookingRequestPresenter
+  Presenter <|-- UpdateBookingSettingsPresenter
+  RejectBookingRequestPresenter --> BookingService
+  Repository <|-- BookingPageRepository
+  Repository <|-- BookingRequestRepository
+  SlotPlanner --> LocalCalendar
+  UpdateBookingSettingsPresenter --> BookingService
 ```
 
 ## API module: Clinical records (CU-07, CU-08, CU-09)
@@ -1123,6 +1756,7 @@ classDiagram
     -clock: Clock
     -accesses: RecordAccessLog
     -ids: IdGenerator
+    -trail: AuditTrail
     +getRecord(professionalId, patientId) Promise~ClinicalRecord~
     +accessLog(professionalId, patientId) Promise~RecordAccess[]~
     +registerConsultation(professionalId, patientId, data) Promise~Consultation~
@@ -1229,6 +1863,9 @@ classDiagram
     -records: ClinicalRecordService
     #execute(input) Promise~ConsultationDto~
   }
+  class AuditTrail {
+    <<external>>
+  }
   class AuthGuard {
     <<external>>
   }
@@ -1273,6 +1910,7 @@ classDiagram
   ClinicalActivityRecorder <|-- PatientActivityRecorder
   ClinicalRecordRepository <|.. MongooseClinicalRecordRepository
   ClinicalRecordRoutes --> AuthGuard
+  ClinicalRecordService --> AuditTrail
   ClinicalRecordService --> ClinicalActivityRecorder
   ClinicalRecordService --> ClinicalRecordRepository
   ClinicalRecordService --> Clock
@@ -1621,7 +2259,7 @@ classDiagram
 
 ## API module: Patients (CU-04, CU-05, CU-06)
 
-17 classes.
+18 classes.
 
 ```mermaid
 classDiagram
@@ -1693,6 +2331,11 @@ classDiagram
     +fullNames(professionalId, patientIds) Promise~Map~string, string~~
     +contacts(professionalId, patientIds) Promise~Map~string, PatientContact~~
   }
+  class PatientIntake {
+    -patients: PatientService
+    +findIdByDni(professionalId, dni) Promise~string | null~
+    +register(professionalId, details) Promise~string~
+  }
   class PatientMapper {
     <<Data Mapper>>
     +toDomain(record) Patient
@@ -1721,6 +2364,7 @@ classDiagram
     -transactions: TransactionManager
     -clock: Clock
     -ids: IdGenerator
+    -audit: AuditTrail
     +now: Date
     +register(professionalId, details) Promise~Patient~
     +search(professionalId, query) Promise~Patient[]~
@@ -1728,12 +2372,14 @@ classDiagram
     +update(professionalId, patientId, details) Promise~Patient~
     +changeStatus(professionalId, patientId, status) Promise~Patient~
     +inactivateDormant() Promise~number~
+    +findByDni(professionalId, dni) Promise~Patient | null~
   }
   class PatientsModule {
     <<Composition Root, Abstract Factory>>
     +basePath
     +directory: PatientDirectory
     +activity: PatientActivity
+    +intake: PatientIntake
     -deps: PatientsModuleDependencies
     +registerContracts(registry) void
     +createRouter() Router
@@ -1758,6 +2404,9 @@ classDiagram
     <<Presenter>>
     -patients: PatientService
     #execute(input)
+  }
+  class AuditTrail {
+    <<external>>
   }
   class AuthGuard {
     <<external>>
@@ -1796,14 +2445,17 @@ classDiagram
   MongooseRepository <|-- MongoosePatientRepository
   PatientActivity --> PatientRepository
   PatientDirectory --> PatientRepository
+  PatientIntake --> PatientService
   PatientRepository <|.. MongoosePatientRepository
   PatientRoutes --> AuthGuard
+  PatientService --> AuditTrail
   PatientService --> Clock
   PatientService --> IdGenerator
   PatientService --> PatientRepository
   PatientService --> TransactionManager
   PatientsModule --> PatientActivity
   PatientsModule --> PatientDirectory
+  PatientsModule --> PatientIntake
   Person <|-- Patient
   Presenter <|-- ChangePatientStatusPresenter
   Presenter <|-- CreatePatientPresenter
@@ -2025,6 +2677,7 @@ classDiagram
     -catalog: PlanCatalog
     -clock: Clock
     -ids: IdGenerator
+    -audit: AuditTrail
     +now: Date
     +plans: Plan[]
     +planOf(subscription) Plan | null
@@ -2066,6 +2719,9 @@ classDiagram
     <<Presenter>>
     -service: SubscriptionService
     #execute(actor,methodId,data,) Promise~SubscriptionDetailDto~
+  }
+  class AuditTrail {
+    <<external>>
   }
   class AuthGuard {
     <<external>>
@@ -2137,6 +2793,7 @@ classDiagram
   SubscriptionAccess --> SubscriptionRepository
   SubscriptionRepository <|.. MongooseSubscriptionRepository
   SubscriptionRoutes --> AuthGuard
+  SubscriptionService --> AuditTrail
   SubscriptionService --> BillingNotifier
   SubscriptionService --> Clock
   SubscriptionService --> IdGenerator
@@ -2229,6 +2886,7 @@ classDiagram
     -transactions: TransactionManager
     -clock: Clock
     -ids: IdGenerator
+    -audit: AuditTrail
     +start(professionalId, request) Promise~VirtualMeeting~
     +history(professionalId, patientId) Promise~VirtualMeeting[]~
     +forAppointment(professionalId, appointmentId) Promise~VirtualMeeting[]~
@@ -2276,6 +2934,9 @@ classDiagram
     +toDto(meeting)$ VirtualMeetingDto
   }
   class AppointmentDirectory {
+    <<external>>
+  }
+  class AuditTrail {
     <<external>>
   }
   class AuthGuard {
@@ -2328,6 +2989,7 @@ classDiagram
   Repository <|-- VirtualMeetingRepository
   StartVirtualMeetingPresenter --> VirtualConsultationService
   VirtualConsultationService --> AppointmentLookup
+  VirtualConsultationService --> AuditTrail
   VirtualConsultationService --> Clock
   VirtualConsultationService --> IdGenerator
   VirtualConsultationService --> MeetingInvitations
@@ -2341,7 +3003,7 @@ classDiagram
 
 ## Web model and store
 
-21 classes.
+28 classes.
 
 ```mermaid
 classDiagram
@@ -2370,6 +3032,11 @@ classDiagram
     +getInstance()$ ReduxStore
     +create()$ ReduxStore
   }
+  class AuditAdapter {
+    <<Adapter>>
+    +categoryLabel(category)$ string
+    +toItem(dto)$ AuditItem
+  }
   class AuthForms {
     +offices(text)$ string[]
     +toLoginRequest(values)$ LoginRequestDto
@@ -2377,6 +3044,21 @@ classDiagram
     +profileFromDto(dto)$ ProfileFormValues
     +toProfileRequest(values)$ UpdateProfileRequestDto
     +toChangePasswordRequest(values)$ ChangePasswordRequestDto
+  }
+  class BookingAdapter {
+    <<Adapter>>
+    +statusLabel(status)$ string
+    +toRequestItem(dto, timeZone)$ BookingRequestItem
+    +toSummary(dto)$ BookingSettingsSummary
+    +toPublicPage(dto)$ PublicPageModel
+    +toSlotDays(dto)$ SlotDay[]
+    +receipt(startsAt, timeZone)$ string
+  }
+  class BookingSettingsForm {
+    +EMPTY_WINDOW$
+    +fromDto(dto)$ BookingSettingsFormValues
+    +toRequest(values)$ UpdateBookingSettingsRequestDto
+    +publicPath(slug)$ string
   }
   class ClinicalRecordAdapter {
     <<Adapter>>
@@ -2388,6 +3070,26 @@ classDiagram
   class ConsultationForm {
     +defaults(now)$ ConsultationFormValues
     +toRequest(values)$ RegisterConsultationRequestDto
+  }
+  class EarningsAdapter {
+    <<Adapter>>
+    +RANGES$
+    +window(today, monthsBack, monthsAhead)$ MonthWindow
+    +toSummary(dto)$ EarningsSummary
+  }
+  class FeesForm {
+    +fromDto(dto)$ FeesFormValues
+    +toRequest(values)$ UpdateConsultationFeesRequestDto
+  }
+  class Formats {
+    <<Adapter>>
+    +date(value, style, timeZone)$ string
+    +weekday(isoWeekday, width)$ string
+    +dayHeading(isoDate)$ string
+    +month(isoMonth, width)$ string
+    +compactMoney(amount, currency)$ string
+    +isoDate(isoDate)$ string
+    +money(amount, currency)$ string
   }
   class HealthAdapter {
     <<Adapter>>
@@ -2422,6 +3124,10 @@ classDiagram
     <<Adapter>>
     +render(prescription)$ jsPDF
     +download(prescription)$ void
+  }
+  class PublicBookingForm {
+    +defaults(modality)$ PublicBookingFormValues
+    +toRequest(values, startsAt)$ CreateBookingRequestDto
   }
   class RecordAccessAdapter {
     <<Adapter>>
@@ -2461,5 +3167,6 @@ classDiagram
     <<Adapter>>
     +print() void
     +copyText(text) Promise~void~
+    +absoluteUrl(path) string
   }
 ```
