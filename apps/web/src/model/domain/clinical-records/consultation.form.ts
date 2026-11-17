@@ -10,7 +10,6 @@ const medicationSchema = z.object({
   indications: z.string(),
 });
 
-/** CU-09 form: evolution, diagnosis (CU-11) and medications (CU-12) are optional. */
 export const consultationFormSchema = z.object({
   date: z.string().min(1, 'Required'),
   type: z.enum(['in_person', 'virtual']),
@@ -47,7 +46,6 @@ export class ConsultationForm {
     };
   }
 
-  /** `date` comes from a local `datetime-local` input. */
   static toRequest(values: ConsultationFormValues): RegisterConsultationRequestDto {
     return {
       date: new Date(values.date).toISOString(),

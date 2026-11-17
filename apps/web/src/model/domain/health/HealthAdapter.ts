@@ -16,10 +16,7 @@ export interface HealthUiModel {
   components: ComponentHealthUiModel[];
 }
 
-/**
- * Adapter (ADR-0007): maps the `HealthDto` contract to a UI model with display-ready values,
- * so ViewModels and Views never format raw DTO fields themselves.
- */
+// Adapter
 export class HealthAdapter {
   static toUiModel(dto: HealthDto): HealthUiModel {
     return {

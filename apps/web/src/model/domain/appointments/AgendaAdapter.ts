@@ -49,9 +49,8 @@ export const MODALITY_LABEL: Record<AppointmentModality, string> = {
 
 const WEEK = { weekStartsOn: 1 } as const;
 
-/** Adapter (ADR-0007): appointments → calendar grid and day agenda (CU-10). */
+// Adapter
 export class AgendaAdapter {
-  /** Visible range of the month grid: whole weeks, Monday first. */
   static monthRange(month: Date): { from: Date; to: Date } {
     const from = startOfWeek(startOfMonth(month), WEEK);
     const to = addDays(endOfWeek(endOfMonth(month), WEEK), 1);
@@ -66,7 +65,6 @@ export class AgendaAdapter {
     return ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   }
 
-  /** CU-10 step 2: month grid with an indicator on days that have appointments. */
   static calendar(
     month: Date,
     appointments: AppointmentDto[],
@@ -92,7 +90,6 @@ export class AgendaAdapter {
     return weeks;
   }
 
-  /** CU-10 step 5: the selected day's appointments, chronologically. */
   static dayAgenda(appointments: AppointmentDto[], day: Date): AgendaItem[] {
     return appointments
       .filter((a) => isSameDay(new Date(a.startsAt), day))

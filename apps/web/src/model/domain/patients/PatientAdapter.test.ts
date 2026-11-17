@@ -25,6 +25,7 @@ const dto: PatientDto = {
   statusChangedAt: '2030-01-01T10:00:00.000Z',
   statusOrigin: 'manual',
   registeredAt: '2029-01-01T10:00:00.000Z',
+  lastConsultationAt: null,
 };
 
 describe('PatientAdapter', () => {

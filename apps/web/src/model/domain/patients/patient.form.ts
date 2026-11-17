@@ -1,10 +1,6 @@
 import type { PatientDto, PatientInputDto } from '@mentora/contracts';
 import { z } from 'zod';
 
-/**
- * CU-04 needs only names and DNI; CU-06 edits everything. One form serves both (ADR-0021).
- * Every field is a string in the form; `toInput` converts to the API contract.
- */
 export const patientFormSchema = z.object({
   firstName: z.string().trim().min(1, 'Required'),
   lastName: z.string().trim().min(1, 'Required'),
