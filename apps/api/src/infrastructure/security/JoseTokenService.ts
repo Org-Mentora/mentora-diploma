@@ -2,6 +2,7 @@ import { jwtVerify, SignJWT } from 'jose';
 import { type SessionClaims, TokenService } from '#core/security/TokenService';
 
 const ISSUER = 'mentora-api';
+const ALGORITHM = 'HS256';
 
 // Adapter
 export class JoseTokenService extends TokenService {
@@ -20,7 +21,7 @@ export class JoseTokenService extends TokenService {
       aex: claims.accessEndsAt?.getTime() ?? null,
       cv: claims.credentialsVersion,
     })
-      .setProtectedHeader({ alg: 'HS256' })
+      .setProtectedHeader({ alg: ALGORITHM })
       .setSubject(claims.professionalId)
       .setIssuer(ISSUER)
       .setIssuedAt()
@@ -30,7 +31,10 @@ export class JoseTokenService extends TokenService {
 
   async verify(token: string): Promise<SessionClaims | null> {
     try {
-      const { payload } = await jwtVerify(token, this.#key, { issuer: ISSUER });
+      const { payload } = await jwtVerify(token, this.#key, {
+        issuer: ISSUER,
+        algorithms: [ALGORITHM],
+      });
       if (!payload.sub) {
         return null;
       }
