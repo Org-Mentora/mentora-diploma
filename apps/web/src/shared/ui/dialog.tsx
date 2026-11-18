@@ -29,7 +29,7 @@ function DialogContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring">
+        <DialogPrimitive.Close className="absolute top-3 right-3 flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           <XIcon className="size-4" />
           <span className="sr-only">{t('common.close')}</span>
         </DialogPrimitive.Close>
@@ -39,13 +39,16 @@ function DialogContent({
 }
 
 function DialogHeader({ className, ...props }: ComponentProps<'div'>) {
-  return <div className={cn('flex flex-col gap-2 text-left', className)} {...props} />;
+  return <div className={cn('flex flex-col gap-2 pr-8 text-left', className)} {...props} />;
 }
 
 function DialogFooter({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
-      className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
+      className={cn(
+        'sticky bottom-0 -mx-6 -mb-6 flex flex-col-reverse gap-2 border-t bg-background px-6 py-4 sm:flex-row sm:justify-end',
+        className,
+      )}
       {...props}
     />
   );

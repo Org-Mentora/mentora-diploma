@@ -78,6 +78,18 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+  :focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+  ::selection {
+    background: oklch(from var(--chart-earned) l c h / 0.2);
+  }
 }
 
 @media print {
