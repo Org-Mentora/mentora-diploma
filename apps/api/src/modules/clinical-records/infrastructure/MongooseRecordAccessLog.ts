@@ -5,10 +5,7 @@ import { Keyset } from '#infrastructure/database/Keyset';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { RecordAccess, RecordAccessAction, RecordAccessLog } from '../model/RecordAccessLog';
 
-const NEWEST_FIRST = new Keyset([
-  { path: 'at', direction: -1, type: 'date' },
-  { path: '_id', direction: -1 },
-]);
+const NEWEST_FIRST = Keyset.newestFirst('at');
 
 interface RecordAccessDocument {
   _id: string;

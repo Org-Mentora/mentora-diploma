@@ -27,27 +27,15 @@ export class MongoosePatientRepository
   }
 
   async findOwned(professionalId: string, id: string): Promise<Patient | null> {
-    const record = await this.model
-      .findOne({ _id: id, professionalId })
-      .session(this.session)
-      .lean<PatientDocument>();
-    return record ? this.mapper.toDomain(record) : null;
+    return this.findOneBy({ _id: id, professionalId });
   }
 
   async findOwnedMany(professionalId: string, ids: readonly string[]): Promise<Patient[]> {
-    const records = await this.model
-      .find({ _id: { $in: [...ids] }, professionalId })
-      .session(this.session)
-      .lean<PatientDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+    return this.findManyBy({ _id: { $in: [...ids] }, professionalId });
   }
 
   async findByDni(professionalId: string, dni: string): Promise<Patient | null> {
-    const record = await this.model
-      .findOne({ professionalId, dni })
-      .session(this.session)
-      .lean<PatientDocument>();
-    return record ? this.mapper.toDomain(record) : null;
+    return this.findOneBy({ professionalId, dni });
   }
 
   async search(
@@ -62,26 +50,18 @@ export class MongoosePatientRepository
             $and: terms.map((term) => ({ searchText: { $regex: escapeRegex(term) } })),
           }
         : { professionalId };
-    const records = await this.model
-      .find(BY_SURNAME.where(filter, page.after))
-      .sort(BY_SURNAME.sort())
-      .limit(page.limit + 1)
-      .session(this.session)
-      .lean<PatientDocument[]>();
-    return BY_SURNAME.page(records, page, (record) => this.mapper.toDomain(record));
+    return this.findPage(BY_SURNAME, filter, page);
   }
 
   async findDormant(cutoff: Date, limit: number): Promise<Patient[]> {
-    const records = await this.model
-      .find({
+    return this.findManyBy(
+      {
         status: 'active',
         statusChangedAt: { $lt: cutoff },
         registeredAt: { $lt: cutoff },
         $or: [{ lastClinicalActivityAt: null }, { lastClinicalActivityAt: { $lt: cutoff } }],
-      })
-      .limit(limit)
-      .session(this.session)
-      .lean<PatientDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+      },
+      { limit },
+    );
   }
 }

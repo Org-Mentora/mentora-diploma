@@ -15,12 +15,9 @@ export class MongooseSubscriptionRepository
   }
 
   async findDue(now: Date, limit: number): Promise<Subscription[]> {
-    const records = await this.model
-      .find({ phase: { $in: ['trial', 'active'] }, cancelledAt: null, periodEndsAt: { $lte: now } })
-      .sort({ periodEndsAt: 1 })
-      .limit(limit)
-      .session(this.session)
-      .lean<SubscriptionDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+    return this.findManyBy(
+      { phase: { $in: ['trial', 'active'] }, cancelledAt: null, periodEndsAt: { $lte: now } },
+      { sort: { periodEndsAt: 1 }, limit },
+    );
   }
 }

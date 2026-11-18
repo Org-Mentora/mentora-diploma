@@ -12,10 +12,7 @@ const SOONEST_FIRST = new Keyset([
   { path: 'startsAt', direction: 1, type: 'date' },
   { path: '_id', direction: 1 },
 ]);
-const NEWEST_FIRST = new Keyset([
-  { path: 'createdAt', direction: -1, type: 'date' },
-  { path: '_id', direction: -1 },
-]);
+const NEWEST_FIRST = Keyset.newestFirst();
 
 // Repository, Adapter
 export class MongooseBookingRequestRepository
@@ -27,11 +24,7 @@ export class MongooseBookingRequestRepository
   }
 
   async findOwned(professionalId: string, id: string): Promise<BookingRequest | null> {
-    const record = await this.model
-      .findOne({ _id: id, professionalId })
-      .session(this.session)
-      .lean<BookingRequestDocument>();
-    return record ? this.mapper.toDomain(record) : null;
+    return this.findOneBy({ _id: id, professionalId });
   }
 
   async findPendingBetween(
@@ -63,29 +56,14 @@ export class MongooseBookingRequestRepository
       query.status = status;
     }
     const order = status === 'pending' ? SOONEST_FIRST : NEWEST_FIRST;
-    const records = await this.model
-      .find(order.where(query, page.after))
-      .sort(order.sort())
-      .limit(page.limit + 1)
-      .session(this.session)
-      .lean<BookingRequestDocument[]>();
-    return order.page(records, page, (record) => this.mapper.toDomain(record));
+    return this.findPage(order, query, page);
   }
 
   async findExpirable(now: Date, limit: number): Promise<BookingRequest[]> {
-    const records = await this.model
-      .find({ status: 'pending', startsAt: { $lte: now } })
-      .limit(limit)
-      .session(this.session)
-      .lean<BookingRequestDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+    return this.findManyBy({ status: 'pending', startsAt: { $lte: now } }, { limit });
   }
 
   private async findMany(query: QueryFilter<BookingRequestDocument>): Promise<BookingRequest[]> {
-    const records = await this.model
-      .find(query)
-      .session(this.session)
-      .lean<BookingRequestDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+    return this.findManyBy(query);
   }
 }

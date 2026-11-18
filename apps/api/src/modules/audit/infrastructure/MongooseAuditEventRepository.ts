@@ -8,10 +8,7 @@ import type { AuditEventFilter, AuditEventRepository } from '../model/AuditEvent
 import { AuditEventMapper } from './AuditEventMapper';
 import { type AuditEventDocument, AuditEventModel } from './AuditEventSchema';
 
-const NEWEST_FIRST = new Keyset([
-  { path: 'occurredAt', direction: -1, type: 'date' },
-  { path: '_id', direction: -1 },
-]);
+const NEWEST_FIRST = Keyset.newestFirst('occurredAt');
 
 // Repository, Adapter
 export class MongooseAuditEventRepository
@@ -47,12 +44,6 @@ export class MongooseAuditEventRepository
     if (Object.keys(occurredAt).length > 0) {
       query.occurredAt = occurredAt;
     }
-    const records = await this.model
-      .find(NEWEST_FIRST.where(query, page.after))
-      .sort(NEWEST_FIRST.sort())
-      .limit(page.limit + 1)
-      .session(this.session)
-      .lean<AuditEventDocument[]>();
-    return NEWEST_FIRST.page(records, page, (record) => this.mapper.toDomain(record));
+    return this.findPage(NEWEST_FIRST, query, page);
   }
 }

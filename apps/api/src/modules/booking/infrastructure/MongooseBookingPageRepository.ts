@@ -15,10 +15,6 @@ export class MongooseBookingPageRepository
   }
 
   async findBySlug(slug: string): Promise<BookingPage | null> {
-    const record = await this.model
-      .findOne({ slug })
-      .session(this.session)
-      .lean<BookingPageDocument>();
-    return record ? this.mapper.toDomain(record) : null;
+    return this.findOneBy({ slug });
   }
 }

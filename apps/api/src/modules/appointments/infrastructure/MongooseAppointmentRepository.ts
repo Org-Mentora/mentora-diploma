@@ -26,11 +26,7 @@ export class MongooseAppointmentRepository
   }
 
   async findOwned(professionalId: string, id: string): Promise<Appointment | null> {
-    const record = await this.model
-      .findOne({ _id: id, professionalId })
-      .session(this.session)
-      .lean<AppointmentDocument>();
-    return record ? this.mapper.toDomain(record) : null;
+    return this.findOneBy({ _id: id, professionalId });
   }
 
   async findStartingBetween(
@@ -39,13 +35,7 @@ export class MongooseAppointmentRepository
     to: Date,
     page: PageRequest,
   ): Promise<Page<Appointment>> {
-    const records = await this.model
-      .find(BY_START.where({ professionalId, startsAt: { $gte: from, $lt: to } }, page.after))
-      .sort(BY_START.sort())
-      .limit(page.limit + 1)
-      .session(this.session)
-      .lean<AppointmentDocument[]>();
-    return BY_START.page(records, page, (record) => this.mapper.toDomain(record));
+    return this.findPage(BY_START, { professionalId, startsAt: { $gte: from, $lt: to } }, page);
   }
 
   async findScheduledOverlapping(
@@ -53,26 +43,19 @@ export class MongooseAppointmentRepository
     startsAt: Date,
     endsAt: Date,
   ): Promise<Appointment[]> {
-    const records = await this.model
-      .find({
-        professionalId,
-        status: 'scheduled',
-        startsAt: { $lt: endsAt },
-        endsAt: { $gt: startsAt },
-      })
-      .session(this.session)
-      .lean<AppointmentDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+    return this.findManyBy({
+      professionalId,
+      status: 'scheduled',
+      startsAt: { $lt: endsAt },
+      endsAt: { $gt: startsAt },
+    });
   }
 
   async findNeedingReminder(from: Date, to: Date, limit: number): Promise<Appointment[]> {
-    const records = await this.model
-      .find({ status: 'scheduled', reminderSentAt: null, startsAt: { $gt: from, $lte: to } })
-      .sort({ startsAt: 1 })
-      .limit(limit)
-      .session(this.session)
-      .lean<AppointmentDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+    return this.findManyBy(
+      { status: 'scheduled', reminderSentAt: null, startsAt: { $gt: from, $lte: to } },
+      { sort: { startsAt: 1 }, limit },
+    );
   }
 
   async earnings(professionalId: string, from: Date, to: Date, now: Date): Promise<EarningsRow[]> {

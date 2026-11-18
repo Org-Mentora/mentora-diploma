@@ -7,10 +7,7 @@ import type { PaymentRepository } from '../model/PaymentRepository';
 import { PaymentMapper } from './PaymentMapper';
 import { type PaymentDocument, PaymentModel } from './PaymentSchema';
 
-const NEWEST_FIRST = new Keyset([
-  { path: 'createdAt', direction: -1, type: 'date' },
-  { path: '_id', direction: -1 },
-]);
+const NEWEST_FIRST = Keyset.newestFirst();
 
 // Repository, Adapter
 export class MongoosePaymentRepository
@@ -22,13 +19,7 @@ export class MongoosePaymentRepository
   }
 
   async findByProfessional(professionalId: string, page: PageRequest): Promise<Page<Payment>> {
-    const records = await this.model
-      .find(NEWEST_FIRST.where({ professionalId }, page.after))
-      .sort(NEWEST_FIRST.sort())
-      .limit(page.limit + 1)
-      .session(this.session)
-      .lean<PaymentDocument[]>();
-    return NEWEST_FIRST.page(records, page, (record) => this.mapper.toDomain(record));
+    return this.findPage(NEWEST_FIRST, { professionalId }, page);
   }
 
   countByProfessional(professionalId: string): Promise<number> {

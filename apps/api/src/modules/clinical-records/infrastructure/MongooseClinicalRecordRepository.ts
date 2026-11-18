@@ -15,10 +15,6 @@ export class MongooseClinicalRecordRepository
   }
 
   async findByPatient(professionalId: string, patientId: string): Promise<ClinicalRecord | null> {
-    const record = await this.model
-      .findOne({ professionalId, patientId })
-      .session(this.session)
-      .lean<ClinicalRecordDocument>();
-    return record ? this.mapper.toDomain(record) : null;
+    return this.findOneBy({ professionalId, patientId });
   }
 }

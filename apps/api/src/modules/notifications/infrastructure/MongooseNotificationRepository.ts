@@ -14,10 +14,7 @@ import {
 } from '../model/Notification';
 import type { NotificationRepository } from '../model/NotificationRepository';
 
-const NEWEST_FIRST = new Keyset([
-  { path: 'createdAt', direction: -1, type: 'date' },
-  { path: '_id', direction: -1 },
-]);
+const NEWEST_FIRST = Keyset.newestFirst();
 
 interface NotificationDocument extends MongoDocument {
   professionalId: string;
@@ -118,12 +115,6 @@ export class MongooseNotificationRepository
     patientId: string,
     page: PageRequest,
   ): Promise<Page<Notification>> {
-    const records = await this.model
-      .find(NEWEST_FIRST.where({ professionalId, patientId }, page.after))
-      .sort(NEWEST_FIRST.sort())
-      .limit(page.limit + 1)
-      .session(this.session)
-      .lean<NotificationDocument[]>();
-    return NEWEST_FIRST.page(records, page, (record) => this.mapper.toDomain(record));
+    return this.findPage(NEWEST_FIRST, { professionalId, patientId }, page);
   }
 }

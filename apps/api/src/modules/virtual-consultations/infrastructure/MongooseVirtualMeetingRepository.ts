@@ -14,10 +14,7 @@ import {
   VirtualMeeting,
 } from '../model/VirtualMeeting';
 
-const NEWEST_FIRST = new Keyset([
-  { path: 'createdAt', direction: -1, type: 'date' },
-  { path: '_id', direction: -1 },
-]);
+const NEWEST_FIRST = Keyset.newestFirst();
 
 interface VirtualMeetingDocument extends MongoDocument {
   professionalId: string;
@@ -121,23 +118,13 @@ export class MongooseVirtualMeetingRepository
     patientId: string,
     page: PageRequest,
   ): Promise<Page<VirtualMeeting>> {
-    const records = await this.model
-      .find(NEWEST_FIRST.where({ professionalId, patientId }, page.after))
-      .sort(NEWEST_FIRST.sort())
-      .limit(page.limit + 1)
-      .session(this.session)
-      .lean<VirtualMeetingDocument[]>();
-    return NEWEST_FIRST.page(records, page, (record) => this.mapper.toDomain(record));
+    return this.findPage(NEWEST_FIRST, { professionalId, patientId }, page);
   }
 
   async findByAppointment(
     professionalId: string,
     appointmentId: string,
   ): Promise<VirtualMeeting | null> {
-    const record = await this.model
-      .findOne({ professionalId, appointmentId })
-      .session(this.session)
-      .lean<VirtualMeetingDocument>();
-    return record ? this.mapper.toDomain(record) : null;
+    return this.findOneBy({ professionalId, appointmentId });
   }
 }
