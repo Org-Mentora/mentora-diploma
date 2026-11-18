@@ -48,7 +48,7 @@ flowchart LR
 
 ## API core (shared kernel)
 
-30 classes.
+32 classes.
 
 ```mermaid
 classDiagram
@@ -72,6 +72,13 @@ classDiagram
   }
   class ConflictError {
     +kind
+  }
+  class CursorCodec {
+    <<Adapter>>
+    +encode(key)$ string | null
+    +decode(cursor)$ CursorKey | null
+    +request(input)$ PageRequest
+    +toDto(page, transform)$ PageDto~U~
   }
   class DateFormatter {
     <<abstract>>
@@ -118,6 +125,17 @@ classDiagram
   }
   class NotFoundError {
     +kind
+  }
+  class PageRequest {
+    <<Value Object>>
+    +DEFAULT_LIMIT$
+    +MAX_LIMIT$
+    +limit: number
+    +after: CursorKey | null
+    +of(limit, after)$ PageRequest
+    +first(limit)$ PageRequest
+    +slice(sorted, keyOf) Page~T~
+    +map(page, transform)$ Page~U~
   }
   class PasswordHasher {
     <<abstract>>
@@ -205,7 +223,7 @@ classDiagram
 
 ## API infrastructure
 
-29 classes.
+30 classes.
 
 ```mermaid
 classDiagram
@@ -273,6 +291,14 @@ classDiagram
     -ttlSeconds: number
     +issue(claims) Promise~string~
     +verify(token) Promise~SessionClaims | null~
+  }
+  class Keyset {
+    <<Strategy>>
+    -fields: KeysetField[]
+    +sort() Record~string, number | boolean~
+    +where(base, after) Filter
+    +slice(records, request) object
+    +page(records, request, toItem) Page~TItem~
   }
   class Logger {
     <<Singleton>>
@@ -515,7 +541,7 @@ classDiagram
   class AppointmentRepository {
     <<abstract · Repository>>
     +findOwned(professionalId, id)* Promise~Appointment | null~
-    +findStartingBetween(professionalId, from, to)* Promise~Appointment[]~
+    +findStartingBetween(professionalId, from, to, page)* Promise~Page~Appointment~~
     +findScheduledOverlapping(professionalId, startsAt, endsAt)* Promise~Appointment[]~
     +findNeedingReminder(from, to, limit)* Promise~Appointment[]~
     +earnings(professionalId, from, to, now)* Promise~EarningsRow[]~
@@ -535,7 +561,7 @@ classDiagram
     -ids: IdGenerator
     -fees: ConsultationFeesRepository
     -audit: AuditTrail
-    +list(professionalId, from, to) Promise~AgendaEntry[]~
+    +list(professionalId, from, to, page) Promise~Page~AgendaEntry~~
     +get(professionalId, appointmentId) Promise~AgendaEntry~
     +schedule(professionalId, patientId, request) Promise~AgendaEntry~
     +book(professionalId, patientId, request) Promise~Appointment~
@@ -626,7 +652,7 @@ classDiagram
   class ListAppointmentsPresenter {
     <<Presenter>>
     -agenda: AppointmentService
-    #execute(input) Promise~AppointmentDto[]~
+    #execute(input) Promise~AppointmentPageDto~
   }
   class MongooseAgendaLock {
     <<Adapter>>
@@ -637,7 +663,7 @@ classDiagram
     <<Repository, Adapter>>
     -timezone: string
     +findOwned(professionalId, id) Promise~Appointment | null~
-    +findStartingBetween(professionalId, from, to) Promise~Appointment[]~
+    +findStartingBetween(professionalId, from, to, page) Promise~Page~Appointment~~
     +findScheduledOverlapping(professionalId, startsAt, endsAt) Promise~Appointment[]~
     +findNeedingReminder(from, to, limit) Promise~Appointment[]~
     +earnings(professionalId, from, to, now) Promise~EarningsRow[]~
@@ -813,7 +839,7 @@ classDiagram
   }
   class AuditEventRepository {
     <<abstract · Repository>>
-    +search(professionalId, filter)* Promise~AuditEvent[]~
+    +search(professionalId, filter, page)* Promise~Page~AuditEvent~~
   }
   class AuditLog {
     <<Adapter>>
@@ -839,10 +865,8 @@ classDiagram
     +build() Router
   }
   class AuditService {
-    +DEFAULT_LIMIT$
-    +MAX_LIMIT$
     -events: AuditEventRepository
-    +list(professionalId, query) Promise~AuditPage~
+    +list(professionalId, query, page) Promise~Page~AuditEvent~~
   }
   class ListAuditEventsPresenter {
     <<Presenter>>
@@ -852,7 +876,7 @@ classDiagram
   class MongooseAuditEventRepository {
     <<Repository, Adapter>>
     +save(event) Promise~void~
-    +search(professionalId, filter) Promise~AuditEvent[]~
+    +search(professionalId, filter, page) Promise~Page~AuditEvent~~
   }
   class RequestOriginContextSource {
     <<Adapter>>
@@ -1459,7 +1483,7 @@ classDiagram
     +findOwned(professionalId, id)* Promise~BookingRequest | null~
     +findPendingBetween(professionalId, from, to)* Promise~BookingRequest[]~
     +countPendingByDni(professionalId, dni)* Promise~number~
-    +list(professionalId, status, limit)* Promise~BookingRequest[]~
+    +list(professionalId, status, page)* Promise~Page~BookingRequest~~
     +findExpirable(now, limit)* Promise~BookingRequest[]~
   }
   class BookingRoutes {
@@ -1486,7 +1510,7 @@ classDiagram
     +publicPage(slug) Promise~PublicBookingPage~
     +availability(slug, from, days) Promise~DaySlots[]~
     +request(slug, data) Promise~BookingRequest~
-    +list(professionalId, status) Promise~RequestEntry[]~
+    +list(professionalId, status, page) Promise~Page~RequestEntry~~
     +accept(professionalId, requestId, decision) Promise~RequestEntry~
     +reject(professionalId, requestId, reason) Promise~RequestEntry~
     +expirePast() Promise~number~
@@ -1532,7 +1556,7 @@ classDiagram
   class ListBookingRequestsPresenter {
     <<Presenter>>
     -booking: BookingService
-    #execute(actor,status,) Promise~BookingRequestDto[]~
+    #execute(input) Promise~BookingRequestPageDto~
   }
   class LocalCalendar {
     <<abstract>>
@@ -1551,7 +1575,7 @@ classDiagram
     +findOwned(professionalId, id) Promise~BookingRequest | null~
     +findPendingBetween(professionalId, from, to) Promise~BookingRequest[]~
     +countPendingByDni(professionalId, dni) Promise~number~
-    +list(professionalId, status, limit) Promise~BookingRequest[]~
+    +list(professionalId, status, page) Promise~Page~BookingRequest~~
     +findExpirable(now, limit) Promise~BookingRequest[]~
   }
   class PatientIntakeRegistry {
@@ -1757,11 +1781,11 @@ classDiagram
     -accesses: RecordAccessLog
     -ids: IdGenerator
     -trail: AuditTrail
-    +getRecord(professionalId, patientId) Promise~ClinicalRecord~
-    +accessLog(professionalId, patientId) Promise~RecordAccess[]~
+    +getRecord(professionalId, patientId, page) Promise~object~
+    +accessLog(professionalId, patientId, page) Promise~Page~RecordAccess~~
     +registerConsultation(professionalId, patientId, data) Promise~Consultation~
     +getConsultation(professionalId, patientId, consultationId) Promise~Consultation~
-    +diagnosisHistory(professionalId, patientId) Promise~DiagnosisHistoryEntry[]~
+    +diagnosisHistory(professionalId, patientId, page) Promise~Page~DiagnosisHistoryEntry~~
   }
   class ClinicalRecordsModule {
     <<Composition Root, Abstract Factory>>
@@ -1777,9 +1801,9 @@ classDiagram
     +listRecordAccess(view) ListRecordAccessPresenter
   }
   class ClinicalRecordViewModel {
-    +record(record)$ ClinicalRecordDto
+    +record(record, consultations)$ ClinicalRecordDto
     +consultation(consultation)$ ConsultationDto
-    +diagnosisHistory(entries)$ DiagnosisHistoryEntryDto[]
+    +diagnosisEntry(entry)$ DiagnosisHistoryEntryDto
   }
   class Consultation {
     <<Entity>>
@@ -1811,12 +1835,12 @@ classDiagram
   class GetDiagnosisHistoryPresenter {
     <<Presenter>>
     -records: ClinicalRecordService
-    #execute(input) Promise~DiagnosisHistoryEntryDto[]~
+    #execute(input) Promise~DiagnosisHistoryPageDto~
   }
   class ListRecordAccessPresenter {
     <<Presenter>>
     -records: ClinicalRecordService
-    #execute(input) Promise~RecordAccessDto[]~
+    #execute(input) Promise~RecordAccessPageDto~
   }
   class Medication {
     <<Value Object>>
@@ -1837,7 +1861,7 @@ classDiagram
     <<Adapter>>
     -context: TransactionContext
     +append(access) Promise~void~
-    +findByPatient(professionalId, patientId, limit) Promise~RecordAccess[]~
+    +findByPatient(professionalId, patientId, page) Promise~Page~RecordAccess~~
   }
   class PatientActivityRecorder {
     <<Adapter>>
@@ -1856,7 +1880,7 @@ classDiagram
   class RecordAccessLog {
     <<abstract>>
     +append(access)* Promise~void~
-    +findByPatient(professionalId, patientId, limit)* Promise~RecordAccess[]~
+    +findByPatient(professionalId, patientId, page)* Promise~Page~RecordAccess~~
   }
   class RegisterConsultationPresenter {
     <<Presenter>>
@@ -1953,7 +1977,7 @@ classDiagram
   direction LR
   class DiagnosisCatalog {
     -entries: DiagnosisCatalogRepository
-    +search(term, category) Promise~DiagnosisCatalogEntry[]~
+    +search(term, category, page) Promise~Page~DiagnosisCatalogEntry~~
     +findActive(code) Promise~DiagnosisCatalogEntry | null~
   }
   class DiagnosisCatalogEntry {
@@ -1976,7 +2000,7 @@ classDiagram
   }
   class DiagnosisCatalogRepository {
     <<abstract · Repository>>
-    +search(criteria)* Promise~DiagnosisCatalogEntry[]~
+    +search(criteria)* Promise~Page~DiagnosisCatalogEntry~~
     +findByCode(code)* Promise~DiagnosisCatalogEntry | null~
   }
   class DiagnosisCatalogRoutes {
@@ -1990,7 +2014,7 @@ classDiagram
   }
   class MongooseDiagnosisCatalogRepository {
     <<Repository, Adapter>>
-    +search(criteria) Promise~DiagnosisCatalogEntry[]~
+    +search(criteria) Promise~Page~DiagnosisCatalogEntry~~
     +findByCode(code) Promise~DiagnosisCatalogEntry | null~
   }
   class MongooseDiagnosisCatalogSeeder {
@@ -2001,7 +2025,7 @@ classDiagram
   class SearchDiagnosesPresenter {
     <<Presenter>>
     -catalog: DiagnosisCatalog
-    #execute(input) Promise~DiagnosisCatalogEntryDto[]~
+    #execute(input) Promise~DiagnosisCatalogPageDto~
   }
   class AuthGuard {
     <<external>>
@@ -2133,7 +2157,7 @@ classDiagram
   class ListNotificationsPresenter {
     <<Presenter>>
     -center: NotificationCenter
-    #execute(actor,patientId,) Promise~NotificationDto[]~
+    #execute(input) Promise~NotificationPageDto~
   }
   class LocalWhatsAppOutbox {
     <<Adapter>>
@@ -2147,7 +2171,7 @@ classDiagram
   }
   class MongooseNotificationRepository {
     <<Repository, Adapter>>
-    +findByPatient(professionalId, patientId) Promise~Notification[]~
+    +findByPatient(professionalId, patientId, page) Promise~Page~Notification~~
   }
   class Notification {
     <<Aggregate Root>>
@@ -2173,7 +2197,7 @@ classDiagram
     -clock: Clock
     -ids: IdGenerator
     +send(message) Promise~DeliveryOutcome~
-    +history(professionalId, patientId) Promise~Notification[]~
+    +history(professionalId, patientId, page) Promise~Page~Notification~~
   }
   class NotificationMapper {
     <<Data Mapper>>
@@ -2182,7 +2206,7 @@ classDiagram
   }
   class NotificationRepository {
     <<abstract · Repository>>
-    +findByPatient(professionalId, patientId)* Promise~Notification[]~
+    +findByPatient(professionalId, patientId, page)* Promise~Page~Notification~~
   }
   class NotificationRoutes {
     -presenters: NotificationPresenterFactory
@@ -2290,7 +2314,7 @@ classDiagram
     +findOwned(professionalId, id) Promise~Patient | null~
     +findOwnedMany(professionalId, ids) Promise~Patient[]~
     +findByDni(professionalId, dni) Promise~Patient | null~
-    +search(professionalId, terms) Promise~Patient[]~
+    +search(professionalId, terms, page) Promise~Page~Patient~~
     +findDormant(cutoff, limit) Promise~Patient[]~
   }
   class Patient {
@@ -2346,7 +2370,7 @@ classDiagram
     +findOwned(professionalId, id)* Promise~Patient | null~
     +findOwnedMany(professionalId, ids)* Promise~Patient[]~
     +findByDni(professionalId, dni)* Promise~Patient | null~
-    +search(professionalId, terms)* Promise~Patient[]~
+    +search(professionalId, terms, page)* Promise~Page~Patient~~
     +findDormant(cutoff, limit)* Promise~Patient[]~
   }
   class PatientRoutes {
@@ -2367,7 +2391,7 @@ classDiagram
     -audit: AuditTrail
     +now: Date
     +register(professionalId, details) Promise~Patient~
-    +search(professionalId, query) Promise~Patient[]~
+    +search(professionalId, query, page) Promise~Page~Patient~~
     +get(professionalId, patientId) Promise~Patient~
     +update(professionalId, patientId, details) Promise~Patient~
     +changeStatus(professionalId, patientId, status) Promise~Patient~
@@ -2510,11 +2534,11 @@ classDiagram
   class ListPaymentsPresenter {
     <<Presenter>>
     -service: SubscriptionService
-    #execute(actor) Promise~PaymentDto[]~
+    #execute(input) Promise~PaymentPageDto~
   }
   class MongoosePaymentRepository {
     <<Repository, Adapter>>
-    +findByProfessional(professionalId, limit) Promise~Payment[]~
+    +findByProfessional(professionalId, page) Promise~Page~Payment~~
     +countByProfessional(professionalId) Promise~number~
     +hasChargeKey(chargeKey) Promise~boolean~
     +hasManualReference(professionalId, reference) Promise~boolean~
@@ -2569,7 +2593,7 @@ classDiagram
   }
   class PaymentRepository {
     <<abstract · Repository>>
-    +findByProfessional(professionalId, limit)* Promise~Payment[]~
+    +findByProfessional(professionalId, page)* Promise~Page~Payment~~
     +countByProfessional(professionalId)* Promise~number~
     +hasChargeKey(chargeKey)* Promise~boolean~
     +hasManualReference(professionalId, reference)* Promise~boolean~
@@ -2689,7 +2713,7 @@ classDiagram
     +setAutoDebit(professionalId, enabled) Promise~Subscription~
     +cancel(professionalId) Promise~Subscription~
     +registerManualPayment(professionalId, data) Promise~Payment~
-    +listPayments(professionalId) Promise~Payment[]~
+    +listPayments(professionalId, page) Promise~Page~Payment~~
     +processDueRenewals() Promise~RenewalReport~
   }
   class SubscriptionsModule {
@@ -2839,7 +2863,7 @@ classDiagram
   class ListVirtualMeetingsPresenter {
     <<Presenter>>
     -consultations: VirtualConsultationService
-    #execute(actor,query,) Promise~VirtualMeetingDto[]~
+    #execute(actor,query,) Promise~VirtualMeetingPageDto~
   }
   class MeetingInvitations {
     <<abstract>>
@@ -2855,7 +2879,7 @@ classDiagram
   class MongooseVirtualMeetingRepository {
     <<Repository, Adapter>>
     +insertIfFirstForAppointment(meeting) Promise~boolean~
-    +findByPatient(professionalId, patientId) Promise~VirtualMeeting[]~
+    +findByPatient(professionalId, patientId, page) Promise~Page~VirtualMeeting~~
     +findByAppointment(professionalId, appointmentId) Promise~VirtualMeeting | null~
   }
   class NotificationMeetingInvitations {
@@ -2888,8 +2912,8 @@ classDiagram
     -ids: IdGenerator
     -audit: AuditTrail
     +start(professionalId, request) Promise~VirtualMeeting~
-    +history(professionalId, patientId) Promise~VirtualMeeting[]~
-    +forAppointment(professionalId, appointmentId) Promise~VirtualMeeting[]~
+    +history(professionalId, patientId, page) Promise~Page~VirtualMeeting~~
+    +forAppointment(professionalId, appointmentId) Promise~Page~VirtualMeeting~~
   }
   class VirtualConsultationsModule {
     <<Composition Root, Abstract Factory>>
@@ -2921,7 +2945,7 @@ classDiagram
   }
   class VirtualMeetingRepository {
     <<abstract · Repository>>
-    +findByPatient(professionalId, patientId)* Promise~VirtualMeeting[]~
+    +findByPatient(professionalId, patientId, page)* Promise~Page~VirtualMeeting~~
     +findByAppointment(professionalId, appointmentId)* Promise~VirtualMeeting | null~
     +insertIfFirstForAppointment(meeting)* Promise~boolean~
   }
@@ -3062,7 +3086,7 @@ classDiagram
   }
   class ClinicalRecordAdapter {
     <<Adapter>>
-    +toTimeline(record)$ TimelineItem[]
+    +toTimeline(consultations)$ TimelineItem[]
     +toDetail(dto)$ ConsultationDetail
     +toDiagnosisHistory(entries)$ DiagnosisHistoryItem[]
     +toDiagnosisOption(entry)$ DiagnosisOption
