@@ -1,5 +1,4 @@
 import { Presenter } from '#core/presenter/Presenter';
-import type { View } from '#core/view/View';
 import type {
   AppointmentDto,
   RescheduleAppointmentRequestDto,
@@ -11,19 +10,13 @@ import type { AppointmentRef } from './GetAppointmentPresenter';
 // Presenter
 export class RescheduleAppointmentPresenter extends Presenter<
   AppointmentRef & { data: RescheduleAppointmentRequestDto },
-  AppointmentDto
+  AppointmentDto,
+  AppointmentService
 > {
-  constructor(
-    view: View<AppointmentDto>,
-    private readonly agenda: AppointmentService,
-  ) {
-    super(view);
-  }
-
   protected async execute(
     input: AppointmentRef & { data: RescheduleAppointmentRequestDto },
   ): Promise<AppointmentDto> {
-    const entry = await this.agenda.reschedule(
+    const entry = await this.model.reschedule(
       input.actor.professionalId,
       input.appointmentId,
       AppointmentViewModel.toSlot(input.data),

@@ -8,16 +8,10 @@ import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 import type { ScheduledJob } from '#core/scheduling/ScheduledJob';
-import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { MailTransport } from '#infrastructure/mail/MailTransport';
-import {
-  type PaymentDto,
-  type PaymentPageDto,
-  registerSubscriptionContracts,
-  type SubscriptionDetailDto,
-} from './contracts/subscriptions.contracts';
+import { registerSubscriptionContracts } from './contracts/subscriptions.contracts';
 import { EmailBillingNotifier } from './infrastructure/EmailBillingNotifier';
 import { MongoosePaymentRepository } from './infrastructure/MongoosePaymentRepository';
 import { MongooseSubscriptionRepository } from './infrastructure/MongooseSubscriptionRepository';
@@ -27,16 +21,7 @@ import { PlanCatalog, type PlanPrices } from './model/Plan';
 import { SubscriptionAccess } from './model/SubscriptionAccess';
 import type { SubscriptionRepository } from './model/SubscriptionRepository';
 import { SubscriptionService } from './model/SubscriptionService';
-import { AddPaymentMethodPresenter } from './presenter/AddPaymentMethodPresenter';
-import { CancelSubscriptionPresenter } from './presenter/CancelSubscriptionPresenter';
-import { ChoosePlanPresenter } from './presenter/ChoosePlanPresenter';
-import { GetSubscriptionPresenter } from './presenter/GetSubscriptionPresenter';
-import { ListPaymentsPresenter } from './presenter/ListPaymentsPresenter';
-import { RegisterManualPaymentPresenter } from './presenter/RegisterManualPaymentPresenter';
-import { RemovePaymentMethodPresenter } from './presenter/RemovePaymentMethodPresenter';
-import { SetAutoDebitPresenter } from './presenter/SetAutoDebitPresenter';
-import type { SubscriptionPresenterFactory } from './presenter/SubscriptionPresenterFactory';
-import { UpdatePaymentMethodPresenter } from './presenter/UpdatePaymentMethodPresenter';
+import { SubscriptionPresenters } from './presenter/SubscriptionPresenters';
 import { SubscriptionRoutes } from './view/SubscriptionRoutes';
 
 export interface SubscriptionsModuleDependencies {
@@ -59,8 +44,8 @@ export interface SubscriptionsModuleDependencies {
 
 const HOUR_MS = 60 * 60 * 1000;
 
-// Composition Root, Abstract Factory
-export class SubscriptionsModule implements AppModule, SubscriptionPresenterFactory {
+// Composition Root
+export class SubscriptionsModule implements AppModule {
   readonly basePath = '/subscription';
   readonly access: SubscriptionAccess;
   readonly #service: SubscriptionService;
@@ -88,7 +73,10 @@ export class SubscriptionsModule implements AppModule, SubscriptionPresenterFact
   }
 
   createRouter(): Router {
-    return new SubscriptionRoutes(this, this.deps.guard).build();
+    return new SubscriptionRoutes(
+      new SubscriptionPresenters(this.#service),
+      this.deps.guard,
+    ).build();
   }
 
   scheduledJobs(): ScheduledJob[] {
@@ -107,41 +95,5 @@ export class SubscriptionsModule implements AppModule, SubscriptionPresenterFact
         },
       },
     ];
-  }
-
-  getSubscription(view: View<SubscriptionDetailDto>): GetSubscriptionPresenter {
-    return new GetSubscriptionPresenter(view, this.#service);
-  }
-
-  choosePlan(view: View<SubscriptionDetailDto>): ChoosePlanPresenter {
-    return new ChoosePlanPresenter(view, this.#service);
-  }
-
-  addPaymentMethod(view: View<SubscriptionDetailDto>): AddPaymentMethodPresenter {
-    return new AddPaymentMethodPresenter(view, this.#service);
-  }
-
-  updatePaymentMethod(view: View<SubscriptionDetailDto>): UpdatePaymentMethodPresenter {
-    return new UpdatePaymentMethodPresenter(view, this.#service);
-  }
-
-  removePaymentMethod(view: View<SubscriptionDetailDto>): RemovePaymentMethodPresenter {
-    return new RemovePaymentMethodPresenter(view, this.#service);
-  }
-
-  setAutoDebit(view: View<SubscriptionDetailDto>): SetAutoDebitPresenter {
-    return new SetAutoDebitPresenter(view, this.#service);
-  }
-
-  cancelSubscription(view: View<SubscriptionDetailDto>): CancelSubscriptionPresenter {
-    return new CancelSubscriptionPresenter(view, this.#service);
-  }
-
-  listPayments(view: View<PaymentPageDto>): ListPaymentsPresenter {
-    return new ListPaymentsPresenter(view, this.#service);
-  }
-
-  registerManualPayment(view: View<PaymentDto>): RegisterManualPaymentPresenter {
-    return new RegisterManualPaymentPresenter(view, this.#service);
   }
 }

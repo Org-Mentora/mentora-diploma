@@ -4,18 +4,16 @@ import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
-import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { RequestOriginContext } from '#infrastructure/http/RequestOriginContext';
-import { type AuditEventPageDto, registerAuditContracts } from './contracts/audit.contracts';
+import { registerAuditContracts } from './contracts/audit.contracts';
 import { MongooseAuditEventRepository } from './infrastructure/MongooseAuditEventRepository';
 import { RequestOriginContextSource } from './infrastructure/RequestOriginContextSource';
 import type { AuditEventRepository } from './model/AuditEventRepository';
 import { AuditLog } from './model/AuditLog';
 import { AuditService } from './model/AuditService';
-import type { AuditPresenterFactory } from './presenter/AuditPresenterFactory';
-import { ListAuditEventsPresenter } from './presenter/ListAuditEventsPresenter';
+import { AuditPresenters } from './presenter/AuditPresenters';
 import { AuditRoutes } from './view/AuditRoutes';
 
 export interface AuditModuleDependencies {
@@ -27,8 +25,8 @@ export interface AuditModuleDependencies {
   repository?: AuditEventRepository;
 }
 
-// Composition Root, Abstract Factory
-export class AuditModule implements AppModule, AuditPresenterFactory {
+// Composition Root
+export class AuditModule implements AppModule {
   readonly basePath = '/audit';
   readonly trail: AuditTrail;
   readonly #service: AuditService;
@@ -53,10 +51,6 @@ export class AuditModule implements AppModule, AuditPresenterFactory {
   }
 
   createRouter(): Router {
-    return new AuditRoutes(this, this.deps.guard).build();
-  }
-
-  listAuditEvents(view: View<AuditEventPageDto>): ListAuditEventsPresenter {
-    return new ListAuditEventsPresenter(view, this.#service);
+    return new AuditRoutes(new AuditPresenters(this.#service), this.deps.guard).build();
   }
 }

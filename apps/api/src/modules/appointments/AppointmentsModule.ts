@@ -8,18 +8,11 @@ import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 import type { ScheduledJob } from '#core/scheduling/ScheduledJob';
-import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { NotificationCenter } from '#modules/notifications';
 import type { PatientDirectory } from '#modules/patients';
-import {
-  type AppointmentDto,
-  type AppointmentPageDto,
-  type ConsultationFeesDto,
-  type EarningsReportDto,
-  registerAppointmentContracts,
-} from './contracts/appointments.contracts';
+import { registerAppointmentContracts } from './contracts/appointments.contracts';
 import { MongooseAgendaLock } from './infrastructure/MongooseAgendaLock';
 import { MongooseAppointmentRepository } from './infrastructure/MongooseAppointmentRepository';
 import { MongooseConsultationFeesRepository } from './infrastructure/MongooseConsultationFeesRepository';
@@ -33,15 +26,7 @@ import type { AppointmentRepository } from './model/AppointmentRepository';
 import { AppointmentService } from './model/AppointmentService';
 import type { ConsultationFeesRepository } from './model/ConsultationFeesRepository';
 import { EarningsService } from './model/EarningsService';
-import type { AppointmentPresenterFactory } from './presenter/AppointmentPresenterFactory';
-import { CancelAppointmentPresenter } from './presenter/CancelAppointmentPresenter';
-import { GetAppointmentPresenter } from './presenter/GetAppointmentPresenter';
-import { GetConsultationFeesPresenter } from './presenter/GetConsultationFeesPresenter';
-import { GetEarningsReportPresenter } from './presenter/GetEarningsReportPresenter';
-import { ListAppointmentsPresenter } from './presenter/ListAppointmentsPresenter';
-import { RescheduleAppointmentPresenter } from './presenter/RescheduleAppointmentPresenter';
-import { ScheduleAppointmentPresenter } from './presenter/ScheduleAppointmentPresenter';
-import { UpdateConsultationFeesPresenter } from './presenter/UpdateConsultationFeesPresenter';
+import { AppointmentPresenters } from './presenter/AppointmentPresenters';
 import { AppointmentRoutes } from './view/AppointmentRoutes';
 
 export interface AppointmentsModuleDependencies {
@@ -64,8 +49,8 @@ export interface AppointmentsModuleDependencies {
 
 const TEN_MINUTES_MS = 10 * 60 * 1000;
 
-// Composition Root, Abstract Factory
-export class AppointmentsModule implements AppModule, AppointmentPresenterFactory {
+// Composition Root
+export class AppointmentsModule implements AppModule {
   readonly basePath = '/appointments';
   readonly directory: AppointmentDirectory;
   readonly booking: AppointmentBooking;
@@ -111,7 +96,10 @@ export class AppointmentsModule implements AppModule, AppointmentPresenterFactor
   }
 
   createRouter(): Router {
-    return new AppointmentRoutes(this, this.deps.guard).build();
+    return new AppointmentRoutes(
+      new AppointmentPresenters(this.#service, this.#earnings),
+      this.deps.guard,
+    ).build();
   }
 
   scheduledJobs(): ScheduledJob[] {
@@ -127,37 +115,5 @@ export class AppointmentsModule implements AppModule, AppointmentPresenterFactor
         },
       },
     ];
-  }
-
-  listAppointments(view: View<AppointmentPageDto>): ListAppointmentsPresenter {
-    return new ListAppointmentsPresenter(view, this.#service);
-  }
-
-  getAppointment(view: View<AppointmentDto>): GetAppointmentPresenter {
-    return new GetAppointmentPresenter(view, this.#service);
-  }
-
-  scheduleAppointment(view: View<AppointmentDto>): ScheduleAppointmentPresenter {
-    return new ScheduleAppointmentPresenter(view, this.#service);
-  }
-
-  rescheduleAppointment(view: View<AppointmentDto>): RescheduleAppointmentPresenter {
-    return new RescheduleAppointmentPresenter(view, this.#service);
-  }
-
-  cancelAppointment(view: View<AppointmentDto>): CancelAppointmentPresenter {
-    return new CancelAppointmentPresenter(view, this.#service);
-  }
-
-  getConsultationFees(view: View<ConsultationFeesDto>): GetConsultationFeesPresenter {
-    return new GetConsultationFeesPresenter(view, this.#earnings);
-  }
-
-  updateConsultationFees(view: View<ConsultationFeesDto>): UpdateConsultationFeesPresenter {
-    return new UpdateConsultationFeesPresenter(view, this.#earnings);
-  }
-
-  getEarningsReport(view: View<EarningsReportDto>): GetEarningsReportPresenter {
-    return new GetEarningsReportPresenter(view, this.#earnings);
   }
 }

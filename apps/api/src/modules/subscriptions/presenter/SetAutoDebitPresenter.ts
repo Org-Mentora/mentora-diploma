@@ -1,6 +1,5 @@
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type {
   AutoDebitRequestDto,
   SubscriptionDetailDto,
@@ -11,18 +10,15 @@ import { SubscriptionViewModel } from './SubscriptionViewModel';
 export type SetAutoDebitInput = { actor: AuthenticatedActor; data: AutoDebitRequestDto };
 
 // Presenter
-export class SetAutoDebitPresenter extends Presenter<SetAutoDebitInput, SubscriptionDetailDto> {
-  constructor(
-    view: View<SubscriptionDetailDto>,
-    private readonly service: SubscriptionService,
-  ) {
-    super(view);
-  }
-
+export class SetAutoDebitPresenter extends Presenter<
+  SetAutoDebitInput,
+  SubscriptionDetailDto,
+  SubscriptionService
+> {
   protected async execute({ actor, data }: SetAutoDebitInput): Promise<SubscriptionDetailDto> {
     return SubscriptionViewModel.toDto(
-      await this.service.setAutoDebit(actor.professionalId, data.enabled),
-      this.service,
+      await this.model.setAutoDebit(actor.professionalId, data.enabled),
+      this.model,
     );
   }
 }

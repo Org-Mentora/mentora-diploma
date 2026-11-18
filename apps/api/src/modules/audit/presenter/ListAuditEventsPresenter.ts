@@ -1,7 +1,6 @@
 import { CursorCodec } from '#core/presenter/CursorCodec';
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type { AuditEventPageDto, ListAuditEventsQueryDto } from '../contracts/audit.contracts';
 import type { AuditEvent } from '../model/AuditEvent';
 import type { AuditService } from '../model/AuditService';
@@ -14,16 +13,13 @@ export interface ListAuditEventsInput {
 const date = (value: string | undefined) => (value ? new Date(value) : undefined);
 
 // Presenter
-export class ListAuditEventsPresenter extends Presenter<ListAuditEventsInput, AuditEventPageDto> {
-  constructor(
-    view: View<AuditEventPageDto>,
-    private readonly audit: AuditService,
-  ) {
-    super(view);
-  }
-
+export class ListAuditEventsPresenter extends Presenter<
+  ListAuditEventsInput,
+  AuditEventPageDto,
+  AuditService
+> {
   protected async execute({ actor, query }: ListAuditEventsInput): Promise<AuditEventPageDto> {
-    const page = await this.audit.list(
+    const page = await this.model.list(
       actor.professionalId,
       { category: query.category, from: date(query.from), to: date(query.to) },
       CursorCodec.request(query),

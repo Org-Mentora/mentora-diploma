@@ -3,21 +3,16 @@ import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
-import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { MailTransport } from '#infrastructure/mail/MailTransport';
-import {
-  type NotificationPageDto,
-  registerNotificationContracts,
-} from './contracts/notifications.contracts';
+import { registerNotificationContracts } from './contracts/notifications.contracts';
 import { MailEmailGateway } from './infrastructure/MailEmailGateway';
 import { MongooseNotificationRepository } from './infrastructure/MongooseNotificationRepository';
 import { NotificationCenter } from './model/NotificationCenter';
 import type { NotificationRepository } from './model/NotificationRepository';
 import type { WhatsAppGateway } from './model/WhatsAppGateway';
-import { ListNotificationsPresenter } from './presenter/ListNotificationsPresenter';
-import type { NotificationPresenterFactory } from './presenter/NotificationPresenterFactory';
+import { NotificationPresenters } from './presenter/NotificationPresenters';
 import { NotificationRoutes } from './view/NotificationRoutes';
 
 export interface NotificationsModuleDependencies {
@@ -30,8 +25,8 @@ export interface NotificationsModuleDependencies {
   repository?: NotificationRepository;
 }
 
-// Composition Root, Abstract Factory
-export class NotificationsModule implements AppModule, NotificationPresenterFactory {
+// Composition Root
+export class NotificationsModule implements AppModule {
   readonly basePath = '/notifications';
   readonly center: NotificationCenter;
 
@@ -50,10 +45,6 @@ export class NotificationsModule implements AppModule, NotificationPresenterFact
   }
 
   createRouter(): Router {
-    return new NotificationRoutes(this, this.deps.guard).build();
-  }
-
-  listNotifications(view: View<NotificationPageDto>): ListNotificationsPresenter {
-    return new ListNotificationsPresenter(view, this.center);
+    return new NotificationRoutes(new NotificationPresenters(this.center), this.deps.guard).build();
   }
 }

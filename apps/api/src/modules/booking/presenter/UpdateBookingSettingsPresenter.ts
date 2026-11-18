@@ -1,6 +1,5 @@
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type {
   BookingSettingsDto,
   UpdateBookingSettingsRequestDto,
@@ -17,23 +16,17 @@ export interface UpdateBookingSettingsInput {
 // Presenter
 export class UpdateBookingSettingsPresenter extends Presenter<
   UpdateBookingSettingsInput,
-  BookingSettingsDto
+  BookingSettingsDto,
+  BookingService
 > {
-  constructor(
-    view: View<BookingSettingsDto>,
-    private readonly booking: BookingService,
-  ) {
-    super(view);
-  }
-
   protected async execute({
     actor,
     data,
   }: UpdateBookingSettingsInput): Promise<BookingSettingsDto> {
-    const page = await this.booking.configure(actor.professionalId, {
+    const page = await this.model.configure(actor.professionalId, {
       ...data,
       weeklyHours: data.weeklyHours.map((w) => ({ ...w, weekday: w.weekday as IsoWeekday })),
     });
-    return BookingViewModel.settings(page, this.booking.timezone);
+    return BookingViewModel.settings(page, this.model.timezone);
   }
 }

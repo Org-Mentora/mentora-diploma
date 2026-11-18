@@ -1,17 +1,13 @@
 import { Router } from 'express';
 import { InputParser } from '#core/view/InputParser';
-import { JsonHttpView } from '#core/view/JsonHttpView';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
-import { ExpressResponderAdapter } from '#infrastructure/http/ExpressResponderAdapter';
-import {
-  type DiagnosisCatalogPageDto,
-  SearchDiagnosesQuerySchema,
-} from '../contracts/diagnosis-catalog.contracts';
-import type { DiagnosisCatalogPresenterFactory } from '../presenter/DiagnosisCatalogPresenterFactory';
+import { HttpViews } from '#infrastructure/http/HttpViews';
+import { SearchDiagnosesQuerySchema } from '../contracts/diagnosis-catalog.contracts';
+import type { DiagnosisCatalogPresenters } from '../presenter/DiagnosisCatalogPresenters';
 
 export class DiagnosisCatalogRoutes {
   constructor(
-    private readonly presenters: DiagnosisCatalogPresenterFactory,
+    private readonly presenters: DiagnosisCatalogPresenters,
     private readonly guard: AuthGuard,
   ) {}
 
@@ -20,9 +16,8 @@ export class DiagnosisCatalogRoutes {
     router.use(this.guard.requireActiveSubscription);
 
     router.get('/', async (req, res) => {
-      const view = new JsonHttpView<DiagnosisCatalogPageDto>(new ExpressResponderAdapter(res));
       const { q, ...query } = InputParser.parse(SearchDiagnosesQuerySchema, req.query);
-      await this.presenters.searchDiagnoses(view).present({ term: q, ...query });
+      await this.presenters.searchDiagnoses(HttpViews.json(res)).present({ term: q, ...query });
     });
 
     return router;

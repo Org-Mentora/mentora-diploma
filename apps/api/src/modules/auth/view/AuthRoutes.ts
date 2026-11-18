@@ -1,26 +1,22 @@
 import { Router } from 'express';
 import { InputParser } from '#core/view/InputParser';
-import { JsonHttpView } from '#core/view/JsonHttpView';
-import { NoContentHttpView } from '#core/view/NoContentHttpView';
 import { ActorReader } from '#infrastructure/http/ActorReader';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import { ExpressResponderAdapter } from '#infrastructure/http/ExpressResponderAdapter';
+import { HttpViews } from '#infrastructure/http/HttpViews';
 import { RateLimiter, type RateLimitRule } from '#infrastructure/http/RateLimiter';
 import type { SessionCookie } from '#infrastructure/http/SessionCookie';
 import {
   ChangePasswordRequestSchema,
   LoginRequestSchema,
-  type LogoDto,
   PasswordRecoveryRequestSchema,
-  type RecoveryRequestedDto,
   RegisterProfessionalRequestSchema,
   ResetPasswordRequestSchema,
-  type SessionDto,
   UpdateProfileRequestSchema,
   UploadLogoRequestSchema,
   VerifyRecoveryCodeRequestSchema,
 } from '../contracts/auth.contracts';
-import type { AuthPresenterFactory } from '../presenter/AuthPresenterFactory';
+import type { AuthPresenters } from '../presenter/AuthPresenters';
 import { LogoutHttpView } from './LogoutHttpView';
 import { SessionHttpView } from './SessionHttpView';
 
@@ -57,7 +53,7 @@ const RULES = {
 
 export class AuthRoutes {
   constructor(
-    private readonly presenters: AuthPresenterFactory,
+    private readonly presenters: AuthPresenters,
     private readonly guard: AuthGuard,
     private readonly cookie: SessionCookie,
     private readonly limiter: RateLimiter,
@@ -97,22 +93,19 @@ export class AuthRoutes {
       '/password-recovery',
       limit.limit(RULES.recoveryPerIp, RULES.recoveryPerEmail),
       async (req, res) => {
-        const view = new JsonHttpView<RecoveryRequestedDto>(new ExpressResponderAdapter(res), 202);
         const input = InputParser.parse(PasswordRecoveryRequestSchema, req.body);
-        await this.presenters.requestPasswordRecovery(view).present(input);
+        await this.presenters.requestPasswordRecovery(HttpViews.json(res, 202)).present(input);
       },
     );
 
     router.post('/password-recovery/verify', limit.limit(RULES.codePerIp), async (req, res) => {
-      const view = new NoContentHttpView(new ExpressResponderAdapter(res));
       const input = InputParser.parse(VerifyRecoveryCodeRequestSchema, req.body);
-      await this.presenters.verifyRecoveryCode(view).present(input);
+      await this.presenters.verifyRecoveryCode(HttpViews.noContent(res)).present(input);
     });
 
     router.post('/password-recovery/reset', limit.limit(RULES.codePerIp), async (req, res) => {
-      const view = new NoContentHttpView(new ExpressResponderAdapter(res));
       const input = InputParser.parse(ResetPasswordRequestSchema, req.body);
-      await this.presenters.resetPassword(view).present(input);
+      await this.presenters.resetPassword(HttpViews.noContent(res)).present(input);
     });
 
     router.put('/password', this.guard.requireSession, async (req, res) => {
@@ -122,25 +115,25 @@ export class AuthRoutes {
     });
 
     router.put('/profile', this.guard.requireSession, async (req, res) => {
-      const view = new JsonHttpView<SessionDto>(new ExpressResponderAdapter(res));
       const data = InputParser.parse(UpdateProfileRequestSchema, req.body);
-      await this.presenters.updateProfile(view).present({ actor: ActorReader.from(res), data });
+      await this.presenters
+        .updateProfile(HttpViews.json(res))
+        .present({ actor: ActorReader.from(res), data });
     });
 
     router.get('/logo', this.guard.requireSession, async (_req, res) => {
-      const view = new JsonHttpView<LogoDto>(new ExpressResponderAdapter(res));
-      await this.presenters.getLogo(view).present(ActorReader.from(res));
+      await this.presenters.getLogo(HttpViews.json(res)).present(ActorReader.from(res));
     });
 
     router.put('/logo', this.guard.requireSession, async (req, res) => {
-      const view = new NoContentHttpView(new ExpressResponderAdapter(res));
       const data = InputParser.parse(UploadLogoRequestSchema, req.body);
-      await this.presenters.uploadLogo(view).present({ actor: ActorReader.from(res), data });
+      await this.presenters
+        .uploadLogo(HttpViews.noContent(res))
+        .present({ actor: ActorReader.from(res), data });
     });
 
     router.delete('/logo', this.guard.requireSession, async (_req, res) => {
-      const view = new NoContentHttpView(new ExpressResponderAdapter(res));
-      await this.presenters.removeLogo(view).present(ActorReader.from(res));
+      await this.presenters.removeLogo(HttpViews.noContent(res)).present(ActorReader.from(res));
     });
 
     return router;

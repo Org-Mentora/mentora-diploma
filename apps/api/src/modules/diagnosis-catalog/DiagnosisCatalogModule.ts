@@ -1,19 +1,14 @@
 import type { Router } from 'express';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
-import type { View } from '#core/view/View';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
-import {
-  type DiagnosisCatalogPageDto,
-  registerDiagnosisCatalogContracts,
-} from './contracts/diagnosis-catalog.contracts';
+import { registerDiagnosisCatalogContracts } from './contracts/diagnosis-catalog.contracts';
 import { MongooseDiagnosisCatalogRepository } from './infrastructure/MongooseDiagnosisCatalogRepository';
 import { MongooseDiagnosisCatalogSeeder } from './infrastructure/MongooseDiagnosisCatalogSeeder';
 import { DiagnosisCatalog } from './model/DiagnosisCatalog';
 import type { DiagnosisCatalogRepository } from './model/DiagnosisCatalogRepository';
 import type { DiagnosisCatalogSeeder } from './model/DiagnosisCatalogSeeder';
-import type { DiagnosisCatalogPresenterFactory } from './presenter/DiagnosisCatalogPresenterFactory';
-import { SearchDiagnosesPresenter } from './presenter/SearchDiagnosesPresenter';
+import { DiagnosisCatalogPresenters } from './presenter/DiagnosisCatalogPresenters';
 import { DiagnosisCatalogRoutes } from './view/DiagnosisCatalogRoutes';
 
 export interface DiagnosisCatalogModuleDependencies {
@@ -22,8 +17,8 @@ export interface DiagnosisCatalogModuleDependencies {
   seeder?: DiagnosisCatalogSeeder;
 }
 
-// Composition Root, Abstract Factory
-export class DiagnosisCatalogModule implements AppModule, DiagnosisCatalogPresenterFactory {
+// Composition Root
+export class DiagnosisCatalogModule implements AppModule {
   readonly basePath = '/diagnoses';
   readonly catalog: DiagnosisCatalog;
   readonly #seeder: DiagnosisCatalogSeeder;
@@ -40,14 +35,13 @@ export class DiagnosisCatalogModule implements AppModule, DiagnosisCatalogPresen
   }
 
   createRouter(): Router {
-    return new DiagnosisCatalogRoutes(this, this.deps.guard).build();
+    return new DiagnosisCatalogRoutes(
+      new DiagnosisCatalogPresenters(this.catalog),
+      this.deps.guard,
+    ).build();
   }
 
   async onBootstrap(): Promise<void> {
     await this.#seeder.seed();
-  }
-
-  searchDiagnoses(view: View<DiagnosisCatalogPageDto>): SearchDiagnosesPresenter {
-    return new SearchDiagnosesPresenter(view, this.catalog);
   }
 }

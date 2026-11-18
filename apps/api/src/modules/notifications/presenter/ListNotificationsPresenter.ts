@@ -1,7 +1,6 @@
 import { CursorCodec, type PageInput } from '#core/presenter/CursorCodec';
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type { NotificationPageDto } from '../contracts/notifications.contracts';
 import type { NotificationCenter } from '../model/NotificationCenter';
 
@@ -13,17 +12,11 @@ export interface ListNotificationsInput extends PageInput {
 // Presenter
 export class ListNotificationsPresenter extends Presenter<
   ListNotificationsInput,
-  NotificationPageDto
+  NotificationPageDto,
+  NotificationCenter
 > {
-  constructor(
-    view: View<NotificationPageDto>,
-    private readonly center: NotificationCenter,
-  ) {
-    super(view);
-  }
-
   protected async execute(input: ListNotificationsInput): Promise<NotificationPageDto> {
-    const page = await this.center.history(
+    const page = await this.model.history(
       input.actor.professionalId,
       input.patientId,
       CursorCodec.request(input),

@@ -1,18 +1,14 @@
 import { Router } from 'express';
 import { InputParser } from '#core/view/InputParser';
-import { JsonHttpView } from '#core/view/JsonHttpView';
 import { ActorReader } from '#infrastructure/http/ActorReader';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
-import { ExpressResponderAdapter } from '#infrastructure/http/ExpressResponderAdapter';
-import {
-  ListNotificationsQuerySchema,
-  type NotificationPageDto,
-} from '../contracts/notifications.contracts';
-import type { NotificationPresenterFactory } from '../presenter/NotificationPresenterFactory';
+import { HttpViews } from '#infrastructure/http/HttpViews';
+import { ListNotificationsQuerySchema } from '../contracts/notifications.contracts';
+import type { NotificationPresenters } from '../presenter/NotificationPresenters';
 
 export class NotificationRoutes {
   constructor(
-    private readonly presenters: NotificationPresenterFactory,
+    private readonly presenters: NotificationPresenters,
     private readonly guard: AuthGuard,
   ) {}
 
@@ -21,10 +17,9 @@ export class NotificationRoutes {
     router.use(this.guard.requireActiveSubscription);
 
     router.get('/', async (req, res) => {
-      const view = new JsonHttpView<NotificationPageDto>(new ExpressResponderAdapter(res));
       const query = InputParser.parse(ListNotificationsQuerySchema, req.query);
       await this.presenters
-        .listNotifications(view)
+        .listNotifications(HttpViews.json(res))
         .present({ actor: ActorReader.from(res), ...query });
     });
 

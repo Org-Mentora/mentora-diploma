@@ -1,5 +1,4 @@
 import { Presenter } from '#core/presenter/Presenter';
-import type { View } from '#core/view/View';
 import type {
   ConsultationDto,
   RegisterConsultationRequestDto,
@@ -11,20 +10,14 @@ import type { PatientRecordRef } from './GetClinicalRecordPresenter';
 // Presenter
 export class RegisterConsultationPresenter extends Presenter<
   PatientRecordRef & { data: RegisterConsultationRequestDto },
-  ConsultationDto
+  ConsultationDto,
+  ClinicalRecordService
 > {
-  constructor(
-    view: View<ConsultationDto>,
-    private readonly records: ClinicalRecordService,
-  ) {
-    super(view);
-  }
-
   protected async execute(
     input: PatientRecordRef & { data: RegisterConsultationRequestDto },
   ): Promise<ConsultationDto> {
     const { data } = input;
-    const consultation = await this.records.registerConsultation(
+    const consultation = await this.model.registerConsultation(
       input.actor.professionalId,
       input.patientId,
       {

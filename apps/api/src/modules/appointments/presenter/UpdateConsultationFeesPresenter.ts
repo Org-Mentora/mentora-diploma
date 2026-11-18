@@ -1,6 +1,5 @@
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type {
   ConsultationFeesDto,
   UpdateConsultationFeesRequestDto,
@@ -16,19 +15,13 @@ export interface UpdateConsultationFeesInput {
 // Presenter
 export class UpdateConsultationFeesPresenter extends Presenter<
   UpdateConsultationFeesInput,
-  ConsultationFeesDto
+  ConsultationFeesDto,
+  EarningsService
 > {
-  constructor(
-    view: View<ConsultationFeesDto>,
-    private readonly earnings: EarningsService,
-  ) {
-    super(view);
-  }
-
   protected async execute({
     actor,
     data,
   }: UpdateConsultationFeesInput): Promise<ConsultationFeesDto> {
-    return FeesViewModel.toDto(await this.earnings.updateFees(actor.professionalId, data.amounts));
+    return FeesViewModel.toDto(await this.model.updateFees(actor.professionalId, data.amounts));
   }
 }

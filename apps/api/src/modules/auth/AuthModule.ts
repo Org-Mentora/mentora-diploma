@@ -10,19 +10,13 @@ import type { ContractRegistry } from '#core/module/ContractRegistry';
 import type { DataMigration } from '#core/module/DataMigration';
 import type { PasswordHasher } from '#core/security/PasswordHasher';
 import type { TokenService } from '#core/security/TokenService';
-import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { RateLimiter } from '#infrastructure/http/RateLimiter';
 import type { SessionCookie } from '#infrastructure/http/SessionCookie';
 import type { MailTransport } from '#infrastructure/mail/MailTransport';
 import type { SubscriptionAccess } from '#modules/subscriptions';
-import {
-  type LogoDto,
-  type RecoveryRequestedDto,
-  registerAuthContracts,
-  type SessionDto,
-} from './contracts/auth.contracts';
+import { registerAuthContracts } from './contracts/auth.contracts';
 import { CryptoRecoveryCodeGenerator } from './infrastructure/CryptoRecoveryCodeGenerator';
 import { EmailPasswordRecoveryNotifier } from './infrastructure/EmailPasswordRecoveryNotifier';
 import { LegacySubscriptionMigration } from './infrastructure/LegacySubscriptionMigration';
@@ -37,20 +31,7 @@ import { PasswordRecoveryService } from './model/PasswordRecoveryService';
 import { ProfessionalDirectory } from './model/ProfessionalDirectory';
 import type { ProfessionalRepository } from './model/ProfessionalRepository';
 import { ProfileService } from './model/ProfileService';
-import type { AuthPresenterFactory } from './presenter/AuthPresenterFactory';
-import { ChangePasswordPresenter } from './presenter/ChangePasswordPresenter';
-import { GetCurrentProfessionalPresenter } from './presenter/GetCurrentProfessionalPresenter';
-import { GetLogoPresenter } from './presenter/GetLogoPresenter';
-import { LoginPresenter } from './presenter/LoginPresenter';
-import { LogoutPresenter } from './presenter/LogoutPresenter';
-import { RegisterProfessionalPresenter } from './presenter/RegisterProfessionalPresenter';
-import { RemoveLogoPresenter } from './presenter/RemoveLogoPresenter';
-import { RequestPasswordRecoveryPresenter } from './presenter/RequestPasswordRecoveryPresenter';
-import { ResetPasswordPresenter } from './presenter/ResetPasswordPresenter';
-import type { SessionResult } from './presenter/SessionViewModel';
-import { UpdateProfilePresenter } from './presenter/UpdateProfilePresenter';
-import { UploadLogoPresenter } from './presenter/UploadLogoPresenter';
-import { VerifyRecoveryCodePresenter } from './presenter/VerifyRecoveryCodePresenter';
+import { AuthPresenters } from './presenter/AuthPresenters';
 import { AuthRoutes } from './view/AuthRoutes';
 
 export interface AuthModuleDependencies {
@@ -74,8 +55,8 @@ export interface AuthModuleDependencies {
   logos?: LogoRepository;
 }
 
-// Composition Root, Abstract Factory
-export class AuthModule implements AppModule, AuthPresenterFactory {
+// Composition Root
+export class AuthModule implements AppModule {
   readonly basePath = '/auth';
   readonly directory: ProfessionalDirectory;
   readonly #auth: AuthService;
@@ -126,58 +107,15 @@ export class AuthModule implements AppModule, AuthPresenterFactory {
   }
 
   createRouter(): Router {
-    return new AuthRoutes(this, this.deps.guard, this.deps.cookie, this.deps.limiter).build();
+    return new AuthRoutes(
+      new AuthPresenters(this.#auth, this.#recovery, this.#profiles),
+      this.deps.guard,
+      this.deps.cookie,
+      this.deps.limiter,
+    ).build();
   }
 
   migrations(): DataMigration[] {
     return [{ name: '2026-11-legacy-subscriptions', run: () => this.#migration.run() }];
-  }
-
-  registerProfessional(view: View<SessionResult>): RegisterProfessionalPresenter {
-    return new RegisterProfessionalPresenter(view, this.#auth);
-  }
-
-  login(view: View<SessionResult>): LoginPresenter {
-    return new LoginPresenter(view, this.#auth);
-  }
-
-  logout(view: View<void>): LogoutPresenter {
-    return new LogoutPresenter(view, this.#auth);
-  }
-
-  getCurrentProfessional(view: View<SessionResult>): GetCurrentProfessionalPresenter {
-    return new GetCurrentProfessionalPresenter(view, this.#auth);
-  }
-
-  requestPasswordRecovery(view: View<RecoveryRequestedDto>): RequestPasswordRecoveryPresenter {
-    return new RequestPasswordRecoveryPresenter(view, this.#recovery);
-  }
-
-  verifyRecoveryCode(view: View<void>): VerifyRecoveryCodePresenter {
-    return new VerifyRecoveryCodePresenter(view, this.#recovery);
-  }
-
-  resetPassword(view: View<void>): ResetPasswordPresenter {
-    return new ResetPasswordPresenter(view, this.#recovery);
-  }
-
-  changePassword(view: View<SessionResult>): ChangePasswordPresenter {
-    return new ChangePasswordPresenter(view, this.#auth);
-  }
-
-  updateProfile(view: View<SessionDto>): UpdateProfilePresenter {
-    return new UpdateProfilePresenter(view, this.#profiles);
-  }
-
-  getLogo(view: View<LogoDto>): GetLogoPresenter {
-    return new GetLogoPresenter(view, this.#profiles);
-  }
-
-  uploadLogo(view: View<void>): UploadLogoPresenter {
-    return new UploadLogoPresenter(view, this.#profiles);
-  }
-
-  removeLogo(view: View<void>): RemoveLogoPresenter {
-    return new RemoveLogoPresenter(view, this.#profiles);
   }
 }

@@ -1,6 +1,5 @@
 import { Presenter } from '#core/presenter/Presenter';
 
-import type { View } from '#core/view/View';
 import type { AvailableSlotsDto, AvailableSlotsQueryDto } from '../contracts/booking.contracts';
 import type { BookingService } from '../model/BookingService';
 
@@ -11,23 +10,17 @@ export interface GetAvailableSlotsInput extends AvailableSlotsQueryDto {
 // Presenter
 export class GetAvailableSlotsPresenter extends Presenter<
   GetAvailableSlotsInput,
-  AvailableSlotsDto
+  AvailableSlotsDto,
+  BookingService
 > {
-  constructor(
-    view: View<AvailableSlotsDto>,
-    private readonly booking: BookingService,
-  ) {
-    super(view);
-  }
-
   protected async execute({
     slug,
     from,
     days,
   }: GetAvailableSlotsInput): Promise<AvailableSlotsDto> {
-    const plan = await this.booking.availability(slug, from, days);
+    const plan = await this.model.availability(slug, from, days);
     return {
-      timezone: this.booking.timezone,
+      timezone: this.model.timezone,
       days: plan.map((day) => ({
         date: day.date,
         slots: day.slots.map((slot) => slot.toISOString()),

@@ -1,7 +1,6 @@
 import { CursorCodec, type PageInput } from '#core/presenter/CursorCodec';
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type { AppointmentPageDto } from '../contracts/appointments.contracts';
 import type { AppointmentService } from '../model/AppointmentService';
 import { AppointmentViewModel } from './AppointmentViewModel';
@@ -15,17 +14,11 @@ export interface ListAppointmentsInput extends PageInput {
 // Presenter
 export class ListAppointmentsPresenter extends Presenter<
   ListAppointmentsInput,
-  AppointmentPageDto
+  AppointmentPageDto,
+  AppointmentService
 > {
-  constructor(
-    view: View<AppointmentPageDto>,
-    private readonly agenda: AppointmentService,
-  ) {
-    super(view);
-  }
-
   protected async execute(input: ListAppointmentsInput): Promise<AppointmentPageDto> {
-    const page = await this.agenda.list(
+    const page = await this.model.list(
       input.actor.professionalId,
       new Date(input.from),
       new Date(input.to),

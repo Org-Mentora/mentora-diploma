@@ -1,6 +1,5 @@
 import { Presenter } from '#core/presenter/Presenter';
 
-import type { View } from '#core/view/View';
 import type { BookingReceiptDto, CreateBookingRequestDto } from '../contracts/booking.contracts';
 import type { BookingService } from '../model/BookingService';
 
@@ -12,17 +11,11 @@ export interface CreateBookingRequestInput {
 // Presenter
 export class CreateBookingRequestPresenter extends Presenter<
   CreateBookingRequestInput,
-  BookingReceiptDto
+  BookingReceiptDto,
+  BookingService
 > {
-  constructor(
-    view: View<BookingReceiptDto>,
-    private readonly booking: BookingService,
-  ) {
-    super(view);
-  }
-
   protected async execute({ slug, data }: CreateBookingRequestInput): Promise<BookingReceiptDto> {
-    const request = await this.booking.request(slug, {
+    const request = await this.model.request(slug, {
       requester: {
         firstName: data.firstName,
         lastName: data.lastName,

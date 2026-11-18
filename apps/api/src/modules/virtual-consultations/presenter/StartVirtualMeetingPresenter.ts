@@ -1,6 +1,5 @@
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type {
   StartVirtualMeetingRequestDto,
   VirtualMeetingDto,
@@ -16,17 +15,11 @@ export interface StartVirtualMeetingInput {
 // Presenter
 export class StartVirtualMeetingPresenter extends Presenter<
   StartVirtualMeetingInput,
-  VirtualMeetingDto
+  VirtualMeetingDto,
+  VirtualConsultationService
 > {
-  constructor(
-    view: View<VirtualMeetingDto>,
-    private readonly consultations: VirtualConsultationService,
-  ) {
-    super(view);
-  }
-
   protected async execute({ actor, data }: StartVirtualMeetingInput): Promise<VirtualMeetingDto> {
-    const meeting = await this.consultations.start(actor.professionalId, {
+    const meeting = await this.model.start(actor.professionalId, {
       patientId: data.patientId,
       appointmentId: data.appointmentId ?? null,
     });

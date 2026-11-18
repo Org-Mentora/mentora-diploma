@@ -8,7 +8,6 @@ import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 import type { ScheduledJob } from '#core/scheduling/ScheduledJob';
-import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { RateLimiter } from '#infrastructure/http/RateLimiter';
@@ -17,15 +16,7 @@ import type { AppointmentBooking } from '#modules/appointments';
 import type { ProfessionalDirectory } from '#modules/auth';
 import type { PatientIntake } from '#modules/patients';
 import type { SubscriptionAccess } from '#modules/subscriptions';
-import {
-  type AvailableSlotsDto,
-  type BookingReceiptDto,
-  type BookingRequestDto,
-  type BookingRequestPageDto,
-  type BookingSettingsDto,
-  type PublicBookingPageDto,
-  registerBookingContracts,
-} from './contracts/booking.contracts';
+import { registerBookingContracts } from './contracts/booking.contracts';
 import { AppointmentAgendaBooking } from './infrastructure/AppointmentAgendaBooking';
 import { AuthPracticeDirectory } from './infrastructure/AuthPracticeDirectory';
 import { EmailBookingNotifier } from './infrastructure/EmailBookingNotifier';
@@ -37,15 +28,7 @@ import type { BookingNotifier } from './model/BookingNotifier';
 import type { BookingPageRepository } from './model/BookingPageRepository';
 import type { BookingRequestRepository } from './model/BookingRequestRepository';
 import { BookingService } from './model/BookingService';
-import { AcceptBookingRequestPresenter } from './presenter/AcceptBookingRequestPresenter';
-import type { BookingPresenterFactory } from './presenter/BookingPresenterFactory';
-import { CreateBookingRequestPresenter } from './presenter/CreateBookingRequestPresenter';
-import { GetAvailableSlotsPresenter } from './presenter/GetAvailableSlotsPresenter';
-import { GetBookingSettingsPresenter } from './presenter/GetBookingSettingsPresenter';
-import { GetPublicBookingPagePresenter } from './presenter/GetPublicBookingPagePresenter';
-import { ListBookingRequestsPresenter } from './presenter/ListBookingRequestsPresenter';
-import { RejectBookingRequestPresenter } from './presenter/RejectBookingRequestPresenter';
-import { UpdateBookingSettingsPresenter } from './presenter/UpdateBookingSettingsPresenter';
+import { BookingPresenters } from './presenter/BookingPresenters';
 import { BookingRoutes } from './view/BookingRoutes';
 
 export interface BookingModuleDependencies {
@@ -71,8 +54,8 @@ export interface BookingModuleDependencies {
 
 const HOUR_MS = 60 * 60 * 1000;
 
-// Composition Root, Abstract Factory
-export class BookingModule implements AppModule, BookingPresenterFactory {
+// Composition Root
+export class BookingModule implements AppModule {
   readonly basePath = '/booking';
   readonly #service: BookingService;
   readonly #logger: AppLogger;
@@ -99,7 +82,11 @@ export class BookingModule implements AppModule, BookingPresenterFactory {
   }
 
   createRouter(): Router {
-    return new BookingRoutes(this, this.deps.guard, this.deps.limiter).build();
+    return new BookingRoutes(
+      new BookingPresenters(this.#service),
+      this.deps.guard,
+      this.deps.limiter,
+    ).build();
   }
 
   scheduledJobs(): ScheduledJob[] {
@@ -115,37 +102,5 @@ export class BookingModule implements AppModule, BookingPresenterFactory {
         },
       },
     ];
-  }
-
-  getBookingSettings(view: View<BookingSettingsDto>): GetBookingSettingsPresenter {
-    return new GetBookingSettingsPresenter(view, this.#service);
-  }
-
-  updateBookingSettings(view: View<BookingSettingsDto>): UpdateBookingSettingsPresenter {
-    return new UpdateBookingSettingsPresenter(view, this.#service);
-  }
-
-  listBookingRequests(view: View<BookingRequestPageDto>): ListBookingRequestsPresenter {
-    return new ListBookingRequestsPresenter(view, this.#service);
-  }
-
-  acceptBookingRequest(view: View<BookingRequestDto>): AcceptBookingRequestPresenter {
-    return new AcceptBookingRequestPresenter(view, this.#service);
-  }
-
-  rejectBookingRequest(view: View<BookingRequestDto>): RejectBookingRequestPresenter {
-    return new RejectBookingRequestPresenter(view, this.#service);
-  }
-
-  getPublicBookingPage(view: View<PublicBookingPageDto>): GetPublicBookingPagePresenter {
-    return new GetPublicBookingPagePresenter(view, this.#service);
-  }
-
-  getAvailableSlots(view: View<AvailableSlotsDto>): GetAvailableSlotsPresenter {
-    return new GetAvailableSlotsPresenter(view, this.#service);
-  }
-
-  createBookingRequest(view: View<BookingReceiptDto>): CreateBookingRequestPresenter {
-    return new CreateBookingRequestPresenter(view, this.#service);
   }
 }

@@ -5,17 +5,12 @@ import type { IdGenerator } from '#core/model/IdGenerator';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
-import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { AppointmentDirectory } from '#modules/appointments';
 import type { NotificationCenter } from '#modules/notifications';
 import type { PatientDirectory } from '#modules/patients';
-import {
-  registerVirtualConsultationContracts,
-  type VirtualMeetingDto,
-  type VirtualMeetingPageDto,
-} from './contracts/virtual-consultations.contracts';
+import { registerVirtualConsultationContracts } from './contracts/virtual-consultations.contracts';
 import {
   AppointmentDirectoryLookup,
   NotificationMeetingInvitations,
@@ -24,9 +19,7 @@ import {
 import { MongooseVirtualMeetingRepository } from './infrastructure/MongooseVirtualMeetingRepository';
 import type { MeetingLinkProvider, VirtualMeetingRepository } from './model/ports';
 import { VirtualConsultationService } from './model/VirtualConsultationService';
-import { ListVirtualMeetingsPresenter } from './presenter/ListVirtualMeetingsPresenter';
-import { StartVirtualMeetingPresenter } from './presenter/StartVirtualMeetingPresenter';
-import type { VirtualConsultationPresenterFactory } from './presenter/VirtualConsultationPresenterFactory';
+import { VirtualConsultationPresenters } from './presenter/VirtualConsultationPresenters';
 import { VirtualMeetingRoutes } from './view/VirtualMeetingRoutes';
 
 export interface VirtualConsultationsModuleDependencies {
@@ -43,8 +36,8 @@ export interface VirtualConsultationsModuleDependencies {
   repository?: VirtualMeetingRepository;
 }
 
-// Composition Root, Abstract Factory
-export class VirtualConsultationsModule implements AppModule, VirtualConsultationPresenterFactory {
+// Composition Root
+export class VirtualConsultationsModule implements AppModule {
   readonly basePath = '/virtual-meetings';
   readonly #service: VirtualConsultationService;
 
@@ -67,14 +60,9 @@ export class VirtualConsultationsModule implements AppModule, VirtualConsultatio
   }
 
   createRouter(): Router {
-    return new VirtualMeetingRoutes(this, this.deps.guard).build();
-  }
-
-  startVirtualMeeting(view: View<VirtualMeetingDto>): StartVirtualMeetingPresenter {
-    return new StartVirtualMeetingPresenter(view, this.#service);
-  }
-
-  listVirtualMeetings(view: View<VirtualMeetingPageDto>): ListVirtualMeetingsPresenter {
-    return new ListVirtualMeetingsPresenter(view, this.#service);
+    return new VirtualMeetingRoutes(
+      new VirtualConsultationPresenters(this.#service),
+      this.deps.guard,
+    ).build();
   }
 }

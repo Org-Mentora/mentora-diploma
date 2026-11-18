@@ -1,7 +1,6 @@
 import { CursorCodec } from '#core/presenter/CursorCodec';
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type {
   ListVirtualMeetingsQueryDto,
   VirtualMeetingPageDto,
@@ -17,22 +16,16 @@ export interface ListVirtualMeetingsInput {
 // Presenter
 export class ListVirtualMeetingsPresenter extends Presenter<
   ListVirtualMeetingsInput,
-  VirtualMeetingPageDto
+  VirtualMeetingPageDto,
+  VirtualConsultationService
 > {
-  constructor(
-    view: View<VirtualMeetingPageDto>,
-    private readonly consultations: VirtualConsultationService,
-  ) {
-    super(view);
-  }
-
   protected async execute({
     actor,
     query,
   }: ListVirtualMeetingsInput): Promise<VirtualMeetingPageDto> {
     const page = query.appointmentId
-      ? await this.consultations.forAppointment(actor.professionalId, query.appointmentId)
-      : await this.consultations.history(
+      ? await this.model.forAppointment(actor.professionalId, query.appointmentId)
+      : await this.model.history(
           actor.professionalId,
           query.patientId ?? '',
           CursorCodec.request(query),

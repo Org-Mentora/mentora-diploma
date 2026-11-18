@@ -1,6 +1,5 @@
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type {
   AppointmentDto,
   ScheduleAppointmentRequestDto,
@@ -16,17 +15,11 @@ export interface ScheduleAppointmentInput {
 // Presenter
 export class ScheduleAppointmentPresenter extends Presenter<
   ScheduleAppointmentInput,
-  AppointmentDto
+  AppointmentDto,
+  AppointmentService
 > {
-  constructor(
-    view: View<AppointmentDto>,
-    private readonly agenda: AppointmentService,
-  ) {
-    super(view);
-  }
-
   protected async execute({ actor, data }: ScheduleAppointmentInput): Promise<AppointmentDto> {
-    const entry = await this.agenda.schedule(
+    const entry = await this.model.schedule(
       actor.professionalId,
       data.patientId,
       AppointmentViewModel.toSlot(data),

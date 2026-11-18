@@ -2,13 +2,11 @@ import type { Router } from 'express';
 import type { Clock } from '#core/model/Clock';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
-import type { View } from '#core/view/View';
-import { type HealthDto, registerHealthContracts } from './contracts/health.contracts';
+import { registerHealthContracts } from './contracts/health.contracts';
 import { ProcessUptimeSource } from './infrastructure/ProcessUptimeSource';
 import type { HealthIndicator } from './model/HealthIndicator';
-import { type HealthScope, HealthService, type UptimeSource } from './model/HealthService';
-import { GetHealthPresenter } from './presenter/GetHealthPresenter';
-import type { HealthPresenterFactory } from './presenter/HealthPresenterFactory';
+import { HealthService, type UptimeSource } from './model/HealthService';
+import { HealthPresenters } from './presenter/HealthPresenters';
 import { HealthRoutes } from './view/HealthRoutes';
 
 export interface HealthModuleDependencies {
@@ -17,8 +15,8 @@ export interface HealthModuleDependencies {
   uptime?: UptimeSource;
 }
 
-// Composition Root, Abstract Factory
-export class HealthModule implements AppModule, HealthPresenterFactory {
+// Composition Root
+export class HealthModule implements AppModule {
   readonly basePath = '/health';
   readonly #service: HealthService;
 
@@ -35,10 +33,6 @@ export class HealthModule implements AppModule, HealthPresenterFactory {
   }
 
   createRouter(): Router {
-    return new HealthRoutes(this).build();
-  }
-
-  getHealth(view: View<HealthDto>, scope?: HealthScope): GetHealthPresenter {
-    return new GetHealthPresenter(view, this.#service, scope);
+    return new HealthRoutes(new HealthPresenters(this.#service)).build();
   }
 }

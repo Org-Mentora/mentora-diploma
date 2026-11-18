@@ -1,6 +1,5 @@
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type {
   AddPaymentMethodRequestDto,
   SubscriptionDetailDto,
@@ -13,18 +12,12 @@ export type AddPaymentMethodInput = { actor: AuthenticatedActor; data: AddPaymen
 // Presenter
 export class AddPaymentMethodPresenter extends Presenter<
   AddPaymentMethodInput,
-  SubscriptionDetailDto
+  SubscriptionDetailDto,
+  SubscriptionService
 > {
-  constructor(
-    view: View<SubscriptionDetailDto>,
-    private readonly service: SubscriptionService,
-  ) {
-    super(view);
-  }
-
   protected async execute({ actor, data }: AddPaymentMethodInput): Promise<SubscriptionDetailDto> {
     return SubscriptionViewModel.toDto(
-      await this.service.addPaymentMethod(
+      await this.model.addPaymentMethod(
         actor.professionalId,
         {
           number: data.cardNumber,
@@ -35,7 +28,7 @@ export class AddPaymentMethodPresenter extends Presenter<
         },
         data.makeDefault ?? false,
       ),
-      this.service,
+      this.model,
     );
   }
 }

@@ -4,17 +4,17 @@ import type { HealthDto } from '../contracts/health.contracts';
 import type { HealthScope, HealthService } from '../model/HealthService';
 
 // Presenter
-export class GetHealthPresenter extends Presenter<void, HealthDto> {
+export class GetHealthPresenter extends Presenter<void, HealthDto, HealthService> {
   constructor(
     view: View<HealthDto>,
-    private readonly service: HealthService,
+    health: HealthService,
     private readonly scope: HealthScope = 'dependencies',
   ) {
-    super(view);
+    super(view, health);
   }
 
   protected async execute(): Promise<HealthDto> {
-    const report = await this.service.getReport(this.scope);
+    const report = await this.model.getReport(this.scope);
     return {
       status: report.status,
       uptimeSeconds: report.uptimeSeconds,

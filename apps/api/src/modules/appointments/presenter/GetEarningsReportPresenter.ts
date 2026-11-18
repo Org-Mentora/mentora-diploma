@@ -1,6 +1,5 @@
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type { EarningsQueryDto, EarningsReportDto } from '../contracts/appointments.contracts';
 import type { EarningsService } from '../model/EarningsService';
 
@@ -11,16 +10,10 @@ export interface GetEarningsReportInput extends EarningsQueryDto {
 // Presenter
 export class GetEarningsReportPresenter extends Presenter<
   GetEarningsReportInput,
-  EarningsReportDto
+  EarningsReportDto,
+  EarningsService
 > {
-  constructor(
-    view: View<EarningsReportDto>,
-    private readonly earnings: EarningsService,
-  ) {
-    super(view);
-  }
-
   protected execute({ actor, from, to }: GetEarningsReportInput): Promise<EarningsReportDto> {
-    return this.earnings.report(actor.professionalId, from, to);
+    return this.model.report(actor.professionalId, from, to);
   }
 }

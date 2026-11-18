@@ -7,26 +7,16 @@ import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AppModule } from '#core/module/AppModule';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 import type { ScheduledJob } from '#core/scheduling/ScheduledJob';
-import type { View } from '#core/view/View';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
-import {
-  type PatientDto,
-  type PatientSummaryPageDto,
-  registerPatientContracts,
-} from './contracts/patients.contracts';
+import { registerPatientContracts } from './contracts/patients.contracts';
 import { MongoosePatientRepository } from './infrastructure/MongoosePatientRepository';
 import { PatientActivity } from './model/PatientActivity';
 import { PatientDirectory } from './model/PatientDirectory';
 import { PatientIntake } from './model/PatientIntake';
 import type { PatientRepository } from './model/PatientRepository';
 import { PatientService } from './model/PatientService';
-import { ChangePatientStatusPresenter } from './presenter/ChangePatientStatusPresenter';
-import { CreatePatientPresenter } from './presenter/CreatePatientPresenter';
-import { GetPatientPresenter } from './presenter/GetPatientPresenter';
-import type { PatientPresenterFactory } from './presenter/PatientPresenterFactory';
-import { SearchPatientsPresenter } from './presenter/SearchPatientsPresenter';
-import { UpdatePatientPresenter } from './presenter/UpdatePatientPresenter';
+import { PatientPresenters } from './presenter/PatientPresenters';
 import { PatientRoutes } from './view/PatientRoutes';
 
 export interface PatientsModuleDependencies {
@@ -42,8 +32,8 @@ export interface PatientsModuleDependencies {
 
 const SIX_HOURS_MS = 6 * 60 * 60 * 1000;
 
-// Composition Root, Abstract Factory
-export class PatientsModule implements AppModule, PatientPresenterFactory {
+// Composition Root
+export class PatientsModule implements AppModule {
   readonly basePath = '/patients';
   readonly directory: PatientDirectory;
   readonly activity: PatientActivity;
@@ -69,7 +59,7 @@ export class PatientsModule implements AppModule, PatientPresenterFactory {
   }
 
   createRouter(): Router {
-    return new PatientRoutes(this, this.deps.guard).build();
+    return new PatientRoutes(new PatientPresenters(this.#service), this.deps.guard).build();
   }
 
   scheduledJobs(): ScheduledJob[] {
@@ -85,25 +75,5 @@ export class PatientsModule implements AppModule, PatientPresenterFactory {
         },
       },
     ];
-  }
-
-  createPatient(view: View<PatientDto>): CreatePatientPresenter {
-    return new CreatePatientPresenter(view, this.#service);
-  }
-
-  searchPatients(view: View<PatientSummaryPageDto>): SearchPatientsPresenter {
-    return new SearchPatientsPresenter(view, this.#service);
-  }
-
-  getPatient(view: View<PatientDto>): GetPatientPresenter {
-    return new GetPatientPresenter(view, this.#service);
-  }
-
-  updatePatient(view: View<PatientDto>): UpdatePatientPresenter {
-    return new UpdatePatientPresenter(view, this.#service);
-  }
-
-  changePatientStatus(view: View<PatientDto>): ChangePatientStatusPresenter {
-    return new ChangePatientStatusPresenter(view, this.#service);
   }
 }

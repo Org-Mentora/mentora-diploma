@@ -1,6 +1,5 @@
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
-import type { View } from '#core/view/View';
 import type { ManualPaymentRequestDto, PaymentDto } from '../contracts/subscriptions.contracts';
 import type { SubscriptionService } from '../model/SubscriptionService';
 import { SubscriptionViewModel } from './SubscriptionViewModel';
@@ -13,17 +12,11 @@ export interface RegisterManualPaymentInput {
 // Presenter
 export class RegisterManualPaymentPresenter extends Presenter<
   RegisterManualPaymentInput,
-  PaymentDto
+  PaymentDto,
+  SubscriptionService
 > {
-  constructor(
-    view: View<PaymentDto>,
-    private readonly service: SubscriptionService,
-  ) {
-    super(view);
-  }
-
   protected async execute({ actor, data }: RegisterManualPaymentInput): Promise<PaymentDto> {
-    const payment = await this.service.registerManualPayment(actor.professionalId, {
+    const payment = await this.model.registerManualPayment(actor.professionalId, {
       amount: data.amount,
       paidAt: new Date(`${data.paidAt}T12:00:00.000Z`),
       method: data.method,

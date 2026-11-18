@@ -1,26 +1,21 @@
 import { Router } from 'express';
 import { InputParser } from '#core/view/InputParser';
-import { JsonHttpView } from '#core/view/JsonHttpView';
 import { ActorReader } from '#infrastructure/http/ActorReader';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
-import { ExpressResponderAdapter } from '#infrastructure/http/ExpressResponderAdapter';
+import { HttpViews } from '#infrastructure/http/HttpViews';
 import {
-  type AppointmentDto,
   AppointmentIdParamsSchema,
-  type AppointmentPageDto,
-  type ConsultationFeesDto,
   EarningsQuerySchema,
-  type EarningsReportDto,
   ListAppointmentsQuerySchema,
   RescheduleAppointmentRequestSchema,
   ScheduleAppointmentRequestSchema,
   UpdateConsultationFeesRequestSchema,
 } from '../contracts/appointments.contracts';
-import type { AppointmentPresenterFactory } from '../presenter/AppointmentPresenterFactory';
+import type { AppointmentPresenters } from '../presenter/AppointmentPresenters';
 
 export class AppointmentRoutes {
   constructor(
-    private readonly presenters: AppointmentPresenterFactory,
+    private readonly presenters: AppointmentPresenters,
     private readonly guard: AuthGuard,
   ) {}
 
@@ -29,64 +24,56 @@ export class AppointmentRoutes {
     router.use(this.guard.requireActiveSubscription);
 
     router.get('/', async (req, res) => {
-      const view = new JsonHttpView<AppointmentPageDto>(new ExpressResponderAdapter(res));
       const range = InputParser.parse(ListAppointmentsQuerySchema, req.query);
       await this.presenters
-        .listAppointments(view)
+        .listAppointments(HttpViews.json(res))
         .present({ actor: ActorReader.from(res), ...range });
     });
 
     router.post('/', async (req, res) => {
-      const view = new JsonHttpView<AppointmentDto>(new ExpressResponderAdapter(res), 201);
       const data = InputParser.parse(ScheduleAppointmentRequestSchema, req.body);
       await this.presenters
-        .scheduleAppointment(view)
+        .scheduleAppointment(HttpViews.json(res, 201))
         .present({ actor: ActorReader.from(res), data });
     });
 
     router.get('/fees', async (_req, res) => {
-      const view = new JsonHttpView<ConsultationFeesDto>(new ExpressResponderAdapter(res));
-      await this.presenters.getConsultationFees(view).present(ActorReader.from(res));
+      await this.presenters.getConsultationFees(HttpViews.json(res)).present(ActorReader.from(res));
     });
 
     router.put('/fees', async (req, res) => {
-      const view = new JsonHttpView<ConsultationFeesDto>(new ExpressResponderAdapter(res));
       const data = InputParser.parse(UpdateConsultationFeesRequestSchema, req.body);
       await this.presenters
-        .updateConsultationFees(view)
+        .updateConsultationFees(HttpViews.json(res))
         .present({ actor: ActorReader.from(res), data });
     });
 
     router.get('/earnings', async (req, res) => {
-      const view = new JsonHttpView<EarningsReportDto>(new ExpressResponderAdapter(res));
       const query = InputParser.parse(EarningsQuerySchema, req.query);
       await this.presenters
-        .getEarningsReport(view)
+        .getEarningsReport(HttpViews.json(res))
         .present({ actor: ActorReader.from(res), ...query });
     });
 
     router.get('/:id', async (req, res) => {
-      const view = new JsonHttpView<AppointmentDto>(new ExpressResponderAdapter(res));
       const { id } = InputParser.parse(AppointmentIdParamsSchema, req.params);
       await this.presenters
-        .getAppointment(view)
+        .getAppointment(HttpViews.json(res))
         .present({ actor: ActorReader.from(res), appointmentId: id });
     });
 
     router.put('/:id', async (req, res) => {
-      const view = new JsonHttpView<AppointmentDto>(new ExpressResponderAdapter(res));
       const { id } = InputParser.parse(AppointmentIdParamsSchema, req.params);
       const data = InputParser.parse(RescheduleAppointmentRequestSchema, req.body);
       await this.presenters
-        .rescheduleAppointment(view)
+        .rescheduleAppointment(HttpViews.json(res))
         .present({ actor: ActorReader.from(res), appointmentId: id, data });
     });
 
     router.post('/:id/cancel', async (req, res) => {
-      const view = new JsonHttpView<AppointmentDto>(new ExpressResponderAdapter(res));
       const { id } = InputParser.parse(AppointmentIdParamsSchema, req.params);
       await this.presenters
-        .cancelAppointment(view)
+        .cancelAppointment(HttpViews.json(res))
         .present({ actor: ActorReader.from(res), appointmentId: id });
     });
 
