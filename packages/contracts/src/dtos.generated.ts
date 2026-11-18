@@ -354,7 +354,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** CU-18 Payment history, latest 100, newest first */
+        /** CU-18 Payment history, newest first */
         get: operations["listPayments"];
         put?: never;
         /** CU-18 Register a manual payment for the current plan */
@@ -425,7 +425,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** CU-11 Search the read-only DSM-5 catalog (max 50 results) */
+        /** CU-11 Search the read-only DSM-5 catalog by category and code */
         get: operations["searchDiagnoses"];
         put?: never;
         post?: never;
@@ -510,7 +510,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Append-only log of reads and writes of the clinical record (latest 100, newest first) */
+        /** Append-only log of reads and writes of the clinical record (newest first) */
         get: operations["getRecordAccessLog"];
         put?: never;
         post?: never;
@@ -881,8 +881,8 @@ export interface components {
         };
         AuditEventPageDto: {
             items: components["schemas"]["AuditEventDto"][];
-            /** @description Pass it as `before` to load the next (older) page; null on the last page */
-            nextBefore: string | null;
+            /** @description Pass it as `cursor` to get the next page; null on the last page */
+            nextCursor: string | null;
         };
         AuditEventDto: {
             /** Format: uuid */
@@ -960,6 +960,11 @@ export interface components {
         };
         AutoDebitRequestDto: {
             enabled: boolean;
+        };
+        PaymentPageDto: {
+            items: components["schemas"]["PaymentDto"][];
+            /** @description Pass it as `cursor` to get the next page; null on the last page */
+            nextCursor: string | null;
         };
         PaymentDto: {
             /** Format: uuid */
@@ -1043,6 +1048,11 @@ export interface components {
             allergies?: string[];
             observations?: string | null;
         };
+        PatientSummaryPageDto: {
+            items: components["schemas"]["PatientSummaryDto"][];
+            /** @description Pass it as `cursor` to get the next page; null on the last page */
+            nextCursor: string | null;
+        };
         PatientSummaryDto: {
             /** Format: uuid */
             id: string;
@@ -1058,6 +1068,11 @@ export interface components {
             /** @enum {string} */
             status: "active" | "discharged";
         };
+        DiagnosisCatalogPageDto: {
+            items: components["schemas"]["DiagnosisCatalogEntryDto"][];
+            /** @description Pass it as `cursor` to get the next page; null on the last page */
+            nextCursor: string | null;
+        };
         DiagnosisCatalogEntryDto: {
             /** @example F41.1 */
             code: string;
@@ -1066,7 +1081,7 @@ export interface components {
             /** @example Anxiety disorders */
             category: string;
         };
-        /** @description Consultations newest first (CU-08) */
+        /** @description One page of consultations, newest first (CU-08) */
         ClinicalRecordDto: {
             /** Format: uuid */
             patientId: string;
@@ -1074,7 +1089,12 @@ export interface components {
             openedAt: string;
             /** Format: date-time */
             updatedAt: string;
-            consultations: components["schemas"]["ConsultationSummaryDto"][];
+            consultations: components["schemas"]["ConsultationSummaryPageDto"];
+        };
+        ConsultationSummaryPageDto: {
+            items: components["schemas"]["ConsultationSummaryDto"][];
+            /** @description Pass it as `cursor` to get the next page; null on the last page */
+            nextCursor: string | null;
         };
         ConsultationSummaryDto: {
             /** Format: uuid */
@@ -1137,12 +1157,22 @@ export interface components {
             duration: string;
             indications?: string | null;
         };
+        DiagnosisHistoryPageDto: {
+            items: components["schemas"]["DiagnosisHistoryEntryDto"][];
+            /** @description Pass it as `cursor` to get the next page; null on the last page */
+            nextCursor: string | null;
+        };
         DiagnosisHistoryEntryDto: {
             /** Format: uuid */
             consultationId: string;
             /** Format: date-time */
             consultationDate: string;
             diagnosis: components["schemas"]["AssignedDiagnosisDto"];
+        };
+        RecordAccessPageDto: {
+            items: components["schemas"]["RecordAccessDto"][];
+            /** @description Pass it as `cursor` to get the next page; null on the last page */
+            nextCursor: string | null;
         };
         RecordAccessDto: {
             /** @enum {string} */
@@ -1151,6 +1181,11 @@ export interface components {
             consultationId: string | null;
             /** Format: date-time */
             at: string;
+        };
+        AppointmentPageDto: {
+            items: components["schemas"]["AppointmentDto"][];
+            /** @description Pass it as `cursor` to get the next page; null on the last page */
+            nextCursor: string | null;
         };
         AppointmentDto: {
             /** Format: uuid */
@@ -1252,6 +1287,11 @@ export interface components {
             /** @description Omit to use the fee configured for the type; null for no fee */
             fee?: number | null;
         };
+        NotificationPageDto: {
+            items: components["schemas"]["NotificationDto"][];
+            /** @description Pass it as `cursor` to get the next page; null on the last page */
+            nextCursor: string | null;
+        };
         NotificationDto: {
             /** Format: uuid */
             id: string;
@@ -1296,6 +1336,11 @@ export interface components {
              */
             appointmentId?: string | null;
         };
+        VirtualMeetingPageDto: {
+            items: components["schemas"]["VirtualMeetingDto"][];
+            /** @description Pass it as `cursor` to get the next page; null on the last page */
+            nextCursor: string | null;
+        };
         BookingSettingsDto: {
             slug: string;
             timezone: string;
@@ -1325,6 +1370,11 @@ export interface components {
                 end: string;
             }[];
             instructions: string | null;
+        };
+        BookingRequestPageDto: {
+            items: components["schemas"]["BookingRequestDto"][];
+            /** @description Pass it as `cursor` to get the next page; null on the last page */
+            nextCursor: string | null;
         };
         BookingRequestDto: {
             /** Format: uuid */
@@ -1449,34 +1499,44 @@ export type ChoosePlanRequestDto = components['schemas']['ChoosePlanRequestDto']
 export type AddPaymentMethodRequestDto = components['schemas']['AddPaymentMethodRequestDto'];
 export type UpdatePaymentMethodRequestDto = components['schemas']['UpdatePaymentMethodRequestDto'];
 export type AutoDebitRequestDto = components['schemas']['AutoDebitRequestDto'];
+export type PaymentPageDto = components['schemas']['PaymentPageDto'];
 export type PaymentDto = components['schemas']['PaymentDto'];
 export type ManualPaymentRequestDto = components['schemas']['ManualPaymentRequestDto'];
 export type PatientDto = components['schemas']['PatientDto'];
 export type FamilyContactDto = components['schemas']['FamilyContactDto'];
 export type PatientInputDto = components['schemas']['PatientInputDto'];
+export type PatientSummaryPageDto = components['schemas']['PatientSummaryPageDto'];
 export type PatientSummaryDto = components['schemas']['PatientSummaryDto'];
 export type ChangePatientStatusRequestDto = components['schemas']['ChangePatientStatusRequestDto'];
+export type DiagnosisCatalogPageDto = components['schemas']['DiagnosisCatalogPageDto'];
 export type DiagnosisCatalogEntryDto = components['schemas']['DiagnosisCatalogEntryDto'];
 export type ClinicalRecordDto = components['schemas']['ClinicalRecordDto'];
+export type ConsultationSummaryPageDto = components['schemas']['ConsultationSummaryPageDto'];
 export type ConsultationSummaryDto = components['schemas']['ConsultationSummaryDto'];
 export type AssignedDiagnosisDto = components['schemas']['AssignedDiagnosisDto'];
 export type ConsultationDto = components['schemas']['ConsultationDto'];
 export type MedicationDto = components['schemas']['MedicationDto'];
 export type RegisterConsultationRequestDto = components['schemas']['RegisterConsultationRequestDto'];
 export type MedicationInputDto = components['schemas']['MedicationInputDto'];
+export type DiagnosisHistoryPageDto = components['schemas']['DiagnosisHistoryPageDto'];
 export type DiagnosisHistoryEntryDto = components['schemas']['DiagnosisHistoryEntryDto'];
+export type RecordAccessPageDto = components['schemas']['RecordAccessPageDto'];
 export type RecordAccessDto = components['schemas']['RecordAccessDto'];
+export type AppointmentPageDto = components['schemas']['AppointmentPageDto'];
 export type AppointmentDto = components['schemas']['AppointmentDto'];
 export type ConsultationFeesDto = components['schemas']['ConsultationFeesDto'];
 export type UpdateConsultationFeesRequestDto = components['schemas']['UpdateConsultationFeesRequestDto'];
 export type EarningsReportDto = components['schemas']['EarningsReportDto'];
 export type ScheduleAppointmentRequestDto = components['schemas']['ScheduleAppointmentRequestDto'];
 export type RescheduleAppointmentRequestDto = components['schemas']['RescheduleAppointmentRequestDto'];
+export type NotificationPageDto = components['schemas']['NotificationPageDto'];
 export type NotificationDto = components['schemas']['NotificationDto'];
 export type VirtualMeetingDto = components['schemas']['VirtualMeetingDto'];
 export type StartVirtualMeetingRequestDto = components['schemas']['StartVirtualMeetingRequestDto'];
+export type VirtualMeetingPageDto = components['schemas']['VirtualMeetingPageDto'];
 export type BookingSettingsDto = components['schemas']['BookingSettingsDto'];
 export type UpdateBookingSettingsRequestDto = components['schemas']['UpdateBookingSettingsRequestDto'];
+export type BookingRequestPageDto = components['schemas']['BookingRequestPageDto'];
 export type BookingRequestDto = components['schemas']['BookingRequestDto'];
 export type AcceptBookingRequestDto = components['schemas']['AcceptBookingRequestDto'];
 export type RejectBookingRequestDto = components['schemas']['RejectBookingRequestDto'];
@@ -2036,13 +2096,14 @@ export interface operations {
     listAuditEvents: {
         parameters: {
             query?: {
+                /** @description Opaque cursor: the `nextCursor` of the previous page */
+                cursor?: string;
+                /** @description Page size (default 20, max 100) */
+                limit?: number;
                 /** @description session, account, patient, consultation, appointment, booking, … */
                 category?: string;
                 from?: string;
                 to?: string;
-                /** @description Cursor: the `nextBefore` of the previous page */
-                before?: string;
-                limit?: number;
             };
             header?: never;
             path?: never;
@@ -2469,7 +2530,12 @@ export interface operations {
     };
     listPayments: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Opaque cursor: the `nextCursor` of the previous page */
+                cursor?: string;
+                /** @description Page size (default 20, max 100) */
+                limit?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2482,7 +2548,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaymentDto"][];
+                    "application/json": components["schemas"]["PaymentPageDto"];
                 };
             };
             /** @description Missing or invalid session */
@@ -2559,6 +2625,10 @@ export interface operations {
     searchPatients: {
         parameters: {
             query?: {
+                /** @description Opaque cursor: the `nextCursor` of the previous page */
+                cursor?: string;
+                /** @description Page size (default 20, max 100) */
+                limit?: number;
                 /** @description Name, surname or DNI */
                 q?: string;
             };
@@ -2568,13 +2638,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Matching patients */
+            /** @description Matching patients by surname */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PatientSummaryDto"][];
+                    "application/json": components["schemas"]["PatientSummaryPageDto"];
                 };
             };
             /** @description Missing or invalid session */
@@ -2842,6 +2912,10 @@ export interface operations {
     searchDiagnoses: {
         parameters: {
             query?: {
+                /** @description Opaque cursor: the `nextCursor` of the previous page */
+                cursor?: string;
+                /** @description Page size (default 20, max 100) */
+                limit?: number;
                 /** @description Name or code fragment */
                 q?: string;
                 category?: string;
@@ -2858,7 +2932,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DiagnosisCatalogEntryDto"][];
+                    "application/json": components["schemas"]["DiagnosisCatalogPageDto"];
                 };
             };
             /** @description Missing or invalid session */
@@ -2883,7 +2957,12 @@ export interface operations {
     };
     getClinicalRecord: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Opaque cursor: the `nextCursor` of the previous page */
+                cursor?: string;
+                /** @description Page size (default 20, max 100) */
+                limit?: number;
+            };
             header?: never;
             path: {
                 patientId: string;
@@ -3044,7 +3123,12 @@ export interface operations {
     };
     getDiagnosisHistory: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Opaque cursor: the `nextCursor` of the previous page */
+                cursor?: string;
+                /** @description Page size (default 20, max 100) */
+                limit?: number;
+            };
             header?: never;
             path: {
                 patientId: string;
@@ -3059,7 +3143,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DiagnosisHistoryEntryDto"][];
+                    "application/json": components["schemas"]["DiagnosisHistoryPageDto"];
                 };
             };
             /** @description Missing or invalid session */
@@ -3093,7 +3177,12 @@ export interface operations {
     };
     getRecordAccessLog: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Opaque cursor: the `nextCursor` of the previous page */
+                cursor?: string;
+                /** @description Page size (default 20, max 100) */
+                limit?: number;
+            };
             header?: never;
             path: {
                 patientId: string;
@@ -3108,7 +3197,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["RecordAccessDto"][];
+                    "application/json": components["schemas"]["RecordAccessPageDto"];
                 };
             };
             /** @description Missing or invalid session */
@@ -3143,6 +3232,10 @@ export interface operations {
     listAppointments: {
         parameters: {
             query: {
+                /** @description Opaque cursor: the `nextCursor` of the previous page */
+                cursor?: string;
+                /** @description Page size (default 20, max 100) */
+                limit?: number;
                 /** @description Inclusive start of the range */
                 from: string;
                 /** @description Exclusive end of the range (max 62 days) */
@@ -3160,7 +3253,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AppointmentDto"][];
+                    "application/json": components["schemas"]["AppointmentPageDto"];
                 };
             };
             /** @description Invalid data */
@@ -3583,6 +3676,10 @@ export interface operations {
     listNotifications: {
         parameters: {
             query: {
+                /** @description Opaque cursor: the `nextCursor` of the previous page */
+                cursor?: string;
+                /** @description Page size (default 20, max 100) */
+                limit?: number;
                 patientId: string;
             };
             header?: never;
@@ -3597,7 +3694,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NotificationDto"][];
+                    "application/json": components["schemas"]["NotificationPageDto"];
                 };
             };
             /** @description Missing or invalid session */
@@ -3623,6 +3720,10 @@ export interface operations {
     listVirtualMeetings: {
         parameters: {
             query?: {
+                /** @description Opaque cursor: the `nextCursor` of the previous page */
+                cursor?: string;
+                /** @description Page size (default 20, max 100) */
+                limit?: number;
                 patientId?: string;
                 appointmentId?: string;
             };
@@ -3638,7 +3739,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["VirtualMeetingDto"][];
+                    "application/json": components["schemas"]["VirtualMeetingPageDto"];
                 };
             };
             /** @description Missing filter */
@@ -3831,6 +3932,10 @@ export interface operations {
     listBookingRequests: {
         parameters: {
             query?: {
+                /** @description Opaque cursor: the `nextCursor` of the previous page */
+                cursor?: string;
+                /** @description Page size (default 20, max 100) */
+                limit?: number;
                 status?: "pending" | "accepted" | "rejected" | "expired";
             };
             header?: never;
@@ -3839,13 +3944,13 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Requests */
+            /** @description Pending by start; others newest first */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["BookingRequestDto"][];
+                    "application/json": components["schemas"]["BookingRequestPageDto"];
                 };
             };
             /** @description Missing or invalid session */

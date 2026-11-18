@@ -463,17 +463,17 @@
               "$ref": "#/components/schemas/AuditEventDto"
             }
           },
-          "nextBefore": {
+          "nextCursor": {
             "type": [
               "string",
               "null"
             ],
-            "description": "Pass it as `before` to load the next (older) page; null on the last page"
+            "description": "Pass it as `cursor` to get the next page; null on the last page"
           }
         },
         "required": [
           "items",
-          "nextBefore"
+          "nextCursor"
         ]
       },
       "AuditEventDto": {
@@ -799,6 +799,28 @@
         },
         "required": [
           "enabled"
+        ]
+      },
+      "PaymentPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentDto"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass it as `cursor` to get the next page; null on the last page"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       },
       "PaymentDto": {
@@ -1178,6 +1200,28 @@
           "dni"
         ]
       },
+      "PatientSummaryPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PatientSummaryDto"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass it as `cursor` to get the next page; null on the last page"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
       "PatientSummaryDto": {
         "type": "object",
         "properties": {
@@ -1243,6 +1287,28 @@
           "status"
         ]
       },
+      "DiagnosisCatalogPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiagnosisCatalogEntryDto"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass it as `cursor` to get the next page; null on the last page"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
       "DiagnosisCatalogEntryDto": {
         "type": "object",
         "properties": {
@@ -1281,10 +1347,7 @@
             "format": "date-time"
           },
           "consultations": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ConsultationSummaryDto"
-            }
+            "$ref": "#/components/schemas/ConsultationSummaryPageDto"
           }
         },
         "required": [
@@ -1293,7 +1356,29 @@
           "updatedAt",
           "consultations"
         ],
-        "description": "Consultations newest first (CU-08)"
+        "description": "One page of consultations, newest first (CU-08)"
+      },
+      "ConsultationSummaryPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConsultationSummaryDto"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass it as `cursor` to get the next page; null on the last page"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
       },
       "ConsultationSummaryDto": {
         "type": "object",
@@ -1554,6 +1639,28 @@
           "duration"
         ]
       },
+      "DiagnosisHistoryPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiagnosisHistoryEntryDto"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass it as `cursor` to get the next page; null on the last page"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
       "DiagnosisHistoryEntryDto": {
         "type": "object",
         "properties": {
@@ -1573,6 +1680,28 @@
           "consultationId",
           "consultationDate",
           "diagnosis"
+        ]
+      },
+      "RecordAccessPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecordAccessDto"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass it as `cursor` to get the next page; null on the last page"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       },
       "RecordAccessDto": {
@@ -1603,6 +1732,28 @@
           "action",
           "consultationId",
           "at"
+        ]
+      },
+      "AppointmentPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppointmentDto"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass it as `cursor` to get the next page; null on the last page"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       },
       "AppointmentDto": {
@@ -2047,6 +2198,28 @@
           "modality"
         ]
       },
+      "NotificationPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationDto"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass it as `cursor` to get the next page; null on the last page"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ]
+      },
       "NotificationDto": {
         "type": "object",
         "properties": {
@@ -2197,6 +2370,28 @@
         },
         "required": [
           "patientId"
+        ]
+      },
+      "VirtualMeetingPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VirtualMeetingDto"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass it as `cursor` to get the next page; null on the last page"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       },
       "BookingSettingsDto": {
@@ -2361,6 +2556,28 @@
           "modalities",
           "weeklyHours",
           "instructions"
+        ]
+      },
+      "BookingRequestPageDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingRequestDto"
+            }
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Pass it as `cursor` to get the next page; null on the last page"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
         ]
       },
       "BookingRequestDto": {
@@ -3383,6 +3600,29 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 512,
+              "description": "Opaque cursor: the `nextCursor` of the previous page"
+            },
+            "required": false,
+            "description": "Opaque cursor: the `nextCursor` of the previous page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Page size (default 20, max 100)"
+            },
+            "required": false,
+            "description": "Page size (default 20, max 100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "pattern": "^[a-z_]+$",
               "description": "session, account, patient, consultation, appointment, booking, …"
             },
@@ -3407,27 +3647,6 @@
             },
             "required": false,
             "name": "to",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "pattern": "^[^_]+_[0-9a-f-]{36}$",
-              "description": "Cursor: the `nextBefore` of the previous page"
-            },
-            "required": false,
-            "description": "Cursor: the `nextBefore` of the previous page",
-            "name": "before",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 200
-            },
-            "required": false,
-            "name": "limit",
             "in": "query"
           }
         ],
@@ -3976,7 +4195,7 @@
     "/subscription/payments": {
       "get": {
         "operationId": "listPayments",
-        "summary": "CU-18 Payment history, latest 100, newest first",
+        "summary": "CU-18 Payment history, newest first",
         "tags": [
           "Subscription"
         ],
@@ -3985,16 +4204,38 @@
             "cookieAuth": []
           }
         ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512,
+              "description": "Opaque cursor: the `nextCursor` of the previous page"
+            },
+            "required": false,
+            "description": "Opaque cursor: the `nextCursor` of the previous page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Page size (default 20, max 100)"
+            },
+            "required": false,
+            "description": "Page size (default 20, max 100)",
+            "name": "limit",
+            "in": "query"
+          }
+        ],
         "responses": {
           "200": {
             "description": "Payments",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PaymentDto"
-                  }
+                  "$ref": "#/components/schemas/PaymentPageDto"
                 }
               }
             }
@@ -4175,6 +4416,29 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 512,
+              "description": "Opaque cursor: the `nextCursor` of the previous page"
+            },
+            "required": false,
+            "description": "Opaque cursor: the `nextCursor` of the previous page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Page size (default 20, max 100)"
+            },
+            "required": false,
+            "description": "Page size (default 20, max 100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "maxLength": 100,
               "description": "Name, surname or DNI"
             },
@@ -4186,14 +4450,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Matching patients",
+            "description": "Matching patients by surname",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/PatientSummaryDto"
-                  }
+                  "$ref": "#/components/schemas/PatientSummaryPageDto"
                 }
               }
             }
@@ -4471,7 +4732,7 @@
     "/diagnoses": {
       "get": {
         "operationId": "searchDiagnoses",
-        "summary": "CU-11 Search the read-only DSM-5 catalog (max 50 results)",
+        "summary": "CU-11 Search the read-only DSM-5 catalog by category and code",
         "tags": [
           "Diagnoses"
         ],
@@ -4481,6 +4742,29 @@
           }
         ],
         "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512,
+              "description": "Opaque cursor: the `nextCursor` of the previous page"
+            },
+            "required": false,
+            "description": "Opaque cursor: the `nextCursor` of the previous page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Page size (default 20, max 100)"
+            },
+            "required": false,
+            "description": "Page size (default 20, max 100)",
+            "name": "limit",
+            "in": "query"
+          },
           {
             "schema": {
               "type": "string",
@@ -4508,10 +4792,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DiagnosisCatalogEntryDto"
-                  }
+                  "$ref": "#/components/schemas/DiagnosisCatalogPageDto"
                 }
               }
             }
@@ -4560,6 +4841,29 @@
             "required": true,
             "name": "patientId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512,
+              "description": "Opaque cursor: the `nextCursor` of the previous page"
+            },
+            "required": false,
+            "description": "Opaque cursor: the `nextCursor` of the previous page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Page size (default 20, max 100)"
+            },
+            "required": false,
+            "description": "Page size (default 20, max 100)",
+            "name": "limit",
+            "in": "query"
           }
         ],
         "responses": {
@@ -4789,6 +5093,29 @@
             "required": true,
             "name": "patientId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512,
+              "description": "Opaque cursor: the `nextCursor` of the previous page"
+            },
+            "required": false,
+            "description": "Opaque cursor: the `nextCursor` of the previous page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Page size (default 20, max 100)"
+            },
+            "required": false,
+            "description": "Page size (default 20, max 100)",
+            "name": "limit",
+            "in": "query"
           }
         ],
         "responses": {
@@ -4797,10 +5124,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DiagnosisHistoryEntryDto"
-                  }
+                  "$ref": "#/components/schemas/DiagnosisHistoryPageDto"
                 }
               }
             }
@@ -4841,7 +5165,7 @@
     "/patients/{patientId}/clinical-record/access-log": {
       "get": {
         "operationId": "getRecordAccessLog",
-        "summary": "Append-only log of reads and writes of the clinical record (latest 100, newest first)",
+        "summary": "Append-only log of reads and writes of the clinical record (newest first)",
         "tags": [
           "ClinicalRecords"
         ],
@@ -4859,6 +5183,29 @@
             "required": true,
             "name": "patientId",
             "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 512,
+              "description": "Opaque cursor: the `nextCursor` of the previous page"
+            },
+            "required": false,
+            "description": "Opaque cursor: the `nextCursor` of the previous page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Page size (default 20, max 100)"
+            },
+            "required": false,
+            "description": "Page size (default 20, max 100)",
+            "name": "limit",
+            "in": "query"
           }
         ],
         "responses": {
@@ -4867,10 +5214,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/RecordAccessDto"
-                  }
+                  "$ref": "#/components/schemas/RecordAccessPageDto"
                 }
               }
             }
@@ -4924,6 +5268,29 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 512,
+              "description": "Opaque cursor: the `nextCursor` of the previous page"
+            },
+            "required": false,
+            "description": "Opaque cursor: the `nextCursor` of the previous page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Page size (default 20, max 100)"
+            },
+            "required": false,
+            "description": "Page size (default 20, max 100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "format": "date-time",
               "description": "Inclusive start of the range"
             },
@@ -4950,10 +5317,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AppointmentDto"
-                  }
+                  "$ref": "#/components/schemas/AppointmentPageDto"
                 }
               }
             }
@@ -5517,6 +5881,29 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 512,
+              "description": "Opaque cursor: the `nextCursor` of the previous page"
+            },
+            "required": false,
+            "description": "Opaque cursor: the `nextCursor` of the previous page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Page size (default 20, max 100)"
+            },
+            "required": false,
+            "description": "Page size (default 20, max 100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "format": "uuid"
             },
             "required": true,
@@ -5530,10 +5917,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/NotificationDto"
-                  }
+                  "$ref": "#/components/schemas/NotificationPageDto"
                 }
               }
             }
@@ -5660,6 +6044,29 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 512,
+              "description": "Opaque cursor: the `nextCursor` of the previous page"
+            },
+            "required": false,
+            "description": "Opaque cursor: the `nextCursor` of the previous page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Page size (default 20, max 100)"
+            },
+            "required": false,
+            "description": "Page size (default 20, max 100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "format": "uuid"
             },
             "required": false,
@@ -5682,10 +6089,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/VirtualMeetingDto"
-                  }
+                  "$ref": "#/components/schemas/VirtualMeetingPageDto"
                 }
               }
             }
@@ -5848,6 +6252,29 @@
           {
             "schema": {
               "type": "string",
+              "maxLength": 512,
+              "description": "Opaque cursor: the `nextCursor` of the previous page"
+            },
+            "required": false,
+            "description": "Opaque cursor: the `nextCursor` of the previous page",
+            "name": "cursor",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Page size (default 20, max 100)"
+            },
+            "required": false,
+            "description": "Page size (default 20, max 100)",
+            "name": "limit",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
               "enum": [
                 "pending",
                 "accepted",
@@ -5862,14 +6289,11 @@
         ],
         "responses": {
           "200": {
-            "description": "Requests",
+            "description": "Pending by start; others newest first",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/BookingRequestDto"
-                  }
+                  "$ref": "#/components/schemas/BookingRequestPageDto"
                 }
               }
             }

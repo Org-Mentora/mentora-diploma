@@ -138,11 +138,11 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/audit/events`,
           params: {
+            cursor: queryArg.cursor,
+            limit: queryArg.limit,
             category: queryArg.category,
             from: queryArg["from"],
             to: queryArg.to,
-            before: queryArg.before,
-            limit: queryArg.limit,
           },
         }),
         providesTags: ["Audit"],
@@ -215,7 +215,13 @@ const injectedRtkApi = api
         invalidatesTags: ["Subscription", "Auth"],
       }),
       listPayments: build.query<ListPaymentsApiResponse, ListPaymentsApiArg>({
-        query: () => ({ url: `/subscription/payments` }),
+        query: (queryArg) => ({
+          url: `/subscription/payments`,
+          params: {
+            cursor: queryArg.cursor,
+            limit: queryArg.limit,
+          },
+        }),
         providesTags: ["Subscription"],
       }),
       registerManualPayment: build.mutation<
@@ -247,6 +253,8 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/patients`,
           params: {
+            cursor: queryArg.cursor,
+            limit: queryArg.limit,
             q: queryArg.q,
           },
         }),
@@ -285,6 +293,8 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/diagnoses`,
           params: {
+            cursor: queryArg.cursor,
+            limit: queryArg.limit,
             q: queryArg.q,
             category: queryArg.category,
           },
@@ -297,6 +307,10 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/patients/${queryArg.patientId}/clinical-record`,
+          params: {
+            cursor: queryArg.cursor,
+            limit: queryArg.limit,
+          },
         }),
         providesTags: ["ClinicalRecords"],
       }),
@@ -326,6 +340,10 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/patients/${queryArg.patientId}/clinical-record/diagnoses`,
+          params: {
+            cursor: queryArg.cursor,
+            limit: queryArg.limit,
+          },
         }),
         providesTags: ["ClinicalRecords"],
       }),
@@ -335,6 +353,10 @@ const injectedRtkApi = api
       >({
         query: (queryArg) => ({
           url: `/patients/${queryArg.patientId}/clinical-record/access-log`,
+          params: {
+            cursor: queryArg.cursor,
+            limit: queryArg.limit,
+          },
         }),
         providesTags: ["ClinicalRecords"],
       }),
@@ -345,6 +367,8 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/appointments`,
           params: {
+            cursor: queryArg.cursor,
+            limit: queryArg.limit,
             from: queryArg["from"],
             to: queryArg.to,
           },
@@ -428,6 +452,8 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/notifications`,
           params: {
+            cursor: queryArg.cursor,
+            limit: queryArg.limit,
             patientId: queryArg.patientId,
           },
         }),
@@ -451,6 +477,8 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/virtual-meetings`,
           params: {
+            cursor: queryArg.cursor,
+            limit: queryArg.limit,
             patientId: queryArg.patientId,
             appointmentId: queryArg.appointmentId,
           },
@@ -482,6 +510,8 @@ const injectedRtkApi = api
         query: (queryArg) => ({
           url: `/booking/requests`,
           params: {
+            cursor: queryArg.cursor,
+            limit: queryArg.limit,
             status: queryArg.status,
           },
         }),
@@ -600,13 +630,14 @@ export type RemoveLogoApiArg = void;
 export type ListAuditEventsApiResponse =
   /** status 200 One page of audit events */ AuditEventPageDto;
 export type ListAuditEventsApiArg = {
+  /** Opaque cursor: the `nextCursor` of the previous page */
+  cursor?: string;
+  /** Page size (default 20, max 100) */
+  limit?: number;
   /** session, account, patient, consultation, appointment, booking, … */
   category?: string;
   from?: string;
   to?: string;
-  /** Cursor: the `nextBefore` of the previous page */
-  before?: string;
-  limit?: number;
 };
 export type GetSubscriptionApiResponse =
   /** status 200 Subscription */ SubscriptionDetailDto;
@@ -642,8 +673,13 @@ export type SetAutoDebitApiArg = {
 export type CancelSubscriptionApiResponse =
   /** status 200 Subscription cancelled */ SubscriptionDetailDto;
 export type CancelSubscriptionApiArg = void;
-export type ListPaymentsApiResponse = /** status 200 Payments */ PaymentDto[];
-export type ListPaymentsApiArg = void;
+export type ListPaymentsApiResponse = /** status 200 Payments */ PaymentPageDto;
+export type ListPaymentsApiArg = {
+  /** Opaque cursor: the `nextCursor` of the previous page */
+  cursor?: string;
+  /** Page size (default 20, max 100) */
+  limit?: number;
+};
 export type RegisterManualPaymentApiResponse =
   /** status 201 Payment registered */ PaymentDto;
 export type RegisterManualPaymentApiArg = {
@@ -655,8 +691,12 @@ export type CreatePatientApiArg = {
   patientInputDto: PatientInputDto;
 };
 export type SearchPatientsApiResponse =
-  /** status 200 Matching patients */ PatientSummaryDto[];
+  /** status 200 Matching patients by surname */ PatientSummaryPageDto;
 export type SearchPatientsApiArg = {
+  /** Opaque cursor: the `nextCursor` of the previous page */
+  cursor?: string;
+  /** Page size (default 20, max 100) */
+  limit?: number;
   /** Name, surname or DNI */
   q?: string;
 };
@@ -677,8 +717,12 @@ export type ChangePatientStatusApiArg = {
   changePatientStatusRequestDto: ChangePatientStatusRequestDto;
 };
 export type SearchDiagnosesApiResponse =
-  /** status 200 Matching diagnoses */ DiagnosisCatalogEntryDto[];
+  /** status 200 Matching diagnoses */ DiagnosisCatalogPageDto;
 export type SearchDiagnosesApiArg = {
+  /** Opaque cursor: the `nextCursor` of the previous page */
+  cursor?: string;
+  /** Page size (default 20, max 100) */
+  limit?: number;
   /** Name or code fragment */
   q?: string;
   category?: string;
@@ -687,6 +731,10 @@ export type GetClinicalRecordApiResponse =
   /** status 200 Clinical record */ ClinicalRecordDto;
 export type GetClinicalRecordApiArg = {
   patientId: string;
+  /** Opaque cursor: the `nextCursor` of the previous page */
+  cursor?: string;
+  /** Page size (default 20, max 100) */
+  limit?: number;
 };
 export type RegisterConsultationApiResponse =
   /** status 201 Consultation registered */ ConsultationDto;
@@ -701,18 +749,30 @@ export type GetConsultationApiArg = {
   consultationId: string;
 };
 export type GetDiagnosisHistoryApiResponse =
-  /** status 200 Diagnosis history */ DiagnosisHistoryEntryDto[];
+  /** status 200 Diagnosis history */ DiagnosisHistoryPageDto;
 export type GetDiagnosisHistoryApiArg = {
   patientId: string;
+  /** Opaque cursor: the `nextCursor` of the previous page */
+  cursor?: string;
+  /** Page size (default 20, max 100) */
+  limit?: number;
 };
 export type GetRecordAccessLogApiResponse =
-  /** status 200 Access log */ RecordAccessDto[];
+  /** status 200 Access log */ RecordAccessPageDto;
 export type GetRecordAccessLogApiArg = {
   patientId: string;
+  /** Opaque cursor: the `nextCursor` of the previous page */
+  cursor?: string;
+  /** Page size (default 20, max 100) */
+  limit?: number;
 };
 export type ListAppointmentsApiResponse =
-  /** status 200 Appointments ordered by start */ AppointmentDto[];
+  /** status 200 Appointments ordered by start */ AppointmentPageDto;
 export type ListAppointmentsApiArg = {
+  /** Opaque cursor: the `nextCursor` of the previous page */
+  cursor?: string;
+  /** Page size (default 20, max 100) */
+  limit?: number;
   /** Inclusive start of the range */
   from: string;
   /** Exclusive end of the range (max 62 days) */
@@ -756,8 +816,12 @@ export type CancelAppointmentApiArg = {
   id: string;
 };
 export type ListNotificationsApiResponse =
-  /** status 200 Newest first */ NotificationDto[];
+  /** status 200 Newest first */ NotificationPageDto;
 export type ListNotificationsApiArg = {
+  /** Opaque cursor: the `nextCursor` of the previous page */
+  cursor?: string;
+  /** Page size (default 20, max 100) */
+  limit?: number;
   patientId: string;
 };
 export type StartVirtualMeetingApiResponse =
@@ -766,8 +830,12 @@ export type StartVirtualMeetingApiArg = {
   startVirtualMeetingRequestDto: StartVirtualMeetingRequestDto;
 };
 export type ListVirtualMeetingsApiResponse =
-  /** status 200 Newest first */ VirtualMeetingDto[];
+  /** status 200 Newest first */ VirtualMeetingPageDto;
 export type ListVirtualMeetingsApiArg = {
+  /** Opaque cursor: the `nextCursor` of the previous page */
+  cursor?: string;
+  /** Page size (default 20, max 100) */
+  limit?: number;
   patientId?: string;
   appointmentId?: string;
 };
@@ -780,8 +848,12 @@ export type UpdateBookingSettingsApiArg = {
   updateBookingSettingsRequestDto: UpdateBookingSettingsRequestDto;
 };
 export type ListBookingRequestsApiResponse =
-  /** status 200 Requests */ BookingRequestDto[];
+  /** status 200 Pending by start; others newest first */ BookingRequestPageDto;
 export type ListBookingRequestsApiArg = {
+  /** Opaque cursor: the `nextCursor` of the previous page */
+  cursor?: string;
+  /** Page size (default 20, max 100) */
+  limit?: number;
   status?: "pending" | "accepted" | "rejected" | "expired";
 };
 export type AcceptBookingRequestApiResponse =
@@ -930,8 +1002,8 @@ export type AuditEventDto = {
 };
 export type AuditEventPageDto = {
   items: AuditEventDto[];
-  /** Pass it as `before` to load the next (older) page; null on the last page */
-  nextBefore: string | null;
+  /** Pass it as `cursor` to get the next page; null on the last page */
+  nextCursor: string | null;
 };
 export type PlanDto = {
   id: "monthly" | "annual";
@@ -1000,6 +1072,11 @@ export type PaymentDto = {
   failureReason: string | null;
   paidAt: string;
 };
+export type PaymentPageDto = {
+  items: PaymentDto[];
+  /** Pass it as `cursor` to get the next page; null on the last page */
+  nextCursor: string | null;
+};
 export type ManualPaymentRequestDto = {
   amount: number;
   /** Day the payment was made */
@@ -1060,6 +1137,11 @@ export type PatientSummaryDto = {
   healthInsurance: string | null;
   status: "active" | "discharged" | "inactive";
 };
+export type PatientSummaryPageDto = {
+  items: PatientSummaryDto[];
+  /** Pass it as `cursor` to get the next page; null on the last page */
+  nextCursor: string | null;
+};
 export type ChangePatientStatusRequestDto = {
   status: "active" | "discharged";
 };
@@ -1067,6 +1149,11 @@ export type DiagnosisCatalogEntryDto = {
   code: string;
   name: string;
   category: string;
+};
+export type DiagnosisCatalogPageDto = {
+  items: DiagnosisCatalogEntryDto[];
+  /** Pass it as `cursor` to get the next page; null on the last page */
+  nextCursor: string | null;
 };
 export type AssignedDiagnosisDto = {
   code: string;
@@ -1081,11 +1168,16 @@ export type ConsultationSummaryDto = {
   diagnosis: AssignedDiagnosisDto | null;
   medicationCount: number;
 };
+export type ConsultationSummaryPageDto = {
+  items: ConsultationSummaryDto[];
+  /** Pass it as `cursor` to get the next page; null on the last page */
+  nextCursor: string | null;
+};
 export type ClinicalRecordDto = {
   patientId: string;
   openedAt: string;
   updatedAt: string;
-  consultations: ConsultationSummaryDto[];
+  consultations: ConsultationSummaryPageDto;
 };
 export type MedicationDto = {
   name: string;
@@ -1127,6 +1219,11 @@ export type DiagnosisHistoryEntryDto = {
   consultationDate: string;
   diagnosis: AssignedDiagnosisDto;
 };
+export type DiagnosisHistoryPageDto = {
+  items: DiagnosisHistoryEntryDto[];
+  /** Pass it as `cursor` to get the next page; null on the last page */
+  nextCursor: string | null;
+};
 export type RecordAccessDto = {
   action:
     | "view_record"
@@ -1135,6 +1232,11 @@ export type RecordAccessDto = {
     | "register_consultation";
   consultationId: string | null;
   at: string;
+};
+export type RecordAccessPageDto = {
+  items: RecordAccessDto[];
+  /** Pass it as `cursor` to get the next page; null on the last page */
+  nextCursor: string | null;
 };
 export type AppointmentDto = {
   id: string;
@@ -1152,6 +1254,11 @@ export type AppointmentDto = {
   /** `online`: requested by the patient */
   source: "agenda" | "online";
   cancelledAt: string | null;
+};
+export type AppointmentPageDto = {
+  items: AppointmentDto[];
+  /** Pass it as `cursor` to get the next page; null on the last page */
+  nextCursor: string | null;
 };
 export type ScheduleAppointmentRequestDto = {
   patientId: string;
@@ -1233,6 +1340,11 @@ export type NotificationDto = {
   error: string | null;
   createdAt: string;
 };
+export type NotificationPageDto = {
+  items: NotificationDto[];
+  /** Pass it as `cursor` to get the next page; null on the last page */
+  nextCursor: string | null;
+};
 export type VirtualMeetingDto = {
   id: string;
   patientId: string;
@@ -1247,6 +1359,11 @@ export type StartVirtualMeetingRequestDto = {
   patientId: string;
   /** Virtual appointment the call belongs to; omit from the patient file */
   appointmentId?: string | null;
+};
+export type VirtualMeetingPageDto = {
+  items: VirtualMeetingDto[];
+  /** Pass it as `cursor` to get the next page; null on the last page */
+  nextCursor: string | null;
 };
 export type BookingSettingsDto = {
   slug: string;
@@ -1300,6 +1417,11 @@ export type BookingRequestDto = {
   rejectionReason: string | null;
   createdAt: string;
   decidedAt: string | null;
+};
+export type BookingRequestPageDto = {
+  items: BookingRequestDto[];
+  /** Pass it as `cursor` to get the next page; null on the last page */
+  nextCursor: string | null;
 };
 export type AcceptBookingRequestDto = {
   type: "first_visit" | "control" | "follow_up" | "medication" | "other";
