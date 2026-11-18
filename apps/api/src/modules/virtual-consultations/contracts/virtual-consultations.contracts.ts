@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
+import { errorResponse } from '#core/contracts/ErrorResponse';
 import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
-import type { ContractRegistry } from '#core/module/ContractRegistry';
+import { type ContractRegistry, moduleRoutes } from '#core/module/ContractRegistry';
 
 export const VirtualMeetingSchema = z
   .object({
@@ -43,31 +43,28 @@ export type ListVirtualMeetingsQueryDto = z.infer<typeof ListVirtualMeetingsQuer
 
 export function registerVirtualConsultationContracts(registry: ContractRegistry): void {
   const tags = ['VirtualConsultations'];
-  registry.registerRoute({
+  const route = moduleRoutes(registry, { tags, auth: true });
+  route({
     method: 'post',
     path: '/virtual-meetings',
     operationId: 'startVirtualMeeting',
     summary: 'CU-15 Create the video call link and send it to the patient',
-    tags,
-    auth: true,
     request: { body: StartVirtualMeetingRequestSchema },
     responses: {
       201: {
         description: 'Meeting created (or the existing one of the appointment)',
         schema: VirtualMeetingSchema,
       },
-      400: { description: 'Not a scheduled virtual appointment', schema: ErrorResponseSchema },
-      404: { description: 'Patient or appointment not found', schema: ErrorResponseSchema },
-      503: { description: 'The video platform is not available', schema: ErrorResponseSchema },
+      400: errorResponse('Not a scheduled virtual appointment'),
+      404: errorResponse('Patient or appointment not found'),
+      503: errorResponse('The video platform is not available'),
     },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/virtual-meetings',
     operationId: 'listVirtualMeetings',
     summary: "CU-15 A patient's virtual meeting history, or the meeting of an appointment",
-    tags,
-    auth: true,
     request: {
       query: PageQuerySchema.extend({
         patientId: z.uuid().optional(),
@@ -76,7 +73,7 @@ export function registerVirtualConsultationContracts(registry: ContractRegistry)
     },
     responses: {
       200: { description: 'Newest first', schema: VirtualMeetingPageSchema },
-      400: { description: 'Missing filter', schema: ErrorResponseSchema },
+      400: errorResponse('Missing filter'),
     },
   });
 }

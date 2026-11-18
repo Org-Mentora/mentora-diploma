@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
+import { errorResponse } from '#core/contracts/ErrorResponse';
 import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
-import type { ContractRegistry } from '#core/module/ContractRegistry';
+import { type ContractRegistry, moduleRoutes } from '#core/module/ContractRegistry';
 
 export const AuditEventSchema = z
   .object({
@@ -35,17 +35,17 @@ export type AuditEventPageDto = z.infer<typeof AuditEventPageSchema>;
 export type ListAuditEventsQueryDto = z.infer<typeof ListAuditEventsQuerySchema>;
 
 export function registerAuditContracts(registry: ContractRegistry): void {
-  registry.registerRoute({
+  const route = moduleRoutes(registry, { tags: ['Audit'], auth: true });
+
+  route({
     method: 'get',
     path: '/audit/events',
     operationId: 'listAuditEvents',
     summary: 'User audit trail: what was done in the account, when and from where (newest first)',
-    tags: ['Audit'],
-    auth: true,
     request: { query: ListAuditEventsQuerySchema },
     responses: {
       200: { description: 'One page of audit events', schema: AuditEventPageSchema },
-      400: { description: 'Invalid filter', schema: ErrorResponseSchema },
+      400: errorResponse('Invalid filter'),
     },
   });
 }

@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
-import type { ContractRegistry } from '#core/module/ContractRegistry';
+import { errorResponse } from '#core/contracts/ErrorResponse';
+import { type ContractRegistry, moduleRoutes } from '#core/module/ContractRegistry';
 
 export const ComponentHealthSchema = z
   .object({
@@ -24,31 +24,30 @@ export type ComponentHealthDto = z.infer<typeof ComponentHealthSchema>;
 export type HealthDto = z.infer<typeof HealthSchema>;
 
 export function registerHealthContracts(registry: ContractRegistry): void {
-  registry.registerRoute({
+  const route = moduleRoutes(registry, { tags: ['Health'] });
+
+  route({
     method: 'get',
     path: '/health',
     operationId: 'getHealth',
     summary: 'Report service and dependency health',
-    tags: ['Health'],
     responses: {
       200: { description: 'Health report', schema: HealthSchema },
-      500: { description: 'Unexpected error', schema: ErrorResponseSchema },
+      500: errorResponse('Unexpected error'),
     },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/health/live',
     operationId: 'getLiveness',
     summary: 'Liveness probe: the process answers (no dependency checks)',
-    tags: ['Health'],
     responses: { 200: { description: 'The process is alive', schema: HealthSchema } },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/health/ready',
     operationId: 'getReadiness',
     summary: 'Readiness probe: 503 while a dependency (MongoDB) is down',
-    tags: ['Health'],
     responses: {
       200: { description: 'Ready to serve traffic', schema: HealthSchema },
       503: { description: 'A dependency is down', schema: HealthSchema },

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
-import type { ContractRegistry } from '#core/module/ContractRegistry';
+import { type ContractRegistry, moduleRoutes } from '#core/module/ContractRegistry';
 
 export const DiagnosisCatalogEntrySchema = z
   .object({
@@ -24,13 +24,13 @@ export type DiagnosisCatalogEntryDto = z.infer<typeof DiagnosisCatalogEntrySchem
 export type DiagnosisCatalogPageDto = z.infer<typeof DiagnosisCatalogPageSchema>;
 
 export function registerDiagnosisCatalogContracts(registry: ContractRegistry): void {
-  registry.registerRoute({
+  const route = moduleRoutes(registry, { tags: ['Diagnoses'], auth: true });
+
+  route({
     method: 'get',
     path: '/diagnoses',
     operationId: 'searchDiagnoses',
     summary: 'CU-11 Search the read-only DSM-5 catalog by category and code',
-    tags: ['Diagnoses'],
-    auth: true,
     request: { query: SearchDiagnosesQuerySchema },
     responses: {
       200: { description: 'Matching diagnoses', schema: DiagnosisCatalogPageSchema },

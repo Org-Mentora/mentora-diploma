@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
-import type { ContractRegistry } from '#core/module/ContractRegistry';
+import { type ContractRegistry, moduleRoutes } from '#core/module/ContractRegistry';
 
 export const NotificationSchema = z
   .object({
@@ -31,13 +31,13 @@ export type NotificationDto = z.infer<typeof NotificationSchema>;
 export type NotificationPageDto = z.infer<typeof NotificationPageSchema>;
 
 export function registerNotificationContracts(registry: ContractRegistry): void {
-  registry.registerRoute({
+  const route = moduleRoutes(registry, { tags: ['Notifications'], auth: true });
+
+  route({
     method: 'get',
     path: '/notifications',
     operationId: 'listNotifications',
     summary: 'CU-14 WhatsApp and email messages sent to a patient and their delivery result',
-    tags: ['Notifications'],
-    auth: true,
     request: { query: ListNotificationsQuerySchema },
     responses: {
       200: { description: 'Newest first', schema: NotificationPageSchema },

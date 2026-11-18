@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
+import { errorResponse } from '#core/contracts/ErrorResponse';
 import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
-import type { ContractRegistry } from '#core/module/ContractRegistry';
+import { type ContractRegistry, moduleRoutes } from '#core/module/ContractRegistry';
 
 const ModalitySchema = z.enum(['in_person', 'virtual']);
 const TimeSchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
@@ -150,38 +150,33 @@ export type BookingRequestStatusDto = z.infer<typeof BookingRequestStatusSchema>
 
 export function registerBookingContracts(registry: ContractRegistry): void {
   const tags = ['Online booking'];
-  const invalid = { description: 'Invalid data', schema: ErrorResponseSchema };
-  const notFound = { description: 'Not found', schema: ErrorResponseSchema };
-  const conflict = {
-    description: 'Time taken or request already decided',
-    schema: ErrorResponseSchema,
-  };
+  const route = moduleRoutes(registry, { tags });
+  const invalid = errorResponse('Invalid data');
+  const notFound = errorResponse('Not found');
+  const conflict = errorResponse('Time taken or request already decided');
 
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/booking/settings',
     operationId: 'getBookingSettings',
     summary: 'Online booking settings and public link of the professional',
-    tags,
     auth: true,
     responses: { 200: { description: 'Settings', schema: BookingSettingsSchema } },
   });
-  registry.registerRoute({
+  route({
     method: 'put',
     path: '/booking/settings',
     operationId: 'updateBookingSettings',
     summary: 'Enable online booking and set office hours, slot length and notice',
-    tags,
     auth: true,
     request: { body: UpdateBookingSettingsRequestSchema },
     responses: { 200: { description: 'Saved', schema: BookingSettingsSchema }, 400: invalid },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/booking/requests',
     operationId: 'listBookingRequests',
     summary: 'Appointment requests sent by patients (pending first by date)',
-    tags,
     auth: true,
     request: { query: ListBookingRequestsQuerySchema },
     responses: {
@@ -191,7 +186,7 @@ export function registerBookingContracts(registry: ContractRegistry): void {
       },
     },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/booking/requests/{id}/accept',
     operationId: 'acceptBookingRequest',
@@ -206,12 +201,11 @@ export function registerBookingContracts(registry: ContractRegistry): void {
       409: conflict,
     },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/booking/requests/{id}/reject',
     operationId: 'rejectBookingRequest',
     summary: 'Reject a request (the patient is told by email when possible)',
-    tags,
     auth: true,
     request: { params: RequestIdParamsSchema, body: RejectBookingRequestSchema },
     responses: {
@@ -220,21 +214,19 @@ export function registerBookingContracts(registry: ContractRegistry): void {
       409: conflict,
     },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/booking/public/{slug}',
     operationId: 'getPublicBookingPage',
     summary: 'Public: booking page of a professional',
-    tags,
     request: { params: SlugParamsSchema },
     responses: { 200: { description: 'Page', schema: PublicBookingPageSchema }, 404: notFound },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/booking/public/{slug}/slots',
     operationId: 'getAvailableSlots',
     summary: 'Public: free slots per day',
-    tags,
     request: { params: SlugParamsSchema, query: AvailableSlotsQuerySchema },
     responses: {
       200: { description: 'Free slots', schema: AvailableSlotsSchema },
@@ -242,19 +234,18 @@ export function registerBookingContracts(registry: ContractRegistry): void {
       404: notFound,
     },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/booking/public/{slug}/requests',
     operationId: 'createBookingRequest',
     summary: 'Public: a patient asks for an appointment; the professional accepts or rejects it',
-    tags,
     request: { params: SlugParamsSchema, body: CreateBookingRequestSchema },
     responses: {
       201: { description: 'Request received', schema: BookingReceiptSchema },
       400: invalid,
       404: notFound,
       409: conflict,
-      429: { description: 'Too many requests', schema: ErrorResponseSchema },
+      429: errorResponse('Too many requests'),
     },
   });
 }

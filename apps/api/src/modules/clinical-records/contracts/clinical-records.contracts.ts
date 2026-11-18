@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
+import { errorResponse } from '#core/contracts/ErrorResponse';
 import { nullableRef } from '#core/contracts/nullableRef';
 import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
-import type { ContractRegistry } from '#core/module/ContractRegistry';
+import { type ContractRegistry, moduleRoutes } from '#core/module/ContractRegistry';
 
 const ConsultationTypeSchema = z.enum(['in_person', 'virtual']);
 
@@ -129,69 +129,57 @@ export type RegisterConsultationRequestDto = z.infer<typeof RegisterConsultation
 
 export function registerClinicalRecordContracts(registry: ContractRegistry): void {
   const tags = ['ClinicalRecords'];
-  const notFound = {
-    description: 'Patient or consultation not found',
-    schema: ErrorResponseSchema,
-  };
+  const route = moduleRoutes(registry, { tags, auth: true });
+  const notFound = errorResponse('Patient or consultation not found');
 
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/patients/{patientId}/clinical-record',
     operationId: 'getClinicalRecord',
     summary: 'CU-08 Clinical record of a patient (consultations newest first)',
-    tags,
-    auth: true,
     request: { params: PatientRecordParamsSchema, query: PageQuerySchema },
     responses: {
       200: { description: 'Clinical record', schema: ClinicalRecordSchema },
       404: notFound,
     },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/patients/{patientId}/clinical-record/consultations',
     operationId: 'registerConsultation',
     summary:
       'CU-09 Register a consultation with evolution, diagnosis (CU-11) and medication (CU-12)',
-    tags,
-    auth: true,
     request: { params: PatientRecordParamsSchema, body: RegisterConsultationRequestSchema },
     responses: {
       201: { description: 'Consultation registered', schema: ConsultationSchema },
-      400: { description: 'Invalid data or unknown diagnosis code', schema: ErrorResponseSchema },
+      400: errorResponse('Invalid data or unknown diagnosis code'),
       404: notFound,
     },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/patients/{patientId}/clinical-record/consultations/{consultationId}',
     operationId: 'getConsultation',
     summary: 'CU-08 Detail of one consultation',
-    tags,
-    auth: true,
     request: { params: ConsultationParamsSchema },
     responses: { 200: { description: 'Consultation', schema: ConsultationSchema }, 404: notFound },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/patients/{patientId}/clinical-record/diagnoses',
     operationId: 'getDiagnosisHistory',
     summary: 'CU-11 Diagnosis history of a patient (newest first)',
-    tags,
-    auth: true,
     request: { params: PatientRecordParamsSchema, query: PageQuerySchema },
     responses: {
       200: { description: 'Diagnosis history', schema: DiagnosisHistoryPageSchema },
       404: notFound,
     },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/patients/{patientId}/clinical-record/access-log',
     operationId: 'getRecordAccessLog',
     summary: 'Append-only log of reads and writes of the clinical record (newest first)',
-    tags,
-    auth: true,
     request: { params: PatientRecordParamsSchema, query: PageQuerySchema },
     responses: {
       200: { description: 'Access log', schema: RecordAccessPageSchema },

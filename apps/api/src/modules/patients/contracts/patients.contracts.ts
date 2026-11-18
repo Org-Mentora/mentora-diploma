@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
+import { errorResponse } from '#core/contracts/ErrorResponse';
 import { nullableRef } from '#core/contracts/nullableRef';
 import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
-import type { ContractRegistry } from '#core/module/ContractRegistry';
+import { type ContractRegistry, moduleRoutes } from '#core/module/ContractRegistry';
 
 export const PatientStatusSchema = z.enum(['active', 'discharged', 'inactive']);
 
@@ -89,67 +89,58 @@ export type ChangePatientStatusDto = z.infer<typeof ChangePatientStatusSchema>;
 
 export function registerPatientContracts(registry: ContractRegistry): void {
   const tags = ['Patients'];
-  const notFound = { description: 'Patient not found', schema: ErrorResponseSchema };
-  const invalid = { description: 'Invalid data', schema: ErrorResponseSchema };
+  const route = moduleRoutes(registry, { tags, auth: true });
+  const notFound = errorResponse('Patient not found');
+  const invalid = errorResponse('Invalid data');
 
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/patients',
     operationId: 'createPatient',
     summary: 'CU-04 Register a patient',
-    tags,
-    auth: true,
     request: { body: PatientInputSchema },
     responses: {
       201: { description: 'Patient registered', schema: PatientSchema },
       400: invalid,
-      409: { description: 'DNI already registered', schema: ErrorResponseSchema },
+      409: errorResponse('DNI already registered'),
     },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/patients',
     operationId: 'searchPatients',
     summary: 'CU-05 Search patients by name, surname or DNI (all when q is empty)',
-    tags,
-    auth: true,
     request: { query: SearchPatientsQuerySchema },
     responses: {
       200: { description: 'Matching patients by surname', schema: PatientSummaryPageSchema },
     },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/patients/{id}',
     operationId: 'getPatient',
     summary: 'Patient profile',
-    tags,
-    auth: true,
     request: { params: PatientIdParamsSchema },
     responses: { 200: { description: 'Patient', schema: PatientSchema }, 404: notFound },
   });
-  registry.registerRoute({
+  route({
     method: 'put',
     path: '/patients/{id}',
     operationId: 'updatePatient',
     summary: 'CU-06 Update patient data',
-    tags,
-    auth: true,
     request: { params: PatientIdParamsSchema, body: PatientInputSchema },
     responses: {
       200: { description: 'Patient updated', schema: PatientSchema },
       400: invalid,
       404: notFound,
-      409: { description: 'DNI already registered', schema: ErrorResponseSchema },
+      409: errorResponse('DNI already registered'),
     },
   });
-  registry.registerRoute({
+  route({
     method: 'patch',
     path: '/patients/{id}/status',
     operationId: 'changePatientStatus',
     summary: 'CU-07 Discharge or reactivate a patient',
-    tags,
-    auth: true,
     request: { params: PatientIdParamsSchema, body: ChangePatientStatusSchema },
     responses: {
       200: { description: 'Status changed', schema: PatientSchema },

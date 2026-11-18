@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
-import type { ContractRegistry } from '#core/module/ContractRegistry';
+import { errorResponse } from '#core/contracts/ErrorResponse';
+import { type ContractRegistry, moduleRoutes } from '#core/module/ContractRegistry';
 
 export const ProfessionalSchema = z
   .object({
@@ -118,137 +118,120 @@ export type UploadLogoRequestDto = z.infer<typeof UploadLogoRequestSchema>;
 
 export function registerAuthContracts(registry: ContractRegistry): void {
   const tags = ['Auth'];
-  const invalid = { description: 'Invalid data', schema: ErrorResponseSchema };
+  const route = moduleRoutes(registry, { tags });
+  const invalid = errorResponse('Invalid data');
   const session = (description: string) => ({ description, schema: SessionSchema });
 
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/auth/register',
     operationId: 'registerProfessional',
     summary: 'CU-03 Register a professional and start the free trial (sets the session cookie)',
-    tags,
     request: { body: RegisterProfessionalRequestSchema },
     responses: {
       201: session('Account created and logged in'),
-      400: { description: 'Invalid data or weak password', schema: ErrorResponseSchema },
-      409: {
-        description: 'Email or license number already registered',
-        schema: ErrorResponseSchema,
-      },
+      400: errorResponse('Invalid data or weak password'),
+      409: errorResponse('Email or license number already registered'),
     },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/auth/login',
     operationId: 'login',
     summary: 'CU-01 Log in with email and password (sets the session cookie)',
-    tags,
     request: { body: LoginRequestSchema },
     responses: {
       200: session('Logged in'),
-      400: { description: 'Missing fields', schema: ErrorResponseSchema },
-      401: { description: 'Invalid email or password', schema: ErrorResponseSchema },
+      400: errorResponse('Missing fields'),
+      401: errorResponse('Invalid email or password'),
     },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/auth/logout',
     operationId: 'logout',
     summary: 'Close the session (clears the session cookie)',
-    tags,
     responses: { 204: { description: 'Logged out' } },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/auth/me',
     operationId: 'getCurrentProfessional',
     summary: 'Current session; refreshes the cookie with the current access',
-    tags,
     auth: true,
     responses: { 200: session('Current session') },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/auth/password-recovery',
     operationId: 'requestPasswordRecovery',
     summary: 'CU-02 Email a recovery code (same answer whether the email exists or not)',
-    tags,
     request: { body: PasswordRecoveryRequestSchema },
     responses: {
       202: { description: 'Code sent if the account exists', schema: RecoveryRequestedSchema },
       400: invalid,
     },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/auth/password-recovery/verify',
     operationId: 'verifyRecoveryCode',
     summary: 'CU-02 Check a recovery code before asking for the new password',
-    tags,
     request: { body: VerifyRecoveryCodeRequestSchema },
     responses: { 204: { description: 'Valid code' }, 400: invalid },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/auth/password-recovery/reset',
     operationId: 'resetPassword',
     summary: 'CU-02 Set a new password with a valid recovery code',
-    tags,
     request: { body: ResetPasswordRequestSchema },
     responses: { 204: { description: 'Password changed' }, 400: invalid },
   });
-  registry.registerRoute({
+  route({
     method: 'put',
     path: '/auth/password',
     operationId: 'changePassword',
     summary: 'CU-17 Change the password (requires the current one)',
-    tags,
     auth: true,
     request: { body: ChangePasswordRequestSchema },
     responses: { 200: session('Password changed; the session cookie is re-issued'), 400: invalid },
   });
-  registry.registerRoute({
+  route({
     method: 'put',
     path: '/auth/profile',
     operationId: 'updateProfile',
     summary: 'CU-16 Update the professional data and offices',
-    tags,
     auth: true,
     request: { body: UpdateProfileRequestSchema },
     responses: {
       200: session('Profile updated'),
       400: invalid,
-      409: {
-        description: 'Email or license number already registered',
-        schema: ErrorResponseSchema,
-      },
+      409: errorResponse('Email or license number already registered'),
     },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/auth/logo',
     operationId: 'getLogo',
     summary: 'CU-13/CU-16 The professional logo used on prescriptions',
-    tags,
     auth: true,
     responses: { 200: { description: 'Logo', schema: LogoSchema } },
   });
-  registry.registerRoute({
+  route({
     method: 'put',
     path: '/auth/logo',
     operationId: 'uploadLogo',
     summary: 'CU-16 Upload or replace the logo (PNG or JPEG, up to 512 KB)',
-    tags,
     auth: true,
     request: { body: UploadLogoRequestSchema },
     responses: { 204: { description: 'Logo saved' }, 400: invalid },
   });
-  registry.registerRoute({
+  route({
     method: 'delete',
     path: '/auth/logo',
     operationId: 'removeLogo',
     summary: 'CU-16 Remove the logo (prescriptions use the default one)',
-    tags,
     auth: true,
     responses: { 204: { description: 'Logo removed' } },
   });

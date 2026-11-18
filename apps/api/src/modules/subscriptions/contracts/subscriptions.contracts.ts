@@ -1,8 +1,8 @@
 import { z } from 'zod';
-import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
+import { errorResponse } from '#core/contracts/ErrorResponse';
 import { nullableRef } from '#core/contracts/nullableRef';
 import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
-import type { ContractRegistry } from '#core/module/ContractRegistry';
+import { type ContractRegistry, moduleRoutes } from '#core/module/ContractRegistry';
 
 export const SubscriptionStatusSchema = z.enum([
   'trial',
@@ -128,107 +128,92 @@ export type ManualPaymentRequestDto = z.infer<typeof ManualPaymentRequestSchema>
 
 export function registerSubscriptionContracts(registry: ContractRegistry): void {
   const tags = ['Subscription', 'Auth'];
-  const invalid = { description: 'Invalid data', schema: ErrorResponseSchema };
+  const route = moduleRoutes(registry, { tags, auth: true });
+  const invalid = errorResponse('Invalid data');
   const detail = (description: string) => ({ description, schema: SubscriptionSchema });
 
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/subscription',
     operationId: 'getSubscription',
     summary: 'CU-18 Subscription panel: status, plan, payment methods and available plans',
     tags: ['Subscription'],
-    auth: true,
     responses: { 200: detail('Subscription') },
   });
-  registry.registerRoute({
+  route({
     method: 'put',
     path: '/subscription/plan',
     operationId: 'choosePlan',
     summary: 'CU-18 Select or change the plan (charges now when there is no access)',
-    tags,
-    auth: true,
     request: { body: ChoosePlanRequestSchema },
     responses: {
       200: detail('Plan applied'),
       400: invalid,
-      402: { description: 'Payment declined', schema: ErrorResponseSchema },
-      409: { description: 'A payment method is required', schema: ErrorResponseSchema },
-      503: { description: 'Payment provider unavailable', schema: ErrorResponseSchema },
+      402: errorResponse('Payment declined'),
+      409: errorResponse('A payment method is required'),
+      503: errorResponse('Payment provider unavailable'),
     },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/subscription/payment-methods',
     operationId: 'addPaymentMethod',
     summary: 'CU-18 Register a card (only a gateway token is stored)',
-    tags,
-    auth: true,
     request: { body: AddPaymentMethodRequestSchema },
     responses: { 201: detail('Card registered'), 400: invalid },
   });
-  registry.registerRoute({
+  route({
     method: 'patch',
     path: '/subscription/payment-methods/{id}',
     operationId: 'updatePaymentMethod',
     summary: 'CU-18 Update holder, expiry or default card',
-    tags,
-    auth: true,
     request: { params: PaymentMethodIdParamsSchema, body: UpdatePaymentMethodRequestSchema },
     responses: { 200: detail('Card updated'), 400: invalid },
   });
-  registry.registerRoute({
+  route({
     method: 'delete',
     path: '/subscription/payment-methods/{id}',
     operationId: 'removePaymentMethod',
     summary: 'CU-18 Remove a card',
-    tags,
-    auth: true,
     request: { params: PaymentMethodIdParamsSchema, query: RemovePaymentMethodQuerySchema },
     responses: {
       200: detail('Card removed'),
       400: invalid,
-      409: { description: 'Confirmation required', schema: ErrorResponseSchema },
+      409: errorResponse('Confirmation required'),
     },
   });
-  registry.registerRoute({
+  route({
     method: 'put',
     path: '/subscription/auto-debit',
     operationId: 'setAutoDebit',
     summary: 'CU-18 Turn automatic debit on or off',
-    tags,
-    auth: true,
     request: { body: AutoDebitRequestSchema },
     responses: { 200: detail('Automatic debit updated'), 400: invalid },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/subscription/cancel',
     operationId: 'cancelSubscription',
     summary: 'CU-18 Cancel the subscription (access lasts until the paid period ends)',
-    tags,
-    auth: true,
     responses: {
       200: detail('Subscription cancelled'),
-      409: { description: 'Already cancelled', schema: ErrorResponseSchema },
+      409: errorResponse('Already cancelled'),
     },
   });
-  registry.registerRoute({
+  route({
     method: 'get',
     path: '/subscription/payments',
     operationId: 'listPayments',
     summary: 'CU-18 Payment history, newest first',
     tags: ['Subscription'],
-    auth: true,
     request: { query: PageQuerySchema },
     responses: { 200: { description: 'Payments', schema: PaymentPageSchema } },
   });
-  registry.registerRoute({
+  route({
     method: 'post',
     path: '/subscription/payments',
     operationId: 'registerManualPayment',
     summary: 'CU-18 Register a manual payment for the current plan',
-    tags,
-    auth: true,
     request: { body: ManualPaymentRequestSchema },
     responses: { 201: { description: 'Payment registered', schema: PaymentSchema }, 400: invalid },
   });
