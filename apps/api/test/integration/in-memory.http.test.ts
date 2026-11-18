@@ -240,7 +240,9 @@ describe('API on in-memory adapters (dependency inversion)', () => {
   it('searches patients through the injected repository', async () => {
     const response = await agent.get('/api/patients').query({ q: 'lucia' }).expect(200);
 
-    expect(response.body.map((p: { fullName: string }) => p.fullName)).toEqual(['Lucía Fernández']);
+    expect(response.body.items.map((p: { fullName: string }) => p.fullName)).toEqual([
+      'Lucía Fernández',
+    ]);
   });
 
   it('resolves diagnoses from the injected catalog into the clinical record', async () => {
@@ -283,7 +285,7 @@ describe('API on in-memory adapters (dependency inversion)', () => {
 
     expect(meeting.body.joinUrl).toMatch(/^https:\/\/meet\.jit\.si\//);
     expect(fakes.whatsapp.sent.at(-1)?.body).toContain(meeting.body.joinUrl);
-    expect(log.body[0]).toMatchObject({ status: 'sent' });
+    expect(log.body.items[0]).toMatchObject({ status: 'sent' });
   });
 
   it('runs every write through the injected transaction manager, never MongoDB', async () => {

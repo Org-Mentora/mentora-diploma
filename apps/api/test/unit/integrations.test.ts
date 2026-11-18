@@ -36,7 +36,7 @@ class MemoryNotifications extends NotificationRepository {
     this.saved.push(notification);
   }
   async findByPatient() {
-    return this.saved;
+    return { items: this.saved, next: null };
   }
 }
 
@@ -214,7 +214,7 @@ describe('VirtualConsultationService (CU-15 step 2 alternative)', () => {
           saved.push(meeting);
         }
         async findByPatient() {
-          return saved;
+          return { items: saved, next: null };
         }
         async findByAppointment() {
           return null;

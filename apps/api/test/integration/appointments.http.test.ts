@@ -69,7 +69,7 @@ describe('Appointments API (CU-10)', () => {
       .query({ from: '2030-01-01T00:00:00.000Z', to: '2030-02-01T00:00:00.000Z' })
       .expect(200);
 
-    expect(january.body.map((a: { startsAt: string }) => a.startsAt)).toEqual([
+    expect(january.body.items.map((a: { startsAt: string }) => a.startsAt)).toEqual([
       '2030-01-08T09:00:00.000Z',
       '2030-01-10T13:00:00.000Z',
     ]);

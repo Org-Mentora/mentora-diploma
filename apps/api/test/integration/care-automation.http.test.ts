@@ -43,7 +43,7 @@ describe('Care automation API (CU-07 automatic, CU-14, CU-15)', () => {
     });
 
   const notifications = async (patientId: string) =>
-    (await agent.get('/api/notifications').query({ patientId }).expect(200)).body;
+    (await agent.get('/api/notifications').query({ patientId }).expect(200)).body.items;
 
   describe('CU-14 WhatsApp notifications', () => {
     it('messages the patient when an appointment is scheduled and logs the delivery', async () => {
@@ -127,7 +127,7 @@ describe('Care automation API (CU-07 automatic, CU-14, CU-15)', () => {
       await schedule(id, '2030-01-24T13:00:00.000Z').expect(201);
       const other = await t.loggedInAgent();
       const { body } = await other.get('/api/notifications').query({ patientId: id }).expect(200);
-      expect(body).toEqual([]);
+      expect(body).toEqual({ items: [], nextCursor: null });
     });
   });
 
@@ -160,7 +160,7 @@ describe('Care automation API (CU-07 automatic, CU-14, CU-15)', () => {
         .get('/api/virtual-meetings')
         .query({ appointmentId: appointment.id })
         .expect(200);
-      expect(byAppointment.body).toHaveLength(1);
+      expect(byAppointment.body.items).toHaveLength(1);
     });
 
     it('creates one call when it is started twice at the same time', async () => {
@@ -185,7 +185,7 @@ describe('Care automation API (CU-07 automatic, CU-14, CU-15)', () => {
       expect(started.body).toMatchObject({ appointmentId: null, invitationStatus: 'skipped' });
 
       const history = await agent.get('/api/virtual-meetings').query({ patientId: id }).expect(200);
-      expect(history.body.map((m: { id: string }) => m.id)).toEqual([started.body.id]);
+      expect(history.body.items.map((m: { id: string }) => m.id)).toEqual([started.body.id]);
       await agent.get('/api/virtual-meetings').expect(400);
     });
 

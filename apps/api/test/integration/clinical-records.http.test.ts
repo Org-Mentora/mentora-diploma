@@ -29,15 +29,18 @@ describe('Clinical record API (CU-08, CU-09, CU-11, CU-12)', () => {
       .expect(200);
     const byCode = await agent.get('/api/diagnoses').query({ q: 'F32' }).expect(200);
 
-    expect(byName.body).toEqual([
+    expect(byName.body.items).toEqual([
       { code: 'F41.1', name: 'Generalized anxiety disorder', category: 'Anxiety disorders' },
     ]);
-    expect(byCode.body.length).toBeGreaterThanOrEqual(3);
+    expect(byCode.body.items.length).toBeGreaterThanOrEqual(3);
   });
 
   it('CU-08 an empty record is returned when there are no consultations', async () => {
     const response = await agent.get(base).expect(200);
-    expect(response.body).toMatchObject({ patientId, consultations: [] });
+    expect(response.body).toMatchObject({
+      patientId,
+      consultations: { items: [], nextCursor: null },
+    });
   });
 
   it('CU-09 registers a consultation with evolution, DSM-5 diagnosis and medications', async () => {
@@ -95,9 +98,9 @@ describe('Clinical record API (CU-08, CU-09, CU-11, CU-12)', () => {
 
   it('CU-08 lists consultations newest first and shows the detail of one', async () => {
     const record = await agent.get(base).expect(200);
-    const [latest, first] = record.body.consultations;
+    const [latest, first] = record.body.consultations.items;
 
-    expect(record.body.consultations).toHaveLength(2);
+    expect(record.body.consultations.items).toHaveLength(2);
     expect(latest).toMatchObject({ type: 'virtual', diagnosis: null, medicationCount: 0 });
     expect(first).toMatchObject({ diagnosis: { code: 'F41.1' }, medicationCount: 2 });
 
@@ -117,10 +120,9 @@ describe('Clinical record API (CU-08, CU-09, CU-11, CU-12)', () => {
       .expect(201);
 
     const history = await agent.get(`${base}/diagnoses`).expect(200);
-    expect(history.body.map((h: { diagnosis: { code: string } }) => h.diagnosis.code)).toEqual([
-      'F32.1',
-      'F41.1',
-    ]);
+    expect(
+      history.body.items.map((h: { diagnosis: { code: string } }) => h.diagnosis.code),
+    ).toEqual(['F32.1', 'F41.1']);
   });
 
   it("answers 404 for another professional's patient", async () => {
@@ -150,13 +152,13 @@ describe('Clinical record API (CU-08, CU-09, CU-11, CU-12)', () => {
     const log = await agent.get(`${url}/access-log`).expect(200);
     t.clock.set(TestApp.START);
 
-    expect(log.body.map((a: { action: string }) => a.action)).toEqual([
+    expect(log.body.items.map((a: { action: string }) => a.action)).toEqual([
       'view_diagnoses',
       'view_consultation',
       'view_record',
       'register_consultation',
     ]);
-    expect(log.body[1].consultationId).toBe(consultation.id);
+    expect(log.body.items[1].consultationId).toBe(consultation.id);
     const other = await t.loggedInAgent();
     await other.get(`${url}/access-log`).expect(404);
   });
@@ -178,6 +180,6 @@ describe('Clinical record API (CU-08, CU-09, CU-11, CU-12)', () => {
 
     expect(responses.map((r) => r.status)).toEqual([201, 201, 201, 201, 201]);
     const record = await agent.get(url).expect(200);
-    expect(record.body.consultations).toHaveLength(5);
+    expect(record.body.consultations.items).toHaveLength(5);
   });
 });

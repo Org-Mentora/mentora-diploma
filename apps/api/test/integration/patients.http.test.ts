@@ -49,6 +49,33 @@ describe('Patients API (CU-04..CU-07)', () => {
     expect(responses.map((r) => r.status).sort()).toEqual([201, 409, 409, 409]);
   });
 
+  it('pages the patient list with an opaque cursor instead of returning everything', async () => {
+    const other = await t.loggedInAgent();
+    for (let i = 0; i < 5; i += 1) {
+      await other
+        .post('/api/patients')
+        .send({ firstName: 'Page', lastName: `Patient ${i}`, dni: `4100000${i}` })
+        .expect(201);
+    }
+
+    const names: string[] = [];
+    let cursor: string | null = null;
+    let requests = 0;
+    do {
+      const query: Record<string, string | number> = cursor ? { limit: 2, cursor } : { limit: 2 };
+      const { body } = await other.get('/api/patients').query(query).expect(200);
+      expect(body.items.length).toBeLessThanOrEqual(2);
+      names.push(...body.items.map((p: { fullName: string }) => p.fullName));
+      cursor = body.nextCursor;
+      requests += 1;
+    } while (cursor);
+
+    expect(requests).toBe(3);
+    expect(names).toEqual([0, 1, 2, 3, 4].map((i) => `Page Patient ${i}`));
+    await other.get('/api/patients').query({ cursor: 'not-a-cursor' }).expect(400);
+    await other.get('/api/patients').query({ limit: 101 }).expect(400);
+  });
+
   it('CU-05 searches by name, surname or DNI ignoring accents; empty lists all', async () => {
     await create({ firstName: 'Martín', lastName: 'Gómez', dni: '40111222' }).expect(201);
 
@@ -57,12 +84,12 @@ describe('Patients API (CU-04..CU-07)', () => {
     const none = await agent.get('/api/patients').query({ q: 'zzz' }).expect(200);
     const all = await agent.get('/api/patients').expect(200);
 
-    expect(byAccentless.body.map((p: { fullName: string }) => p.fullName)).toEqual([
+    expect(byAccentless.body.items.map((p: { fullName: string }) => p.fullName)).toEqual([
       'Martín Gómez',
     ]);
-    expect(byDni.body).toHaveLength(1);
-    expect(none.body).toEqual([]);
-    expect(all.body.length).toBeGreaterThanOrEqual(3);
+    expect(byDni.body.items).toHaveLength(1);
+    expect(none.body.items).toEqual([]);
+    expect(all.body.items.length).toBeGreaterThanOrEqual(3);
   });
 
   it('CU-06 updates personal, administrative and clinical data', async () => {
@@ -121,7 +148,7 @@ describe('Patients API (CU-04..CU-07)', () => {
     const other = await t.loggedInAgent();
 
     await other.get(`/api/patients/${patient.id}`).expect(404);
-    expect((await other.get('/api/patients').expect(200)).body).toEqual([]);
+    expect((await other.get('/api/patients').expect(200)).body.items).toEqual([]);
     await other
       .post('/api/patients')
       .send({ firstName: 'Same', lastName: 'Dni', dni: '31222333' })

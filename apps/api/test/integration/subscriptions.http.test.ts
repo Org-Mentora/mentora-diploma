@@ -86,7 +86,7 @@ describe('Subscription API (CU-18, CU-03 trial, CU-01 step 7)', () => {
     const { body } = await agent.get('/api/subscription').expect(200);
     expect(body).toMatchObject({ status: 'active', hasAccess: true });
     const payments = await agent.get('/api/subscription/payments').expect(200);
-    expect(payments.body[0]).toMatchObject({
+    expect(payments.body.items[0]).toMatchObject({
       kind: 'automatic',
       status: 'approved',
       amount: 25000,
@@ -128,7 +128,7 @@ describe('Subscription API (CU-18, CU-03 trial, CU-01 step 7)', () => {
     const paid = await agent.put('/api/subscription/plan').send({ planId: 'annual' }).expect(200);
     expect(paid.body).toMatchObject({ status: 'active', hasAccess: true, plan: { id: 'annual' } });
 
-    const payments = (await agent.get('/api/subscription/payments')).body;
+    const payments = (await agent.get('/api/subscription/payments')).body.items;
     expect(payments.map((p: { status: string }) => p.status)).toEqual(['approved', 'declined']);
     const me = await agent.get('/api/auth/me').expect(200);
     expect(me.body.subscription).toMatchObject({ status: 'active', hasAccess: true });
@@ -148,7 +148,7 @@ describe('Subscription API (CU-18, CU-03 trial, CU-01 step 7)', () => {
 
     expect([a.status, b.status]).toEqual([200, 200]);
     expect(a.body.currentPeriodEndsAt).toBe(b.body.currentPeriodEndsAt);
-    const payments = (await agent.get('/api/subscription/payments')).body;
+    const payments = (await agent.get('/api/subscription/payments')).body.items;
     expect(payments).toHaveLength(1);
   });
 
@@ -179,7 +179,7 @@ describe('Subscription API (CU-18, CU-03 trial, CU-01 step 7)', () => {
 
     expect((await agent.get('/api/subscription')).body.status).toBe('suspended');
     expect(t.mail.lastTo(email)?.subject).toContain('suspended');
-    const failed = (await agent.get('/api/subscription/payments')).body;
+    const failed = (await agent.get('/api/subscription/payments')).body.items;
     expect(failed).toHaveLength(3);
   });
 

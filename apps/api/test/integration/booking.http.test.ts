@@ -73,7 +73,9 @@ describe('Online booking by patients', () => {
   });
 
   it('turns an accepted request into a patient and an online appointment', async () => {
-    const { body: pending } = await agent.get('/api/booking/requests?status=pending').expect(200);
+    const {
+      body: { items: pending },
+    } = await agent.get('/api/booking/requests?status=pending').expect(200);
     expect(pending).toHaveLength(1);
     expect(pending[0].existingPatientId).toBeNull();
 
@@ -84,7 +86,9 @@ describe('Online booking by patients', () => {
     const { body: appointment } = await agent
       .get(`/api/appointments/${accepted.appointmentId}`)
       .expect(200);
-    const { body: patients } = await agent.get('/api/patients?q=40111222').expect(200);
+    const {
+      body: { items: patients },
+    } = await agent.get('/api/patients?q=40111222').expect(200);
 
     expect(accepted.status).toBe('accepted');
     expect(appointment).toMatchObject({ source: 'online', patientName: 'Lucas Ibarra' });
@@ -242,7 +246,7 @@ describe('User audit trail', () => {
 
     const first = await agent.get('/api/audit/events?limit=2').expect(200);
     const next = await agent
-      .get(`/api/audit/events?limit=2&before=${first.body.nextBefore}`)
+      .get(`/api/audit/events?limit=2&cursor=${first.body.nextCursor}`)
       .expect(200);
 
     expect(first.body.items.map((e: { action: string }) => e.action)).toEqual([
@@ -252,6 +256,6 @@ describe('User audit trail', () => {
     expect(next.body.items.map((e: { action: string }) => e.action)).toEqual([
       'account.registered',
     ]);
-    expect(next.body.nextBefore).toBeNull();
+    expect(next.body.nextCursor).toBeNull();
   });
 });

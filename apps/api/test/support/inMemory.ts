@@ -1,5 +1,6 @@
 import { type AuditRecord, AuditTrail } from '#core/model/AuditTrail';
 import type { Entity } from '#core/model/Entity';
+import type { CursorKey, Page, PageRequest } from '#core/model/Pagination';
 import { TransactionManager } from '#core/model/TransactionManager';
 import { RateLimitStore, type RateLimitWindow } from '#infrastructure/http/RateLimitStore';
 import { AgendaLock } from '../../src/modules/appointments/model/AgendaLock';
@@ -42,8 +43,24 @@ import { SubscriptionRepository } from '../../src/modules/subscriptions/model/Su
 import { VirtualMeetingRepository } from '../../src/modules/virtual-consultations/model/ports';
 import type { VirtualMeeting } from '../../src/modules/virtual-consultations/model/VirtualMeeting';
 
-const newestFirst = <T extends { createdAt: Date }>(a: T, b: T) =>
-  b.createdAt.getTime() - a.createdAt.getTime();
+export function paginate<T>(
+  sorted: readonly T[],
+  page: PageRequest,
+  keyOf: (item: T) => CursorKey,
+): Page<T> {
+  const after = page.after ? JSON.stringify(page.after) : null;
+  const start = after ? sorted.findIndex((item) => JSON.stringify(keyOf(item)) === after) + 1 : 0;
+  const items = sorted.slice(start, start + page.limit);
+  const last = items.at(-1);
+  return { items, next: sorted.length > start + page.limit && last ? keyOf(last) : null };
+}
+
+const newestFirst = <T extends { createdAt: Date; id: string }>(a: T, b: T) =>
+  b.createdAt.getTime() - a.createdAt.getTime() || b.id.localeCompare(a.id);
+const newestKey = (item: { createdAt: Date; id: string }): CursorKey => [
+  item.createdAt.toISOString(),
+  item.id,
+];
 
 class EntityStore<TEntity extends Entity<object>> {
   readonly #items = new Map<string, TEntity>();
@@ -154,11 +171,23 @@ export class InMemoryPatientRepository extends PatientRepository {
     return this.owned(professionalId).find((patient) => patient.dni === dni) ?? null;
   }
 
-  async search(professionalId: string, terms: readonly string[]): Promise<Patient[]> {
-    return this.owned(professionalId).filter((patient) => {
-      const text = PatientSearch.indexText(patient.firstName, patient.lastName, patient.dni);
-      return terms.every((term) => text.includes(term));
-    });
+  async search(
+    professionalId: string,
+    terms: readonly string[],
+    page: PageRequest,
+  ): Promise<Page<Patient>> {
+    const found = this.owned(professionalId)
+      .filter((patient) => {
+        const text = PatientSearch.indexText(patient.firstName, patient.lastName, patient.dni);
+        return terms.every((term) => text.includes(term));
+      })
+      .sort(
+        (a, b) =>
+          a.lastName.localeCompare(b.lastName) ||
+          a.firstName.localeCompare(b.firstName) ||
+          a.id.localeCompare(b.id),
+      );
+    return paginate(found, page, (p) => [p.lastName, p.firstName, p.id]);
   }
 
   async findDormant(cutoff: Date, limit: number): Promise<Patient[]> {
@@ -233,12 +262,16 @@ export class InMemoryRecordAccessLog extends RecordAccessLog {
   async findByPatient(
     professionalId: string,
     patientId: string,
-    limit: number,
-  ): Promise<RecordAccess[]> {
-    return this.entries
-      .filter((a) => a.professionalId === professionalId && a.patientId === patientId)
-      .reverse()
-      .slice(0, limit);
+    page: PageRequest,
+  ): Promise<Page<RecordAccess>> {
+    const found = this.entries
+      .map((access, index) => ({ access, index }))
+      .filter(
+        ({ access }) => access.professionalId === professionalId && access.patientId === patientId,
+      )
+      .reverse();
+    const result = paginate(found, page, ({ access, index }) => [access.at.toISOString(), index]);
+    return { items: result.items.map(({ access }) => access), next: result.next };
   }
 }
 
@@ -258,10 +291,16 @@ export class InMemoryAppointmentRepository extends AppointmentRepository {
     return appointment?.professionalId === professionalId ? appointment : null;
   }
 
-  async findStartingBetween(professionalId: string, from: Date, to: Date): Promise<Appointment[]> {
-    return this.owned(professionalId)
+  async findStartingBetween(
+    professionalId: string,
+    from: Date,
+    to: Date,
+    page: PageRequest,
+  ): Promise<Page<Appointment>> {
+    const found = this.owned(professionalId)
       .filter((appointment) => appointment.startsAt >= from && appointment.startsAt < to)
-      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+      .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime() || a.id.localeCompare(b.id));
+    return paginate(found, page, (a) => [a.startsAt.toISOString(), a.id]);
   }
 
   async findScheduledOverlapping(
@@ -372,8 +411,8 @@ export class InMemoryPaymentRepository extends PaymentRepository {
     this.#store.put(payment);
   }
 
-  async findByProfessional(professionalId: string, limit: number): Promise<Payment[]> {
-    return this.of(professionalId).sort(newestFirst).slice(0, limit);
+  async findByProfessional(professionalId: string, page: PageRequest): Promise<Page<Payment>> {
+    return paginate(this.of(professionalId).sort(newestFirst), page, newestKey);
   }
 
   async countByProfessional(professionalId: string): Promise<number> {
@@ -406,12 +445,16 @@ export class InMemoryNotificationRepository extends NotificationRepository {
     this.#store.put(notification);
   }
 
-  async findByPatient(professionalId: string, patientId: string): Promise<Notification[]> {
-    return this.#store
+  async findByPatient(
+    professionalId: string,
+    patientId: string,
+    page: PageRequest,
+  ): Promise<Page<Notification>> {
+    const found = this.#store
       .all()
       .filter((n) => n.professionalId === professionalId && n.patientId === patientId)
-      .sort(newestFirst)
-      .slice(0, 200);
+      .sort(newestFirst);
+    return paginate(found, page, newestKey);
   }
 }
 
@@ -437,11 +480,16 @@ export class InMemoryVirtualMeetingRepository extends VirtualMeetingRepository {
     return true;
   }
 
-  async findByPatient(professionalId: string, patientId: string): Promise<VirtualMeeting[]> {
-    return this.#store
+  async findByPatient(
+    professionalId: string,
+    patientId: string,
+    page: PageRequest,
+  ): Promise<Page<VirtualMeeting>> {
+    const found = this.#store
       .all()
       .filter((m) => m.professionalId === professionalId && m.patientId === patientId)
       .sort(newestFirst);
+    return paginate(found, page, newestKey);
   }
 
   async findByAppointment(
@@ -462,9 +510,9 @@ export class InMemoryDiagnosisCatalogRepository extends DiagnosisCatalogReposito
     super();
   }
 
-  async search(criteria: DiagnosisSearchCriteria): Promise<DiagnosisCatalogEntry[]> {
+  async search(criteria: DiagnosisSearchCriteria): Promise<Page<DiagnosisCatalogEntry>> {
     const term = criteria.term?.toLowerCase();
-    return this.entries
+    const found = this.entries
       .filter((entry) => entry.active)
       .filter((entry) => !criteria.category || entry.category === criteria.category)
       .filter(
@@ -473,7 +521,8 @@ export class InMemoryDiagnosisCatalogRepository extends DiagnosisCatalogReposito
           entry.name.toLowerCase().includes(term) ||
           entry.code.toLowerCase().includes(term),
       )
-      .slice(0, criteria.limit);
+      .sort((a, b) => a.category.localeCompare(b.category) || a.code.localeCompare(b.code));
+    return paginate(found, criteria.page, (entry) => [entry.category, entry.code]);
   }
 
   async findByCode(code: string): Promise<DiagnosisCatalogEntry | null> {
