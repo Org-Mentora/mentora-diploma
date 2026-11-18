@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { PageQuerySchema } from '#core/contracts/Pagination';
 import { InputParser } from '#core/view/InputParser';
 import { JsonHttpView } from '#core/view/JsonHttpView';
 import { ActorReader } from '#infrastructure/http/ActorReader';
@@ -8,9 +9,9 @@ import {
   type ClinicalRecordDto,
   type ConsultationDto,
   ConsultationParamsSchema,
-  type DiagnosisHistoryEntryDto,
+  type DiagnosisHistoryPageDto,
   PatientRecordParamsSchema,
-  type RecordAccessDto,
+  type RecordAccessPageDto,
   RegisterConsultationRequestSchema,
 } from '../contracts/clinical-records.contracts';
 import type { ClinicalRecordPresenterFactory } from '../presenter/ClinicalRecordPresenterFactory';
@@ -29,9 +30,10 @@ export class ClinicalRecordRoutes {
     router.get(base, async (req, res) => {
       const view = new JsonHttpView<ClinicalRecordDto>(new ExpressResponderAdapter(res));
       const { patientId } = InputParser.parse(PatientRecordParamsSchema, req.params);
+      const page = InputParser.parse(PageQuerySchema, req.query);
       await this.presenters
         .getClinicalRecord(view)
-        .present({ actor: ActorReader.from(res), patientId });
+        .present({ actor: ActorReader.from(res), patientId, ...page });
     });
 
     router.post(`${base}/consultations`, async (req, res) => {
@@ -52,19 +54,21 @@ export class ClinicalRecordRoutes {
     });
 
     router.get(`${base}/diagnoses`, async (req, res) => {
-      const view = new JsonHttpView<DiagnosisHistoryEntryDto[]>(new ExpressResponderAdapter(res));
+      const view = new JsonHttpView<DiagnosisHistoryPageDto>(new ExpressResponderAdapter(res));
       const { patientId } = InputParser.parse(PatientRecordParamsSchema, req.params);
+      const page = InputParser.parse(PageQuerySchema, req.query);
       await this.presenters
         .getDiagnosisHistory(view)
-        .present({ actor: ActorReader.from(res), patientId });
+        .present({ actor: ActorReader.from(res), patientId, ...page });
     });
 
     router.get(`${base}/access-log`, async (req, res) => {
-      const view = new JsonHttpView<RecordAccessDto[]>(new ExpressResponderAdapter(res));
+      const view = new JsonHttpView<RecordAccessPageDto>(new ExpressResponderAdapter(res));
       const { patientId } = InputParser.parse(PatientRecordParamsSchema, req.params);
+      const page = InputParser.parse(PageQuerySchema, req.query);
       await this.presenters
         .listRecordAccess(view)
-        .present({ actor: ActorReader.from(res), patientId });
+        .present({ actor: ActorReader.from(res), patientId, ...page });
     });
 
     return router;

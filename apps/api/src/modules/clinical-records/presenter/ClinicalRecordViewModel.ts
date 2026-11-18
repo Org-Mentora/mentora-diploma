@@ -1,3 +1,5 @@
+import type { Page } from '#core/model/Pagination';
+import { CursorCodec } from '#core/presenter/CursorCodec';
 import type {
   ClinicalRecordDto,
   ConsultationDto,
@@ -8,12 +10,12 @@ import type { ClinicalRecord, DiagnosisHistoryEntry } from '../model/ClinicalRec
 import type { Consultation } from '../model/Consultation';
 
 export class ClinicalRecordViewModel {
-  static record(record: ClinicalRecord): ClinicalRecordDto {
+  static record(record: ClinicalRecord, consultations: Page<Consultation>): ClinicalRecordDto {
     return {
       patientId: record.patientId,
       openedAt: record.openedAt.toISOString(),
       updatedAt: record.updatedAt.toISOString(),
-      consultations: record.consultationsChronological().map((c) => ({
+      consultations: CursorCodec.toDto(consultations, (c) => ({
         id: c.id,
         date: c.date.toISOString(),
         type: c.type,
@@ -45,8 +47,8 @@ export class ClinicalRecordViewModel {
     };
   }
 
-  static diagnosisHistory(entries: DiagnosisHistoryEntry[]): DiagnosisHistoryEntryDto[] {
-    return entries.map((entry) => ({
+  static diagnosisEntry(entry: DiagnosisHistoryEntry): DiagnosisHistoryEntryDto {
+    return {
       consultationId: entry.consultationId,
       consultationDate: entry.consultationDate.toISOString(),
       diagnosis: {
@@ -54,7 +56,7 @@ export class ClinicalRecordViewModel {
         name: entry.diagnosis.name,
         assignedAt: entry.diagnosis.assignedAt.toISOString(),
       },
-    }));
+    };
   }
 
   private static diagnosis(diagnosis: AssignedDiagnosis | null) {

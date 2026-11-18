@@ -2,8 +2,8 @@ import type { View } from '#core/view/View';
 import type {
   ClinicalRecordDto,
   ConsultationDto,
-  DiagnosisHistoryEntryDto,
-  RecordAccessDto,
+  DiagnosisHistoryPageDto,
+  RecordAccessPageDto,
 } from '../contracts/clinical-records.contracts';
 import type { GetClinicalRecordPresenter } from './GetClinicalRecordPresenter';
 import type { GetConsultationPresenter } from './GetConsultationPresenter';
@@ -16,6 +16,6 @@ export interface ClinicalRecordPresenterFactory {
   getClinicalRecord(view: View<ClinicalRecordDto>): GetClinicalRecordPresenter;
   registerConsultation(view: View<ConsultationDto>): RegisterConsultationPresenter;
   getConsultation(view: View<ConsultationDto>): GetConsultationPresenter;
-  getDiagnosisHistory(view: View<DiagnosisHistoryEntryDto[]>): GetDiagnosisHistoryPresenter;
-  listRecordAccess(view: View<RecordAccessDto[]>): ListRecordAccessPresenter;
+  getDiagnosisHistory(view: View<DiagnosisHistoryPageDto>): GetDiagnosisHistoryPresenter;
+  listRecordAccess(view: View<RecordAccessPageDto>): ListRecordAccessPresenter;
 }

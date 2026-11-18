@@ -1,21 +1,26 @@
+import { CursorCodec } from '#core/presenter/CursorCodec';
 import { Presenter } from '#core/presenter/Presenter';
 import type { View } from '#core/view/View';
-import type { RecordAccessDto } from '../contracts/clinical-records.contracts';
+import type { RecordAccessPageDto } from '../contracts/clinical-records.contracts';
 import type { ClinicalRecordService } from '../model/ClinicalRecordService';
 import type { PatientRecordRef } from './GetClinicalRecordPresenter';
 
 // Presenter
-export class ListRecordAccessPresenter extends Presenter<PatientRecordRef, RecordAccessDto[]> {
+export class ListRecordAccessPresenter extends Presenter<PatientRecordRef, RecordAccessPageDto> {
   constructor(
-    view: View<RecordAccessDto[]>,
+    view: View<RecordAccessPageDto>,
     private readonly records: ClinicalRecordService,
   ) {
     super(view);
   }
 
-  protected async execute(input: PatientRecordRef): Promise<RecordAccessDto[]> {
-    const accesses = await this.records.accessLog(input.actor.professionalId, input.patientId);
-    return accesses.map((access) => ({
+  protected async execute(input: PatientRecordRef): Promise<RecordAccessPageDto> {
+    const page = await this.records.accessLog(
+      input.actor.professionalId,
+      input.patientId,
+      CursorCodec.request(input),
+    );
+    return CursorCodec.toDto(page, (access) => ({
       action: access.action,
       consultationId: access.consultationId,
       at: access.at.toISOString(),

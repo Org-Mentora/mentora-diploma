@@ -1,3 +1,5 @@
+import type { Page, PageRequest } from '#core/model/Pagination';
+
 export type RecordAccessAction =
   | 'view_record'
   | 'view_consultation'
@@ -17,6 +19,6 @@ export abstract class RecordAccessLog {
   abstract findByPatient(
     professionalId: string,
     patientId: string,
-    limit: number,
-  ): Promise<RecordAccess[]>;
+    page: PageRequest,
+  ): Promise<Page<RecordAccess>>;
 }

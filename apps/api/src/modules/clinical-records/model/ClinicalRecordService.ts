@@ -2,6 +2,7 @@ import { NotFoundError, ValidationError } from '#core/errors/ApplicationError';
 import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
+import type { Page, PageRequest } from '#core/model/Pagination';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import { AssignedDiagnosis } from './AssignedDiagnosis';
 import type { ClinicalActivityRecorder } from './ClinicalActivityRecorder';
@@ -23,8 +24,6 @@ export interface RegisterConsultationData {
   medications: MedicationData[];
 }
 
-const ACCESS_LOG_LIMIT = 100;
-
 export class ClinicalRecordService {
   constructor(
     private readonly records: ClinicalRecordRepository,
@@ -38,15 +37,29 @@ export class ClinicalRecordService {
     private readonly trail: AuditTrail,
   ) {}
 
-  async getRecord(professionalId: string, patientId: string): Promise<ClinicalRecord> {
+  async getRecord(
+    professionalId: string,
+    patientId: string,
+    page: PageRequest,
+  ): Promise<{ record: ClinicalRecord; consultations: Page<Consultation> }> {
     const record = await this.loadRecord(professionalId, patientId);
-    await this.audit(professionalId, patientId, 'view_record');
-    return record;
+    if (!page.after) {
+      await this.audit(professionalId, patientId, 'view_record');
+    }
+    const consultations = page.slice(record.consultationsChronological(), (c) => [
+      c.date.toISOString(),
+      c.id,
+    ]);
+    return { record, consultations };
   }
 
-  async accessLog(professionalId: string, patientId: string): Promise<RecordAccess[]> {
+  async accessLog(
+    professionalId: string,
+    patientId: string,
+    page: PageRequest,
+  ): Promise<Page<RecordAccess>> {
     await this.assertPatient(professionalId, patientId);
-    return this.accesses.findByPatient(professionalId, patientId, ACCESS_LOG_LIMIT);
+    return this.accesses.findByPatient(professionalId, patientId, page);
   }
 
   registerConsultation(
@@ -112,10 +125,16 @@ export class ClinicalRecordService {
   async diagnosisHistory(
     professionalId: string,
     patientId: string,
-  ): Promise<DiagnosisHistoryEntry[]> {
+    page: PageRequest,
+  ): Promise<Page<DiagnosisHistoryEntry>> {
     const record = await this.loadRecord(professionalId, patientId);
-    await this.audit(professionalId, patientId, 'view_diagnoses');
-    return record.diagnosisHistory();
+    if (!page.after) {
+      await this.audit(professionalId, patientId, 'view_diagnoses');
+    }
+    return page.slice(record.diagnosisHistory(), (entry) => [
+      entry.consultationDate.toISOString(),
+      entry.consultationId,
+    ]);
   }
 
   private async assignDiagnosis(code: string | null, now: Date): Promise<AssignedDiagnosis | null> {

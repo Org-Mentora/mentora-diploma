@@ -1,7 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import mongoose, { Schema } from 'mongoose';
+import type { Page, PageRequest } from '#core/model/Pagination';
+import { Keyset } from '#infrastructure/database/Keyset';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { RecordAccess, RecordAccessAction, RecordAccessLog } from '../model/RecordAccessLog';
+
+const NEWEST_FIRST = new Keyset([
+  { path: 'at', direction: -1, type: 'date' },
+  { path: '_id', direction: -1 },
+]);
 
 interface RecordAccessDocument {
   _id: string;
@@ -48,19 +55,25 @@ export class MongooseRecordAccessLog implements RecordAccessLog {
   async findByPatient(
     professionalId: string,
     patientId: string,
-    limit: number,
-  ): Promise<RecordAccess[]> {
-    const records = await RecordAccessModel.find({ professionalId, patientId })
-      .sort({ at: -1, _id: -1 })
-      .limit(limit)
+    page: PageRequest,
+  ): Promise<Page<RecordAccess>> {
+    const records = await RecordAccessModel.find(
+      NEWEST_FIRST.where({ professionalId, patientId }, page.after),
+    )
+      .sort(NEWEST_FIRST.sort())
+      .limit(page.limit + 1)
       .session(this.context.session)
       .lean<RecordAccessDocument[]>();
-    return records.map(({ professionalId, patientId, action, consultationId, at }) => ({
-      professionalId,
-      patientId,
-      action,
-      consultationId,
-      at,
-    }));
+    return NEWEST_FIRST.page(
+      records,
+      page,
+      ({ professionalId, patientId, action, consultationId, at }) => ({
+        professionalId,
+        patientId,
+        action,
+        consultationId,
+        at,
+      }),
+    );
   }
 }

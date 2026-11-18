@@ -14,8 +14,8 @@ import type { PatientActivity, PatientDirectory } from '#modules/patients';
 import {
   type ClinicalRecordDto,
   type ConsultationDto,
-  type DiagnosisHistoryEntryDto,
-  type RecordAccessDto,
+  type DiagnosisHistoryPageDto,
+  type RecordAccessPageDto,
   registerClinicalRecordContracts,
 } from './contracts/clinical-records.contracts';
 import { CatalogDiagnosisResolver } from './infrastructure/CatalogDiagnosisResolver';
@@ -95,11 +95,11 @@ export class ClinicalRecordsModule implements AppModule, ClinicalRecordPresenter
     return new GetConsultationPresenter(view, this.#service);
   }
 
-  getDiagnosisHistory(view: View<DiagnosisHistoryEntryDto[]>): GetDiagnosisHistoryPresenter {
+  getDiagnosisHistory(view: View<DiagnosisHistoryPageDto>): GetDiagnosisHistoryPresenter {
     return new GetDiagnosisHistoryPresenter(view, this.#service);
   }
 
-  listRecordAccess(view: View<RecordAccessDto[]>): ListRecordAccessPresenter {
+  listRecordAccess(view: View<RecordAccessPageDto>): ListRecordAccessPresenter {
     return new ListRecordAccessPresenter(view, this.#service);
   }
 }

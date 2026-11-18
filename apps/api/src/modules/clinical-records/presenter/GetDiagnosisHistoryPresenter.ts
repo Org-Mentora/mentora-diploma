@@ -1,6 +1,7 @@
+import { CursorCodec } from '#core/presenter/CursorCodec';
 import { Presenter } from '#core/presenter/Presenter';
 import type { View } from '#core/view/View';
-import type { DiagnosisHistoryEntryDto } from '../contracts/clinical-records.contracts';
+import type { DiagnosisHistoryPageDto } from '../contracts/clinical-records.contracts';
 import type { ClinicalRecordService } from '../model/ClinicalRecordService';
 import { ClinicalRecordViewModel } from './ClinicalRecordViewModel';
 import type { PatientRecordRef } from './GetClinicalRecordPresenter';
@@ -8,20 +9,21 @@ import type { PatientRecordRef } from './GetClinicalRecordPresenter';
 // Presenter
 export class GetDiagnosisHistoryPresenter extends Presenter<
   PatientRecordRef,
-  DiagnosisHistoryEntryDto[]
+  DiagnosisHistoryPageDto
 > {
   constructor(
-    view: View<DiagnosisHistoryEntryDto[]>,
+    view: View<DiagnosisHistoryPageDto>,
     private readonly records: ClinicalRecordService,
   ) {
     super(view);
   }
 
-  protected async execute(input: PatientRecordRef): Promise<DiagnosisHistoryEntryDto[]> {
-    const history = await this.records.diagnosisHistory(
+  protected async execute(input: PatientRecordRef): Promise<DiagnosisHistoryPageDto> {
+    const page = await this.records.diagnosisHistory(
       input.actor.professionalId,
       input.patientId,
+      CursorCodec.request(input),
     );
-    return ClinicalRecordViewModel.diagnosisHistory(history);
+    return CursorCodec.toDto(page, ClinicalRecordViewModel.diagnosisEntry);
   }
 }

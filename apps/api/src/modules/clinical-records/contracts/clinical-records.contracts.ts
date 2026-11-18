@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
 import { nullableRef } from '#core/contracts/nullableRef';
+import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 
 const ConsultationTypeSchema = z.enum(['in_person', 'virtual']);
@@ -49,14 +50,22 @@ export const ConsultationSummarySchema = z
   })
   .meta({ id: 'ConsultationSummaryDto' });
 
+export const ConsultationSummaryPageSchema = pageOf(
+  ConsultationSummarySchema,
+  'ConsultationSummaryPageDto',
+);
+
 export const ClinicalRecordSchema = z
   .object({
     patientId: z.uuid(),
     openedAt: z.iso.datetime(),
     updatedAt: z.iso.datetime(),
-    consultations: z.array(ConsultationSummarySchema),
+    consultations: ConsultationSummaryPageSchema,
   })
-  .meta({ id: 'ClinicalRecordDto', description: 'Consultations newest first (CU-08)' });
+  .meta({
+    id: 'ClinicalRecordDto',
+    description: 'One page of consultations, newest first (CU-08)',
+  });
 
 export const DiagnosisHistoryEntrySchema = z
   .object({
@@ -66,6 +75,11 @@ export const DiagnosisHistoryEntrySchema = z
   })
   .meta({ id: 'DiagnosisHistoryEntryDto' });
 
+export const DiagnosisHistoryPageSchema = pageOf(
+  DiagnosisHistoryEntrySchema,
+  'DiagnosisHistoryPageDto',
+);
+
 export const RecordAccessSchema = z
   .object({
     action: z.enum(['view_record', 'view_consultation', 'view_diagnoses', 'register_consultation']),
@@ -73,6 +87,8 @@ export const RecordAccessSchema = z
     at: z.iso.datetime(),
   })
   .meta({ id: 'RecordAccessDto' });
+
+export const RecordAccessPageSchema = pageOf(RecordAccessSchema, 'RecordAccessPageDto');
 
 export const MedicationInputSchema = z
   .object({
@@ -105,6 +121,8 @@ export const ConsultationParamsSchema = z.object({
 export type ConsultationDto = z.infer<typeof ConsultationSchema>;
 export type ConsultationSummaryDto = z.infer<typeof ConsultationSummarySchema>;
 export type ClinicalRecordDto = z.infer<typeof ClinicalRecordSchema>;
+export type DiagnosisHistoryPageDto = z.infer<typeof DiagnosisHistoryPageSchema>;
+export type RecordAccessPageDto = z.infer<typeof RecordAccessPageSchema>;
 export type DiagnosisHistoryEntryDto = z.infer<typeof DiagnosisHistoryEntrySchema>;
 export type RecordAccessDto = z.infer<typeof RecordAccessSchema>;
 export type RegisterConsultationRequestDto = z.infer<typeof RegisterConsultationRequestSchema>;
@@ -123,7 +141,7 @@ export function registerClinicalRecordContracts(registry: ContractRegistry): voi
     summary: 'CU-08 Clinical record of a patient (consultations newest first)',
     tags,
     auth: true,
-    request: { params: PatientRecordParamsSchema },
+    request: { params: PatientRecordParamsSchema, query: PageQuerySchema },
     responses: {
       200: { description: 'Clinical record', schema: ClinicalRecordSchema },
       404: notFound,
@@ -161,9 +179,9 @@ export function registerClinicalRecordContracts(registry: ContractRegistry): voi
     summary: 'CU-11 Diagnosis history of a patient (newest first)',
     tags,
     auth: true,
-    request: { params: PatientRecordParamsSchema },
+    request: { params: PatientRecordParamsSchema, query: PageQuerySchema },
     responses: {
-      200: { description: 'Diagnosis history', schema: z.array(DiagnosisHistoryEntrySchema) },
+      200: { description: 'Diagnosis history', schema: DiagnosisHistoryPageSchema },
       404: notFound,
     },
   });
@@ -171,13 +189,12 @@ export function registerClinicalRecordContracts(registry: ContractRegistry): voi
     method: 'get',
     path: '/patients/{patientId}/clinical-record/access-log',
     operationId: 'getRecordAccessLog',
-    summary:
-      'Append-only log of reads and writes of the clinical record (latest 100, newest first)',
+    summary: 'Append-only log of reads and writes of the clinical record (newest first)',
     tags,
     auth: true,
-    request: { params: PatientRecordParamsSchema },
+    request: { params: PatientRecordParamsSchema, query: PageQuerySchema },
     responses: {
-      200: { description: 'Access log', schema: z.array(RecordAccessSchema) },
+      200: { description: 'Access log', schema: RecordAccessPageSchema },
       404: notFound,
     },
   });
