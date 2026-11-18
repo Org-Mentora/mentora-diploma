@@ -11,3 +11,7 @@ export const ErrorResponseSchema = z
   .meta({ id: 'ErrorResponseDto', description: 'Body returned by every failed request' });
 
 export type ErrorResponseDto = z.infer<typeof ErrorResponseSchema>;
+
+export function errorResponse(description: string) {
+  return { description, schema: ErrorResponseSchema };
+}

@@ -25,3 +25,12 @@ export interface RouteContract {
 export interface ContractRegistry {
   registerRoute(route: RouteContract): void;
 }
+
+export type ModuleRouteContract = Omit<RouteContract, 'tags'> & { tags?: string[] };
+
+export function moduleRoutes(
+  registry: ContractRegistry,
+  defaults: { tags: string[]; auth?: boolean },
+): (route: ModuleRouteContract) => void {
+  return (route) => registry.registerRoute({ ...defaults, ...route });
+}

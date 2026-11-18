@@ -17,6 +17,13 @@ function invalid(): never {
 export class Keyset {
   constructor(private readonly fields: readonly KeysetField[]) {}
 
+  static newestFirst(path = 'createdAt'): Keyset {
+    return new Keyset([
+      { path, direction: -1, type: 'date' },
+      { path: '_id', direction: -1 },
+    ]);
+  }
+
   sort(): Record<string, 1 | -1> {
     return Object.fromEntries(this.fields.map((field) => [field.path, field.direction]));
   }
@@ -40,7 +47,7 @@ export class Keyset {
     return Object.keys(base).length === 0 ? { $or: branches } : { $and: [base, { $or: branches }] };
   }
 
-  slice<TRecord>(
+  private slice<TRecord>(
     records: TRecord[],
     request: PageRequest,
   ): { records: TRecord[]; next: CursorKey | null } {

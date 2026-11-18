@@ -6,16 +6,9 @@ import { HealthService } from '../../src/modules/health/model/HealthService';
 import { GetHealthPresenter } from '../../src/modules/health/presenter/GetHealthPresenter';
 import { FixedClock, FixedUptime, SpyView, StubIndicator } from '../support/fakes';
 
-class FailingPresenter extends Presenter<void, string> {
-  constructor(
-    view: SpyView<string>,
-    private readonly error: Error,
-  ) {
-    super(view);
-  }
-
+class FailingPresenter extends Presenter<void, string, Error> {
   protected async execute(): Promise<string> {
-    throw this.error;
+    throw this.model;
   }
 }
 

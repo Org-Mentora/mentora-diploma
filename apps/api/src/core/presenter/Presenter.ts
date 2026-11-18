@@ -1,9 +1,12 @@
 import { ApplicationError } from '#core/errors/ApplicationError';
-import type { ErrorViewModel, View } from '#core/view/View';
+import { toErrorViewModel, type View } from '#core/view/View';
 
 // Template Method
-export abstract class Presenter<TInput, TViewModel> {
-  constructor(protected readonly view: View<TViewModel>) {}
+export abstract class Presenter<TInput, TViewModel, TModel> {
+  constructor(
+    protected readonly view: View<TViewModel>,
+    protected readonly model: TModel,
+  ) {}
 
   async present(input: TInput): Promise<void> {
     let viewModel: TViewModel;
@@ -11,7 +14,7 @@ export abstract class Presenter<TInput, TViewModel> {
       viewModel = await this.execute(input);
     } catch (error) {
       if (error instanceof ApplicationError) {
-        this.view.renderError(this.toErrorViewModel(error));
+        this.view.renderError(toErrorViewModel(error));
         return;
       }
       throw error;
@@ -20,8 +23,4 @@ export abstract class Presenter<TInput, TViewModel> {
   }
 
   protected abstract execute(input: TInput): Promise<TViewModel>;
-
-  protected toErrorViewModel(error: ApplicationError): ErrorViewModel {
-    return { kind: error.kind, code: error.code, message: error.message, details: error.details };
-  }
 }

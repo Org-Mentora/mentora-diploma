@@ -24,7 +24,7 @@ export abstract class HttpView<TViewModel> implements View<TViewModel> {
   constructor(protected readonly responder: HttpResponder) {}
 
   render(viewModel: TViewModel): void {
-    this.responder.send(this.successStatus, this.serialize(viewModel));
+    this.responder.send(this.successStatus, viewModel);
   }
 
   renderError(error: ErrorViewModel): void {
@@ -32,9 +32,5 @@ export abstract class HttpView<TViewModel> implements View<TViewModel> {
       error: { code: error.code, message: error.message, details: error.details },
     };
     this.responder.send(STATUS_BY_KIND[error.kind], body);
-  }
-
-  protected serialize(viewModel: TViewModel): unknown {
-    return viewModel;
   }
 }

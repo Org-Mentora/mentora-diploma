@@ -2,11 +2,8 @@ import type { ErrorRequestHandler, RequestHandler } from 'express';
 import type { ErrorResponseDto } from '#core/contracts/ErrorResponse';
 import { ApplicationError } from '#core/errors/ApplicationError';
 import type { AppLogger } from '#core/logging/AppLogger';
-import { HttpView } from '#core/view/HttpView';
-import { ExpressResponderAdapter } from './ExpressResponderAdapter';
-
-// Passive View
-class ErrorHttpView extends HttpView<never> {}
+import { toErrorViewModel } from '#core/view/View';
+import { HttpViews } from './HttpViews';
 
 export class HttpErrorHandler {
   constructor(private readonly logger: AppLogger) {}
@@ -20,12 +17,7 @@ export class HttpErrorHandler {
 
   readonly handle: ErrorRequestHandler = (error: unknown, _req, res, _next) => {
     if (error instanceof ApplicationError) {
-      new ErrorHttpView(new ExpressResponderAdapter(res)).renderError({
-        kind: error.kind,
-        code: error.code,
-        message: error.message,
-        details: error.details,
-      });
+      HttpViews.json(res).renderError(toErrorViewModel(error));
       return;
     }
 
