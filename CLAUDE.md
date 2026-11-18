@@ -56,7 +56,7 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | Tooling | [0002](docs/adr/0002-monorepo-pnpm-turborepo.md) | pnpm workspaces + Turborepo; exact versions; opt-in dependency build scripts | Accepted |
 | Tooling | [0003](docs/adr/0003-typescript-esm-node24.md) | TS 6 strict, ESM, Node 24; API subpath imports `#core` `#infrastructure` `#modules`; web `@/` | Accepted |
 | Tooling | [0013](docs/adr/0013-biome-architecture-linting.md) | Biome 2: per-layer `noRestrictedImports` overrides, GritQL plugins, Lefthook | Accepted |
-| Backend | [0004](docs/adr/0004-backend-mvp-passive-view.md) | MVP Passive View per module: model / presenter / view / contracts / infrastructure | Accepted |
+| Backend | [0004](docs/adr/0004-backend-mvp-passive-view.md) | MVP Passive View per module: model / presenter / view / contracts / infrastructure (factory = `<Module>Presenters` class → 0049) | Amended |
 | Backend | [0005](docs/adr/0005-backend-oop-conventions.md) | Classes, abstract classes owned by the Model, constructor injection, `ApplicationError` | Accepted |
 | Backend | [0024](docs/adr/0024-injectable-module-adapters.md) | `<Name>ModuleDependencies`: Model ports optional (`deps.x ?? new MongooseX()`); Singletons/clock from `modules.ts` | Accepted |
 | Backend | [0018](docs/adr/0018-authentication-session-cookie.md) | JWT (jose) in httpOnly cookie `mentora_session`; scrypt; `AuthGuard` 401/403 `SUBSCRIPTION_INACTIVE` | Accepted |
@@ -84,10 +84,11 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | Patterns | [0007](docs/adr/0007-adapter-pattern.md) | Adapter at every technology boundary (Mongoose, pino, Express, zod-to-openapi, DTO→UI) | Accepted |
 | API | [0009](docs/adr/0009-code-first-openapi.md) | zod contracts with `.meta({id})` → OpenAPI → Swagger UI at `/api/docs` (~~OpenAPI 3.0.3~~ → 0023) | Amended |
 | API/Web | [0048](docs/adr/0048-cursor-pagination.md) | Every list is keyset-paged: `PageQuerySchema` (`cursor`, `limit` ≤100, default 20) → `pageOf(Item)` `{ items, nextCursor }`; web `usePagedQuery` + `LoadMore` | Accepted |
+| Patterns | [0049](docs/adr/0049-less-boilerplate.md) | Less boilerplate: `Presenter(view, model)`, `<Module>Presenters`, `HttpViews`, `moduleRoutes`/`errorResponse`, `findOneBy`/`findManyBy`/`findPage`; web `usePagedList`, `useAction`, `FormErrors` | Accepted |
 | API | [0023](docs/adr/0023-openapi-3-1-nullable-refs.md) | OpenAPI **3.1** output; nullable DTO refs via `nullableRef(Schema)`, never `.nullable()` | Accepted |
 | API/Web | [0010](docs/adr/0010-frontend-codegen.md) | `pnpm codegen` → `@mentora/contracts` DTOs + RTK Query hooks; committed and CI-checked | Accepted |
 | Frontend | [0011](docs/adr/0011-frontend-mvvm.md) | MVVM: View → `useXxxViewModel` → model (generated API + adapters) | Accepted |
-| Frontend | [0021](docs/adr/0021-forms-in-viewmodels.md) | Forms: react-hook-form + zod schemas in `model/domain`, `useForm` owned by the ViewModel | Accepted |
+| Frontend | [0021](docs/adr/0021-forms-in-viewmodels.md) | Forms: react-hook-form + zod schemas in `model/domain`, `useForm` owned by the ViewModel (API errors via `FormErrors` → 0049) | Amended |
 | Frontend | [0047](docs/adr/0047-web-internationalization.md) | i18next behind `@/shared/i18n`; es (default) / en, language in `/settings/preferences`; zod messages are keys | Accepted |
 | Frontend | [0012](docs/adr/0012-tailwind-shadcn.md) | Tailwind v4 CSS-first + shadcn/ui in `src/shared/ui` | Accepted |
 | Ops | [0014](docs/adr/0014-containerization.md) | Multi-stage Dockerfiles (dev/build/runtime), Compose + dev watch overlay (~~root nginx :80~~ → 0038) | Amended |

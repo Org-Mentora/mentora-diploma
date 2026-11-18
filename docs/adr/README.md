@@ -61,3 +61,4 @@ We record every architecturally significant decision as an ADR using the
 | [0046](0046-consultation-fees-and-earnings.md) | Consultation fees and earnings report | Accepted | backend, frontend, data |
 | [0047](0047-web-internationalization.md) | Web internationalization with i18next | Accepted | frontend, tooling |
 | [0048](0048-cursor-pagination.md) | Cursor pagination for every list endpoint | Accepted | backend, frontend, api, data |
+| [0049](0049-less-boilerplate.md) | Less boilerplate in presenters, routes, contracts, repositories and ViewModels | Accepted | backend, frontend, patterns |
