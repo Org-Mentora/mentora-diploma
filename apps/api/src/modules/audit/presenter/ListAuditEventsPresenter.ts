@@ -1,4 +1,4 @@
-import { ValidationError } from '#core/errors/ApplicationError';
+import { CursorCodec } from '#core/presenter/CursorCodec';
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
 import type { View } from '#core/view/View';
@@ -23,31 +23,12 @@ export class ListAuditEventsPresenter extends Presenter<ListAuditEventsInput, Au
   }
 
   protected async execute({ actor, query }: ListAuditEventsInput): Promise<AuditEventPageDto> {
-    const page = await this.audit.list(actor.professionalId, {
-      category: query.category,
-      from: date(query.from),
-      to: date(query.to),
-      before: ListAuditEventsPresenter.cursor(query.before),
-      limit: query.limit,
-    });
-    return {
-      items: page.events.map(ListAuditEventsPresenter.toDto),
-      nextBefore: page.nextBefore
-        ? `${page.nextBefore.occurredAt.toISOString()}_${page.nextBefore.id}`
-        : null,
-    };
-  }
-
-  private static cursor(value: string | undefined) {
-    if (!value) {
-      return undefined;
-    }
-    const [at, id] = value.split('_') as [string, string];
-    const occurredAt = new Date(at);
-    if (Number.isNaN(occurredAt.getTime())) {
-      throw new ValidationError('Invalid cursor', { field: 'before' });
-    }
-    return { occurredAt, id };
+    const page = await this.audit.list(
+      actor.professionalId,
+      { category: query.category, from: date(query.from), to: date(query.to) },
+      CursorCodec.request(query),
+    );
+    return CursorCodec.toDto(page, ListAuditEventsPresenter.toDto);
   }
 
   private static toDto(event: AuditEvent) {

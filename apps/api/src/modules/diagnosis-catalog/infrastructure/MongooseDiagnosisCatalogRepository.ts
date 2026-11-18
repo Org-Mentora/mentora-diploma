@@ -1,4 +1,6 @@
 import type { QueryFilter } from 'mongoose';
+import type { Page } from '#core/model/Pagination';
+import { Keyset } from '#infrastructure/database/Keyset';
 import { DiagnosisCatalogEntry } from '../model/DiagnosisCatalogEntry';
 import type {
   DiagnosisCatalogRepository,
@@ -10,9 +12,14 @@ function escapeRegex(term: string): string {
   return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+const BY_CATEGORY = new Keyset([
+  { path: 'category', direction: 1 },
+  { path: '_id', direction: 1 },
+]);
+
 // Repository, Adapter
 export class MongooseDiagnosisCatalogRepository implements DiagnosisCatalogRepository {
-  async search(criteria: DiagnosisSearchCriteria): Promise<DiagnosisCatalogEntry[]> {
+  async search(criteria: DiagnosisSearchCriteria): Promise<Page<DiagnosisCatalogEntry>> {
     const filter: QueryFilter<DiagnosisCatalogDocument> = { active: true };
     if (criteria.category) {
       filter.category = criteria.category;
@@ -21,11 +28,12 @@ export class MongooseDiagnosisCatalogRepository implements DiagnosisCatalogRepos
       const pattern = new RegExp(escapeRegex(criteria.term), 'i');
       filter.$or = [{ name: pattern }, { _id: pattern }];
     }
-    const records = await DiagnosisCatalogModel.find(filter)
-      .sort({ category: 1, _id: 1 })
-      .limit(criteria.limit)
+    const { page } = criteria;
+    const records = await DiagnosisCatalogModel.find(BY_CATEGORY.where(filter, page.after))
+      .sort(BY_CATEGORY.sort())
+      .limit(page.limit + 1)
       .lean<DiagnosisCatalogDocument[]>();
-    return records.map((record) => this.toDomain(record));
+    return BY_CATEGORY.page(records, page, (record) => this.toDomain(record));
   }
 
   async findByCode(code: string): Promise<DiagnosisCatalogEntry | null> {

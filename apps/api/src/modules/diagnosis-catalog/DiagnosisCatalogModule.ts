@@ -4,7 +4,7 @@ import type { ContractRegistry } from '#core/module/ContractRegistry';
 import type { View } from '#core/view/View';
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import {
-  type DiagnosisCatalogEntryDto,
+  type DiagnosisCatalogPageDto,
   registerDiagnosisCatalogContracts,
 } from './contracts/diagnosis-catalog.contracts';
 import { MongooseDiagnosisCatalogRepository } from './infrastructure/MongooseDiagnosisCatalogRepository';
@@ -47,7 +47,7 @@ export class DiagnosisCatalogModule implements AppModule, DiagnosisCatalogPresen
     await this.#seeder.seed();
   }
 
-  searchDiagnoses(view: View<DiagnosisCatalogEntryDto[]>): SearchDiagnosesPresenter {
+  searchDiagnoses(view: View<DiagnosisCatalogPageDto>): SearchDiagnosesPresenter {
     return new SearchDiagnosesPresenter(view, this.catalog);
   }
 }

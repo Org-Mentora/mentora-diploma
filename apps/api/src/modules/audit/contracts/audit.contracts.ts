@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
+import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 
 export const AuditEventSchema = z
@@ -17,16 +18,9 @@ export const AuditEventSchema = z
   })
   .meta({ id: 'AuditEventDto' });
 
-export const AuditEventPageSchema = z
-  .object({
-    items: z.array(AuditEventSchema),
-    nextBefore: z.string().nullable().meta({
-      description: 'Pass it as `before` to load the next (older) page; null on the last page',
-    }),
-  })
-  .meta({ id: 'AuditEventPageDto' });
+export const AuditEventPageSchema = pageOf(AuditEventSchema, 'AuditEventPageDto');
 
-export const ListAuditEventsQuerySchema = z.object({
+export const ListAuditEventsQuerySchema = PageQuerySchema.extend({
   category: z
     .string()
     .regex(/^[a-z_]+$/)
@@ -34,12 +28,6 @@ export const ListAuditEventsQuerySchema = z.object({
     .meta({ description: 'session, account, patient, consultation, appointment, booking, …' }),
   from: z.iso.datetime().optional(),
   to: z.iso.datetime().optional(),
-  before: z
-    .string()
-    .regex(/^[^_]+_[0-9a-f-]{36}$/)
-    .optional()
-    .meta({ description: 'Cursor: the `nextBefore` of the previous page' }),
-  limit: z.coerce.number().int().min(1).max(200).optional(),
 });
 
 export type AuditEventDto = z.infer<typeof AuditEventSchema>;

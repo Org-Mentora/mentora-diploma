@@ -1,10 +1,17 @@
 import type { QueryFilter } from 'mongoose';
+import type { Page, PageRequest } from '#core/model/Pagination';
+import { Keyset } from '#infrastructure/database/Keyset';
 import { MongooseRepository } from '#infrastructure/database/MongooseRepository';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { AuditEvent } from '../model/AuditEvent';
 import type { AuditEventFilter, AuditEventRepository } from '../model/AuditEventRepository';
 import { AuditEventMapper } from './AuditEventMapper';
 import { type AuditEventDocument, AuditEventModel } from './AuditEventSchema';
+
+const NEWEST_FIRST = new Keyset([
+  { path: 'occurredAt', direction: -1, type: 'date' },
+  { path: '_id', direction: -1 },
+]);
 
 // Repository, Adapter
 export class MongooseAuditEventRepository
@@ -21,7 +28,11 @@ export class MongooseAuditEventRepository
     });
   }
 
-  async search(professionalId: string, filter: AuditEventFilter): Promise<AuditEvent[]> {
+  async search(
+    professionalId: string,
+    filter: AuditEventFilter,
+    page: PageRequest,
+  ): Promise<Page<AuditEvent>> {
     const occurredAt: Record<string, Date> = {};
     if (filter.from) {
       occurredAt.$gte = filter.from;
@@ -36,18 +47,12 @@ export class MongooseAuditEventRepository
     if (Object.keys(occurredAt).length > 0) {
       query.occurredAt = occurredAt;
     }
-    if (filter.before) {
-      query.$or = [
-        { occurredAt: { $lt: filter.before.occurredAt } },
-        { occurredAt: filter.before.occurredAt, _id: { $lt: filter.before.id } },
-      ];
-    }
     const records = await this.model
-      .find(query)
-      .sort({ occurredAt: -1, _id: -1 })
-      .limit(filter.limit)
+      .find(NEWEST_FIRST.where(query, page.after))
+      .sort(NEWEST_FIRST.sort())
+      .limit(page.limit + 1)
       .session(this.session)
       .lean<AuditEventDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+    return NEWEST_FIRST.page(records, page, (record) => this.mapper.toDomain(record));
   }
 }
