@@ -23,7 +23,7 @@ export function PreferencesPage() {
               <label
                 key={option.value}
                 className={cn(
-                  'flex cursor-pointer items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent',
+                  'flex cursor-pointer items-center justify-between rounded-lg border p-4 transition-colors hover:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary',
                   selected && 'border-primary ring-1 ring-primary',
                 )}
               >
@@ -37,7 +37,9 @@ export function PreferencesPage() {
                 />
                 <span className="grid">
                   <span className="font-medium">{option.nativeName}</span>
-                  <span className="text-muted-foreground text-sm">{option.label}</span>
+                  {option.label !== option.nativeName && (
+                    <span className="text-muted-foreground text-sm">{option.label}</span>
+                  )}
                 </span>
                 {selected && <Check className="size-4 text-primary" aria-hidden />}
               </label>

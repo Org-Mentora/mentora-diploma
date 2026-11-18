@@ -25,7 +25,7 @@ export function ProfileSettingsPage() {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <Card>
         <CardHeader>
           <CardTitle>{t('settings.section.profile')}</CardTitle>

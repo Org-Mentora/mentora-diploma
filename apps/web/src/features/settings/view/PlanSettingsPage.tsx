@@ -22,7 +22,7 @@ export function PlanSettingsPage() {
   const { overview } = vm;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <Card className={overview.needsAction ? 'border-destructive' : undefined}>
         <CardHeader className="flex flex-wrap items-start justify-between gap-4">
           <div className="grid gap-1.5">

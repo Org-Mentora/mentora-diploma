@@ -12,7 +12,7 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ title, description, children, footer, wide }: AuthLayoutProps) {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-muted/30 p-4">
+    <div className="flex min-h-dvh justify-center bg-muted/30 px-4 py-10 sm:py-16">
       <div className={wide ? 'w-full max-w-2xl' : 'w-full max-w-sm'}>
         <div className="mb-6 flex items-center justify-between">
           <p className="font-semibold text-xl tracking-tight">Mentora</p>

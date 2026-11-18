@@ -375,6 +375,9 @@ export const es: Messages = {
     loadMore: 'Cargar más',
   },
   nav: {
+    main: 'Navegación principal',
+    skipToContent: 'Saltar al contenido',
+    account: 'Menú de la cuenta',
     patients: 'Pacientes',
     agenda: 'Agenda',
     reports: 'Reportes',

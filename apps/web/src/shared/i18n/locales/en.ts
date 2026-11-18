@@ -373,6 +373,9 @@ export const en = {
     loadMore: 'Load more',
   },
   nav: {
+    main: 'Main navigation',
+    skipToContent: 'Skip to content',
+    account: 'Account menu',
     patients: 'Patients',
     agenda: 'Agenda',
     reports: 'Reports',
