@@ -11,6 +11,7 @@ export const PATTERNS = [
   'Data Mapper',
   'Entity',
   'Facade',
+  'Iterator',
   'Passive View',
   'Presenter',
   'Repository',
