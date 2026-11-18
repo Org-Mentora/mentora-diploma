@@ -15,7 +15,7 @@ export function PrescriptionPage() {
   const { letterhead } = vm;
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="flex flex-wrap items-center gap-3 print:hidden">
         <Link
           to={`/patients/${vm.patientId}`}
@@ -23,7 +23,7 @@ export function PrescriptionPage() {
         >
           <ArrowLeft className="size-4" /> {t('clinical.backToPatient')}
         </Link>
-        <div className="ml-auto flex gap-2">
+        <div className="flex flex-wrap gap-2 sm:ml-auto">
           <Button variant="outline" onClick={vm.print} disabled={!vm.canGenerate}>
             <Printer /> {t('prescription.print')}
           </Button>
@@ -37,7 +37,7 @@ export function PrescriptionPage() {
         </div>
       </div>
 
-      <article className="mx-auto grid w-full max-w-3xl gap-6 rounded-md border bg-white p-10 text-black shadow-sm print:max-w-none print:border-0 print:p-0 print:shadow-none">
+      <article className="mx-auto grid w-full max-w-3xl gap-6 rounded-md border bg-white p-5 text-black sm:p-10 shadow-sm print:max-w-none print:border-0 print:p-0 print:shadow-none">
         {letterhead && (
           <header className="flex items-start gap-4 border-b pb-4">
             {letterhead.logoDataUrl ? (
@@ -92,7 +92,7 @@ export function PrescriptionPage() {
         </section>
 
         {letterhead && (
-          <footer className="mt-10 ml-auto w-64 border-neutral-400 border-t pt-2 text-center text-xs">
+          <footer className="mt-10 ml-auto w-full max-w-64 border-neutral-400 border-t pt-2 text-center text-xs">
             <p>{letterhead.professionalName}</p>
             <p>{letterhead.license}</p>
           </footer>

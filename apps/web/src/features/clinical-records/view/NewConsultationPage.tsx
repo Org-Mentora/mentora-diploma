@@ -16,7 +16,7 @@ export function NewConsultationPage() {
   const { errors } = vm.form.formState;
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <button
         type="button"
         onClick={vm.cancel}

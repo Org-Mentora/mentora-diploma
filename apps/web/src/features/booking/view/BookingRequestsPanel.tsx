@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/dialog';
+import { EmptyState } from '@/shared/ui/empty-state';
 import { FormField } from '@/shared/ui/form-field';
 import { LoadMore } from '@/shared/ui/load-more';
 import { NativeSelect } from '@/shared/ui/select';
@@ -94,7 +95,7 @@ export function BookingRequestsPanel() {
         {vm.isLoading ? (
           <p className="text-muted-foreground text-sm">{t('common.loading')}</p>
         ) : vm.pending.length === 0 ? (
-          <p className="text-muted-foreground text-sm">{t('booking.requests.empty')}</p>
+          <EmptyState title={t('booking.requests.empty')} className="p-6" />
         ) : (
           <ul className="grid gap-2">
             {vm.pending.map((item) => (

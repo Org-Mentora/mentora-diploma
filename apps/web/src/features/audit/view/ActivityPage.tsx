@@ -19,10 +19,10 @@ export function ActivityPage() {
           <CardTitle>{t('audit.title')}</CardTitle>
           <CardDescription>{t('audit.description')}</CardDescription>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 sm:w-auto">
           <NativeSelect
             aria-label={t('audit.filter')}
-            className="w-48"
+            className="flex-1 sm:w-56 sm:flex-none"
             value={vm.category}
             onChange={(event) => vm.setCategory(event.target.value)}
           >

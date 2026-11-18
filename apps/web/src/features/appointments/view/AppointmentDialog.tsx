@@ -65,8 +65,11 @@ export function AppointmentDialog({ appointmentId, day, onClose }: AppointmentDi
                 className="sm:col-span-2"
                 error={errors.patientId?.message}
               >
-                <NativeSelect id="patientId" {...vm.form.register('patientId')}>
-                  <option value="">{t('agenda.selectPatient')}</option>
+                <NativeSelect
+                  id="patientId"
+                  placeholder={t('agenda.selectPatient')}
+                  {...vm.form.register('patientId')}
+                >
                   {vm.patientOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}

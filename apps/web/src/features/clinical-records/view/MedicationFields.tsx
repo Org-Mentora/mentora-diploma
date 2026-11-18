@@ -35,7 +35,10 @@ export function MedicationFields({ form, medications, onAdd }: MedicationFieldsP
         <p className="text-muted-foreground text-sm">{t('clinical.medication.none')}</p>
       )}
       {medications.fields.map((field, index) => (
-        <fieldset key={field.id} className="grid gap-3 rounded-md border p-3 sm:grid-cols-4">
+        <fieldset
+          key={field.id}
+          className="grid gap-3 rounded-md border p-3 sm:grid-cols-2 lg:grid-cols-4"
+        >
           <legend className="sr-only">
             {t('clinical.medication.legend', { index: index + 1 })}
           </legend>
@@ -55,7 +58,7 @@ export function MedicationFields({ form, medications, onAdd }: MedicationFieldsP
           <FormField
             id={`medications.${index}.indications`}
             label={t('clinical.medication.indications')}
-            className="sm:col-span-3"
+            className="sm:col-span-2 lg:col-span-3"
           >
             <Input
               id={`medications.${index}.indications`}

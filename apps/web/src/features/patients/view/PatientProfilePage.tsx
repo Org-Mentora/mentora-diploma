@@ -48,7 +48,7 @@ export function PatientProfilePage() {
   const { profile } = vm;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <Link
         to="/patients"
         className="flex w-fit items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
@@ -57,9 +57,9 @@ export function PatientProfilePage() {
       </Link>
 
       <Card>
-        <CardHeader className="flex flex-wrap items-start justify-between gap-4">
-          <div className="grid gap-1.5">
-            <CardTitle className="flex items-center gap-3 text-2xl">
+        <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="grid min-w-0 gap-1.5">
+            <CardTitle className="flex flex-wrap items-center gap-x-3 gap-y-1 break-words text-2xl leading-tight">
               {profile.fullName}
               <Badge variant={profile.statusTone}>{profile.statusLabel}</Badge>
             </CardTitle>
@@ -67,7 +67,7 @@ export function PatientProfilePage() {
               {profile.headline} · {profile.statusChange}
             </CardDescription>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap lg:shrink-0 lg:justify-end [&>*]:h-auto [&>*]:min-h-10 [&>*]:whitespace-normal [&>*]:text-center sm:[&>*]:min-h-9 sm:[&>*]:whitespace-nowrap">
             <Button variant="outline" onClick={() => vm.setEditOpen(true)}>
               <Pencil /> {t('patients.profile.edit')}
             </Button>
@@ -85,16 +85,16 @@ export function PatientProfilePage() {
             </Link>
             <Link
               to={`/patients/${vm.patientId}/consultations/new`}
-              className="inline-flex h-9 items-center gap-2 rounded-md bg-primary px-4 font-medium text-primary-foreground text-sm hover:bg-primary/90"
+              className={buttonVariants({ className: 'order-first col-span-2 sm:order-last' })}
             >
-              <Stethoscope className="size-4" /> {t('patients.profile.newConsultation')}
+              <Stethoscope /> {t('patients.profile.newConsultation')}
             </Link>
           </div>
         </CardHeader>
       </Card>
 
       <Tabs defaultValue="overview">
-        <TabsList>
+        <TabsList className="w-full sm:w-fit">
           <TabsTrigger value="overview">{t('patients.tab.overview')}</TabsTrigger>
           <TabsTrigger value="record">{t('patients.tab.record')}</TabsTrigger>
           <TabsTrigger value="diagnoses">{t('patients.tab.diagnoses')}</TabsTrigger>

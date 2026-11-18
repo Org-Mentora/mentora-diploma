@@ -27,7 +27,7 @@ export function EarningsPage() {
   const { summary } = vm;
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-1 gap-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="grid gap-1">
           <h1 className="font-semibold text-2xl tracking-tight">{t('reports.title')}</h1>
@@ -37,7 +37,7 @@ export function EarningsPage() {
         </div>
         <NativeSelect
           aria-label={t('reports.range')}
-          className="w-48"
+          className="w-full sm:w-48"
           value={String(vm.range)}
           onChange={(event) => vm.setRange(Number(event.target.value))}
         >

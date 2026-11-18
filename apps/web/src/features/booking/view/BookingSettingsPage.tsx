@@ -137,7 +137,7 @@ export function BookingSettingsPage() {
             <Plus /> {t('booking.settings.addRange')}
           </Button>
         </CardHeader>
-        <CardContent className="grid gap-3">
+        <CardContent className="@container grid gap-3">
           {vm.windows.fields.length === 0 && (
             <p className="text-muted-foreground text-sm">{t('booking.settings.noHours')}</p>
           )}
@@ -146,10 +146,11 @@ export function BookingSettingsPage() {
             return (
               <div
                 key={field.id}
-                className="grid grid-cols-[1fr_auto_auto_auto] items-start gap-2 sm:grid-cols-[12rem_8rem_8rem_auto]"
+                className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-start gap-2 border-b pb-3 last:border-b-0 @lg:grid-cols-[minmax(0,12rem)_8rem_8rem_auto] @lg:border-b-0 @lg:pb-0"
               >
                 <NativeSelect
                   aria-label={t('booking.settings.weekday')}
+                  className="col-span-2 @lg:col-span-1"
                   {...vm.form.register(`weeklyHours.${index}.weekday`)}
                 >
                   {vm.weekdays.map((day) => (
@@ -178,6 +179,7 @@ export function BookingSettingsPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
+                  className="col-start-3 row-start-1 @lg:col-start-auto @lg:row-start-auto"
                   aria-label={t('booking.settings.removeRange')}
                   onClick={() => vm.windows.remove(index)}
                 >

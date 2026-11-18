@@ -1,11 +1,30 @@
 import { useTranslation } from '@/shared/i18n';
+import { cn } from '@/shared/lib/utils';
 import type { EarningsBar, EarningsSummary } from '../viewmodel/useEarningsViewModel';
 
 function Swatch({ className }: { className: string }) {
   return <span aria-hidden className={`inline-block size-2.5 rounded-sm ${className}`} />;
 }
 
-function Bar({ bar }: { bar: EarningsBar }) {
+type TooltipAlign = 'start' | 'center' | 'end';
+
+const TOOLTIP_ALIGN: Record<TooltipAlign, string> = {
+  start: 'left-0',
+  center: 'left-1/2 -translate-x-1/2',
+  end: 'right-0',
+};
+
+function tooltipAlign(index: number, total: number): TooltipAlign {
+  if (index < total / 4) {
+    return 'start';
+  }
+  if (index >= total - total / 4) {
+    return 'end';
+  }
+  return 'center';
+}
+
+function Bar({ bar, align }: { bar: EarningsBar; align: TooltipAlign }) {
   const { t } = useTranslation();
   const hasEarned = bar.earnedPercent > 0;
   const hasProjected = bar.projectedPercent > 0;
@@ -32,7 +51,10 @@ function Bar({ bar }: { bar: EarningsBar }) {
       </button>
       <div
         role="tooltip"
-        className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden w-max -translate-x-1/2 rounded-md border bg-card px-3 py-2 text-card-foreground text-xs shadow-md group-focus-within:block group-hover:block"
+        className={cn(
+          'pointer-events-none absolute bottom-full z-10 mb-2 hidden w-max max-w-[min(16rem,80vw)] rounded-md border bg-card px-3 py-2 text-card-foreground text-xs shadow-md group-focus-within:block group-hover:block',
+          TOOLTIP_ALIGN[align],
+        )}
       >
         <p className="mb-1 font-medium first-letter:uppercase">{bar.longLabel}</p>
         <p className="flex items-center gap-1.5">
@@ -53,7 +75,7 @@ function Bar({ bar }: { bar: EarningsBar }) {
 export function EarningsChart({ summary }: { summary: EarningsSummary }) {
   const { t } = useTranslation();
   return (
-    <figure className="grid gap-3">
+    <figure className="grid min-w-0 gap-3">
       <figcaption className="flex flex-wrap items-center gap-4 text-muted-foreground text-xs">
         <span className="flex items-center gap-1.5">
           <Swatch className="bg-chart-earned" /> {t('reports.earned')}
@@ -62,7 +84,7 @@ export function EarningsChart({ summary }: { summary: EarningsSummary }) {
           <Swatch className="bg-chart-projected" /> {t('reports.projected')}
         </span>
       </figcaption>
-      <div className="grid grid-cols-[auto_1fr] gap-x-2">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2">
         <div className="relative h-60 w-14 text-right text-muted-foreground text-xs tabular-nums">
           {summary.ticks.map((tick) => (
             <span
@@ -84,17 +106,20 @@ export function EarningsChart({ summary }: { summary: EarningsSummary }) {
             />
           ))}
           <div className="relative flex h-full items-end gap-1 sm:gap-2">
-            {summary.bars.map((bar) => (
-              <Bar key={bar.month} bar={bar} />
+            {summary.bars.map((bar, index) => (
+              <Bar key={bar.month} bar={bar} align={tooltipAlign(index, summary.bars.length)} />
             ))}
           </div>
         </div>
         <span />
-        <div className="mt-2 flex gap-1 sm:gap-2">
-          {summary.bars.map((bar) => (
+        <div className="mt-2 flex min-w-0 gap-1 sm:gap-2">
+          {summary.bars.map((bar, index) => (
             <span
               key={bar.month}
-              className="min-w-0 flex-1 truncate text-center text-muted-foreground text-xs first-letter:uppercase"
+              className={cn(
+                'min-w-0 flex-1 truncate text-center text-[11px] text-muted-foreground first-letter:uppercase sm:text-xs',
+                summary.bars.length > 8 && index % 2 === 1 && 'max-sm:invisible',
+              )}
             >
               {bar.label}
             </span>
