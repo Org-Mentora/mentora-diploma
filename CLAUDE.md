@@ -52,7 +52,7 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | Process | [0001](docs/adr/0001-record-architecture-decisions.md) | Decisions recorded as MADR ADRs. Changes are made by superseding ADRs, never by editing them | Accepted |
 | Process | [0016](docs/adr/0016-english-only.md) | English for code, docs and commits. Domain glossary maps the Spanish use cases | Accepted |
 | Process | [0017](docs/adr/0017-agent-context.md) | Short CLAUDE.md with an ADR index, nested per-app CLAUDE.md, skills for recipes | Accepted |
-| Process | [0035](docs/adr/0035-comments-name-design-patterns.md) | Comments only name the design pattern (`// Adapter`); checked by `pnpm lint:comments` | Accepted |
+| Process | [0035](docs/adr/0035-comments-name-design-patterns.md) | Comments only name the design pattern (`// Adapter`); checked by `pnpm lint:comments` (+ `Iterator` → 0048) | Amended |
 | Tooling | [0002](docs/adr/0002-monorepo-pnpm-turborepo.md) | pnpm workspaces + Turborepo; exact versions; opt-in dependency build scripts | Accepted |
 | Tooling | [0003](docs/adr/0003-typescript-esm-node24.md) | TS 6 strict, ESM, Node 24; API subpath imports `#core` `#infrastructure` `#modules`; web `@/` | Accepted |
 | Tooling | [0013](docs/adr/0013-biome-architecture-linting.md) | Biome 2: per-layer `noRestrictedImports` overrides, GritQL plugins, Lefthook | Accepted |
@@ -83,6 +83,7 @@ immutable: superseded rows stay here, struck through, to keep the decision histo
 | Patterns | [0042](docs/adr/0042-dependency-inversion-for-platform-services.md) | DIP for platform services: API `IdGenerator` + `DateFormatter`; web `UserFeedback` + `BrowserActions` via `PlatformContext` | Accepted |
 | Patterns | [0007](docs/adr/0007-adapter-pattern.md) | Adapter at every technology boundary (Mongoose, pino, Express, zod-to-openapi, DTO→UI) | Accepted |
 | API | [0009](docs/adr/0009-code-first-openapi.md) | zod contracts with `.meta({id})` → OpenAPI → Swagger UI at `/api/docs` (~~OpenAPI 3.0.3~~ → 0023) | Amended |
+| API/Web | [0048](docs/adr/0048-cursor-pagination.md) | Every list is keyset-paged: `PageQuerySchema` (`cursor`, `limit` ≤100, default 20) → `pageOf(Item)` `{ items, nextCursor }`; web `usePagedQuery` + `LoadMore` | Accepted |
 | API | [0023](docs/adr/0023-openapi-3-1-nullable-refs.md) | OpenAPI **3.1** output; nullable DTO refs via `nullableRef(Schema)`, never `.nullable()` | Accepted |
 | API/Web | [0010](docs/adr/0010-frontend-codegen.md) | `pnpm codegen` → `@mentora/contracts` DTOs + RTK Query hooks; committed and CI-checked | Accepted |
 | Frontend | [0011](docs/adr/0011-frontend-mvvm.md) | MVVM: View → `useXxxViewModel` → model (generated API + adapters) | Accepted |

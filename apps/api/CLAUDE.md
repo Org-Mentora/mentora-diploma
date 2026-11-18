@@ -3,7 +3,7 @@
 ADRs: 0004 (MVP), 0005 (OOP), 0006 (Singleton), 0007 (Adapter), 0008 (Mongo), 0009 (OpenAPI),
 0024 (module dependencies), 0025 (transactions), 0026 (jobs), 0027 (email), 0029 (subscriptions), 0030 (WhatsApp),
 0031 (video calls), 0033 (cross-module commands), 0040 (agenda lock, rate-limit store, access log), 0041 (JWT signing Strategy), 0042 (IdGenerator, DateFormatter),
-0044 (audit trail), 0045 (online booking), 0046 (fees and earnings).
+0044 (audit trail), 0045 (online booking), 0046 (fees and earnings), 0048 (cursor pagination).
 Reference slice to copy: `src/modules/health`. Recipe: `.claude/skills/new-backend-module`.
 
 ## Layout
@@ -44,6 +44,10 @@ test/                unit/ integration/ support/ (fakes: SpyView, FixedClock, ..
 - **Cross-module (ADR-0022):** owner exposes a query service in `index.ts`; the consumer Model declares
   its own abstract class and an adapter in its `infrastructure/` implements it. Wire in `src/app/modules.ts`.
 - **Contracts:** nullable DTO refs use `nullableRef(Schema)` (ADR-0023).
+- **Lists (ADR-0048):** never return a whole collection. Query = `PageQuerySchema.extend({...})`, response =
+  `pageOf(Item, 'XxxPageDto')`. Presenter: `CursorCodec.request(input)` → service → `CursorCodec.toDto(page, map)`.
+  Repository: a module-level `Keyset` (last field `_id`), `.find(keyset.where(filter, page.after)).sort(keyset.sort())
+  .limit(page.limit + 1)` → `keyset.page(...)`. Embedded append-only collections use `page.slice(sorted, keyOf)`.
 - **Module dependencies (ADR-0024):** one `<Name>ModuleDependencies` object. Model ports are
   optional and default to the Mongoose adapter (`deps.repository ?? new MongooseXRepository(deps.context)`);
   the clock, guard, logger, transactions and Singleton-backed adapters come from `src/app/modules.ts`.

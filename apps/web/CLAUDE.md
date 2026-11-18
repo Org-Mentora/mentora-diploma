@@ -1,7 +1,7 @@
 # Web (apps/web): MVVM + RTK Query + Tailwind/shadcn
 
 ADRs: 0010 (codegen), 0011 (MVVM), 0012 (Tailwind/shadcn), 0006 (AppStore singleton), 0042 (platform ports),
-0047 (i18n).
+0047 (i18n), 0048 (cursor pagination).
 Reference slice to copy: `src/features/health`. Recipe: `.claude/skills/new-frontend-feature`.
 
 ## Layout
@@ -37,6 +37,9 @@ src/shared/i18n/            i18next adapter, locales/en.ts + es.ts (es typed as 
 - `baseApi` refetches `/auth/me` on `403 SUBSCRIPTION_INACTIVE` (refreshes the cookie, ADR-0029).
 - Third-party engines (jsPDF) live in `model/domain` adapters, loaded with `import()` by ViewModels (ADR-0032).
 - Confirmations: `ConfirmDialog` from `@/shared/ui/confirm-dialog`.
+- Lists (ADR-0048): `usePagedQuery(useXxxQuery, filters)` from `@/model/api/usePagedQuery` → `items`, `hasMore`,
+  `loadMore`, `refresh`; Views render `<LoadMore>` from `@/shared/ui/load-more`. Call `refresh()` after a mutation
+  that changes the list. Use `loadAll` only for bounded ranges (agenda month).
 - Toasts, printing and the clipboard (ADR-0042): ViewModels call `useUserFeedback()` / `useBrowserActions()`
   from `@/model/platform/Platform`, never `sonner`, `window` or `navigator`. `AppProviders` provides the
   browser implementation; tests wrap the hook in `<PlatformContext value={fake}>`.

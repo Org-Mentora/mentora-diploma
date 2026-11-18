@@ -60,3 +60,4 @@ We record every architecturally significant decision as an ADR using the
 | [0045](0045-patient-online-booking.md) | Patient online booking | Accepted | backend, frontend, domain |
 | [0046](0046-consultation-fees-and-earnings.md) | Consultation fees and earnings report | Accepted | backend, frontend, data |
 | [0047](0047-web-internationalization.md) | Web internationalization with i18next | Accepted | frontend, tooling |
+| [0048](0048-cursor-pagination.md) | Cursor pagination for every list endpoint | Accepted | backend, frontend, api, data |
