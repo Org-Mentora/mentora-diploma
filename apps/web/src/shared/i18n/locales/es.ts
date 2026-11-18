@@ -372,6 +372,7 @@ export const es: Messages = {
     copied: 'Copiado al portapapeles',
     optional: 'opcional',
     confirm: 'Confirmar',
+    loadMore: 'Cargar más',
   },
   nav: {
     patients: 'Pacientes',

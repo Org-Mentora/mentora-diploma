@@ -370,6 +370,7 @@ export const en = {
     copied: 'Copied to the clipboard',
     optional: 'optional',
     confirm: 'Confirm',
+    loadMore: 'Load more',
   },
   nav: {
     patients: 'Patients',

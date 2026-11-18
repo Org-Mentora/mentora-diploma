@@ -3,6 +3,7 @@ import type { Language } from './i18n';
 const ES: Record<string, string> = {
   'If the email belongs to an account, we sent it a 6-digit code. It expires in 15 minutes.':
     'Si el email pertenece a una cuenta, le enviamos un código de 6 dígitos. Vence en 15 minutos.',
+  'Invalid cursor': 'La página pedida ya no es válida. Volvé a cargar la lista.',
   'A patient with this DNI is already registered': 'Ya hay un paciente registrado con este DNI',
   'A payment with this reference is already registered':
     'Ya hay un pago registrado con esta referencia',
