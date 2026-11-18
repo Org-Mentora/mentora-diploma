@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
 import { nullableRef } from '#core/contracts/nullableRef';
+import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 
 export const PatientStatusSchema = z.enum(['active', 'discharged', 'inactive']);
@@ -74,12 +75,15 @@ export const ChangePatientStatusSchema = z
   .meta({ id: 'ChangePatientStatusRequestDto' });
 
 export const PatientIdParamsSchema = z.object({ id: z.uuid() });
-export const SearchPatientsQuerySchema = z.object({
+export const PatientSummaryPageSchema = pageOf(PatientSummarySchema, 'PatientSummaryPageDto');
+
+export const SearchPatientsQuerySchema = PageQuerySchema.extend({
   q: z.string().trim().max(100).optional().meta({ description: 'Name, surname or DNI' }),
 });
 
 export type PatientDto = z.infer<typeof PatientSchema>;
 export type PatientSummaryDto = z.infer<typeof PatientSummarySchema>;
+export type PatientSummaryPageDto = z.infer<typeof PatientSummaryPageSchema>;
 export type PatientInputDto = z.infer<typeof PatientInputSchema>;
 export type ChangePatientStatusDto = z.infer<typeof ChangePatientStatusSchema>;
 
@@ -110,7 +114,9 @@ export function registerPatientContracts(registry: ContractRegistry): void {
     tags,
     auth: true,
     request: { query: SearchPatientsQuerySchema },
-    responses: { 200: { description: 'Matching patients', schema: z.array(PatientSummarySchema) } },
+    responses: {
+      200: { description: 'Matching patients by surname', schema: PatientSummaryPageSchema },
+    },
   });
   registry.registerRoute({
     method: 'get',

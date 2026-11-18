@@ -1,31 +1,36 @@
+import { CursorCodec, type PageInput } from '#core/presenter/CursorCodec';
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
 import type { View } from '#core/view/View';
-import type { AppointmentDto } from '../contracts/appointments.contracts';
+import type { AppointmentPageDto } from '../contracts/appointments.contracts';
 import type { AppointmentService } from '../model/AppointmentService';
 import { AppointmentViewModel } from './AppointmentViewModel';
 
-export interface ListAppointmentsInput {
+export interface ListAppointmentsInput extends PageInput {
   actor: AuthenticatedActor;
   from: string;
   to: string;
 }
 
 // Presenter
-export class ListAppointmentsPresenter extends Presenter<ListAppointmentsInput, AppointmentDto[]> {
+export class ListAppointmentsPresenter extends Presenter<
+  ListAppointmentsInput,
+  AppointmentPageDto
+> {
   constructor(
-    view: View<AppointmentDto[]>,
+    view: View<AppointmentPageDto>,
     private readonly agenda: AppointmentService,
   ) {
     super(view);
   }
 
-  protected async execute(input: ListAppointmentsInput): Promise<AppointmentDto[]> {
-    const entries = await this.agenda.list(
+  protected async execute(input: ListAppointmentsInput): Promise<AppointmentPageDto> {
+    const page = await this.agenda.list(
       input.actor.professionalId,
       new Date(input.from),
       new Date(input.to),
+      CursorCodec.request(input),
     );
-    return entries.map((entry) => AppointmentViewModel.toDto(entry));
+    return CursorCodec.toDto(page, (entry) => AppointmentViewModel.toDto(entry));
   }
 }

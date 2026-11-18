@@ -1,3 +1,4 @@
+import type { Page, PageRequest } from '#core/model/Pagination';
 import { Repository } from '#core/model/Repository';
 import type { Appointment } from './Appointment';
 import type { EarningsRow } from './EarningsReport';
@@ -9,7 +10,8 @@ export abstract class AppointmentRepository extends Repository<Appointment> {
     professionalId: string,
     from: Date,
     to: Date,
-  ): Promise<Appointment[]>;
+    page: PageRequest,
+  ): Promise<Page<Appointment>>;
   abstract findScheduledOverlapping(
     professionalId: string,
     startsAt: Date,

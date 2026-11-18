@@ -7,6 +7,7 @@ import { ExpressResponderAdapter } from '#infrastructure/http/ExpressResponderAd
 import {
   type AppointmentDto,
   AppointmentIdParamsSchema,
+  type AppointmentPageDto,
   type ConsultationFeesDto,
   EarningsQuerySchema,
   type EarningsReportDto,
@@ -28,7 +29,7 @@ export class AppointmentRoutes {
     router.use(this.guard.requireActiveSubscription);
 
     router.get('/', async (req, res) => {
-      const view = new JsonHttpView<AppointmentDto[]>(new ExpressResponderAdapter(res));
+      const view = new JsonHttpView<AppointmentPageDto>(new ExpressResponderAdapter(res));
       const range = InputParser.parse(ListAppointmentsQuerySchema, req.query);
       await this.presenters
         .listAppointments(view)

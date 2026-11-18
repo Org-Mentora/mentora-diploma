@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
+import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 
 const AppointmentTypeSchema = z.enum([
@@ -106,12 +107,15 @@ export const RescheduleAppointmentRequestSchema = z
   .meta({ id: 'RescheduleAppointmentRequestDto' });
 
 export const AppointmentIdParamsSchema = z.object({ id: z.uuid() });
-export const ListAppointmentsQuerySchema = z.object({
+export const AppointmentPageSchema = pageOf(AppointmentSchema, 'AppointmentPageDto');
+
+export const ListAppointmentsQuerySchema = PageQuerySchema.extend({
   from: z.iso.datetime().meta({ description: 'Inclusive start of the range' }),
   to: z.iso.datetime().meta({ description: 'Exclusive end of the range (max 62 days)' }),
 });
 
 export type AppointmentDto = z.infer<typeof AppointmentSchema>;
+export type AppointmentPageDto = z.infer<typeof AppointmentPageSchema>;
 export type ScheduleAppointmentRequestDto = z.infer<typeof ScheduleAppointmentRequestSchema>;
 export type RescheduleAppointmentRequestDto = z.infer<typeof RescheduleAppointmentRequestSchema>;
 export type ConsultationFeesDto = z.infer<typeof ConsultationFeesSchema>;
@@ -137,7 +141,7 @@ export function registerAppointmentContracts(registry: ContractRegistry): void {
     auth: true,
     request: { query: ListAppointmentsQuerySchema },
     responses: {
-      200: { description: 'Appointments ordered by start', schema: z.array(AppointmentSchema) },
+      200: { description: 'Appointments ordered by start', schema: AppointmentPageSchema },
       400: invalid,
     },
   });

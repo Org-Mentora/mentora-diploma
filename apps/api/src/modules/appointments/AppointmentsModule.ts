@@ -15,6 +15,7 @@ import type { NotificationCenter } from '#modules/notifications';
 import type { PatientDirectory } from '#modules/patients';
 import {
   type AppointmentDto,
+  type AppointmentPageDto,
   type ConsultationFeesDto,
   type EarningsReportDto,
   registerAppointmentContracts,
@@ -128,7 +129,7 @@ export class AppointmentsModule implements AppModule, AppointmentPresenterFactor
     ];
   }
 
-  listAppointments(view: View<AppointmentDto[]>): ListAppointmentsPresenter {
+  listAppointments(view: View<AppointmentPageDto>): ListAppointmentsPresenter {
     return new ListAppointmentsPresenter(view, this.#service);
   }
 

@@ -1,6 +1,7 @@
 import type { View } from '#core/view/View';
 import type {
   AppointmentDto,
+  AppointmentPageDto,
   ConsultationFeesDto,
   EarningsReportDto,
 } from '../contracts/appointments.contracts';
@@ -15,7 +16,7 @@ import type { UpdateConsultationFeesPresenter } from './UpdateConsultationFeesPr
 
 // Abstract Factory
 export interface AppointmentPresenterFactory {
-  listAppointments(view: View<AppointmentDto[]>): ListAppointmentsPresenter;
+  listAppointments(view: View<AppointmentPageDto>): ListAppointmentsPresenter;
   getAppointment(view: View<AppointmentDto>): GetAppointmentPresenter;
   scheduleAppointment(view: View<AppointmentDto>): ScheduleAppointmentPresenter;
   rescheduleAppointment(view: View<AppointmentDto>): RescheduleAppointmentPresenter;

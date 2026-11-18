@@ -1,3 +1,5 @@
+import type { Page, PageRequest } from '#core/model/Pagination';
+import { Keyset } from '#infrastructure/database/Keyset';
 import { MongooseRepository } from '#infrastructure/database/MongooseRepository';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { Patient } from '../model/Patient';
@@ -5,7 +7,11 @@ import type { PatientRepository } from '../model/PatientRepository';
 import { PatientMapper } from './PatientMapper';
 import { type PatientDocument, PatientModel } from './PatientSchema';
 
-const SEARCH_LIMIT = 200;
+const BY_SURNAME = new Keyset([
+  { path: 'lastName', direction: 1 },
+  { path: 'firstName', direction: 1 },
+  { path: '_id', direction: 1 },
+]);
 
 function escapeRegex(term: string): string {
   return term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -44,7 +50,11 @@ export class MongoosePatientRepository
     return record ? this.mapper.toDomain(record) : null;
   }
 
-  async search(professionalId: string, terms: readonly string[]): Promise<Patient[]> {
+  async search(
+    professionalId: string,
+    terms: readonly string[],
+    page: PageRequest,
+  ): Promise<Page<Patient>> {
     const filter =
       terms.length > 0
         ? {
@@ -53,12 +63,12 @@ export class MongoosePatientRepository
           }
         : { professionalId };
     const records = await this.model
-      .find(filter)
-      .sort({ lastName: 1, firstName: 1 })
-      .limit(SEARCH_LIMIT)
+      .find(BY_SURNAME.where(filter, page.after))
+      .sort(BY_SURNAME.sort())
+      .limit(page.limit + 1)
       .session(this.session)
       .lean<PatientDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+    return BY_SURNAME.page(records, page, (record) => this.mapper.toDomain(record));
   }
 
   async findDormant(cutoff: Date, limit: number): Promise<Patient[]> {

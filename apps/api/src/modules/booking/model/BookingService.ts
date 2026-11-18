@@ -2,6 +2,7 @@ import { ConflictError, NotFoundError, ValidationError } from '#core/errors/Appl
 import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
+import type { Page, PageRequest } from '#core/model/Pagination';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AgendaBooking, BookedType } from './AgendaBooking';
 import type { BookingNotifier } from './BookingNotifier';
@@ -33,7 +34,6 @@ export interface RequestEntry {
 
 const MAX_DAYS = 14;
 const MAX_PENDING_PER_DNI = 2;
-const LIST_LIMIT = 200;
 const EXPIRE_BATCH = 200;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -173,16 +173,21 @@ export class BookingService {
     });
   }
 
-  async list(professionalId: string, status: BookingRequestStatus | null): Promise<RequestEntry[]> {
-    const found = await this.requests.list(professionalId, status, LIST_LIMIT);
-    return Promise.all(
-      found.map(async (request) => ({
+  async list(
+    professionalId: string,
+    status: BookingRequestStatus | null,
+    page: PageRequest,
+  ): Promise<Page<RequestEntry>> {
+    const found = await this.requests.list(professionalId, status, page);
+    const items = await Promise.all(
+      found.items.map(async (request) => ({
         request,
         existingPatientId:
           request.patientId ??
           (await this.patients.findIdByDni(professionalId, request.requester.dni)),
       })),
     );
+    return { items, next: found.next };
   }
 
   async accept(

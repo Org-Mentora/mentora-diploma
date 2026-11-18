@@ -2,6 +2,7 @@ import { ConflictError, NotFoundError } from '#core/errors/ApplicationError';
 import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
+import type { Page, PageRequest } from '#core/model/Pagination';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import { type ManualPatientStatus, Patient, type PatientDetails } from './Patient';
 import type { PatientRepository } from './PatientRepository';
@@ -37,8 +38,12 @@ export class PatientService {
     });
   }
 
-  search(professionalId: string, query: string | undefined): Promise<Patient[]> {
-    return this.patients.search(professionalId, PatientSearch.terms(query));
+  search(
+    professionalId: string,
+    query: string | undefined,
+    page: PageRequest,
+  ): Promise<Page<Patient>> {
+    return this.patients.search(professionalId, PatientSearch.terms(query), page);
   }
 
   async get(professionalId: string, patientId: string): Promise<Patient> {

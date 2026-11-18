@@ -12,7 +12,7 @@ import type { TransactionContext } from '#infrastructure/database/TransactionCon
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import {
   type PatientDto,
-  type PatientSummaryDto,
+  type PatientSummaryPageDto,
   registerPatientContracts,
 } from './contracts/patients.contracts';
 import { MongoosePatientRepository } from './infrastructure/MongoosePatientRepository';
@@ -91,7 +91,7 @@ export class PatientsModule implements AppModule, PatientPresenterFactory {
     return new CreatePatientPresenter(view, this.#service);
   }
 
-  searchPatients(view: View<PatientSummaryDto[]>): SearchPatientsPresenter {
+  searchPatients(view: View<PatientSummaryPageDto>): SearchPatientsPresenter {
     return new SearchPatientsPresenter(view, this.#service);
   }
 

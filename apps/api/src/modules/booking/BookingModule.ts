@@ -21,6 +21,7 @@ import {
   type AvailableSlotsDto,
   type BookingReceiptDto,
   type BookingRequestDto,
+  type BookingRequestPageDto,
   type BookingSettingsDto,
   type PublicBookingPageDto,
   registerBookingContracts,
@@ -124,7 +125,7 @@ export class BookingModule implements AppModule, BookingPresenterFactory {
     return new UpdateBookingSettingsPresenter(view, this.#service);
   }
 
-  listBookingRequests(view: View<BookingRequestDto[]>): ListBookingRequestsPresenter {
+  listBookingRequests(view: View<BookingRequestPageDto>): ListBookingRequestsPresenter {
     return new ListBookingRequestsPresenter(view, this.#service);
   }
 

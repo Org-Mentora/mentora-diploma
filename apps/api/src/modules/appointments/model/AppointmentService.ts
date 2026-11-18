@@ -2,6 +2,7 @@ import { ConflictError, NotFoundError, ValidationError } from '#core/errors/Appl
 import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
+import type { Page, PageRequest } from '#core/model/Pagination';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { AgendaLock } from './AgendaLock';
 import { Appointment, type AppointmentSlot } from './Appointment';
@@ -39,15 +40,20 @@ export class AppointmentService {
     private readonly audit: AuditTrail,
   ) {}
 
-  async list(professionalId: string, from: Date, to: Date): Promise<AgendaEntry[]> {
+  async list(
+    professionalId: string,
+    from: Date,
+    to: Date,
+    page: PageRequest,
+  ): Promise<Page<AgendaEntry>> {
     if (to.getTime() <= from.getTime()) {
       throw new ValidationError('`to` must be after `from`', { field: 'to' });
     }
     if (to.getTime() - from.getTime() > MAX_RANGE_DAYS * DAY_MS) {
       throw new ValidationError(`The range cannot exceed ${MAX_RANGE_DAYS} days`, { field: 'to' });
     }
-    const found = await this.appointments.findStartingBetween(professionalId, from, to);
-    return this.withNames(professionalId, found);
+    const found = await this.appointments.findStartingBetween(professionalId, from, to, page);
+    return { items: await this.withNames(professionalId, found.items), next: found.next };
   }
 
   async get(professionalId: string, appointmentId: string): Promise<AgendaEntry> {

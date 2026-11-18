@@ -11,6 +11,7 @@ import {
   AvailableSlotsQuerySchema,
   type BookingReceiptDto,
   type BookingRequestDto,
+  type BookingRequestPageDto,
   type BookingSettingsDto,
   CreateBookingRequestSchema,
   ListBookingRequestsQuerySchema,
@@ -90,11 +91,11 @@ export class BookingRoutes {
     });
 
     router.get('/requests', owner, async (req, res) => {
-      const view = new JsonHttpView<BookingRequestDto[]>(new ExpressResponderAdapter(res));
-      const { status } = InputParser.parse(ListBookingRequestsQuerySchema, req.query);
+      const view = new JsonHttpView<BookingRequestPageDto>(new ExpressResponderAdapter(res));
+      const query = InputParser.parse(ListBookingRequestsQuerySchema, req.query);
       await this.presenters
         .listBookingRequests(view)
-        .present({ actor: ActorReader.from(res), status });
+        .present({ actor: ActorReader.from(res), ...query });
     });
 
     router.post('/requests/:id/accept', owner, async (req, res) => {

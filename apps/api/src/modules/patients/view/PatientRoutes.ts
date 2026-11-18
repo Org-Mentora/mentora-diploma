@@ -9,7 +9,7 @@ import {
   type PatientDto,
   PatientIdParamsSchema,
   PatientInputSchema,
-  type PatientSummaryDto,
+  type PatientSummaryPageDto,
   SearchPatientsQuerySchema,
 } from '../contracts/patients.contracts';
 import type { PatientPresenterFactory } from '../presenter/PatientPresenterFactory';
@@ -31,11 +31,11 @@ export class PatientRoutes {
     });
 
     router.get('/', async (req, res) => {
-      const view = new JsonHttpView<PatientSummaryDto[]>(new ExpressResponderAdapter(res));
-      const { q } = InputParser.parse(SearchPatientsQuerySchema, req.query);
+      const view = new JsonHttpView<PatientSummaryPageDto>(new ExpressResponderAdapter(res));
+      const { q, ...page } = InputParser.parse(SearchPatientsQuerySchema, req.query);
       await this.presenters
         .searchPatients(view)
-        .present({ actor: ActorReader.from(res), query: q });
+        .present({ actor: ActorReader.from(res), query: q, ...page });
     });
 
     router.get('/:id', async (req, res) => {

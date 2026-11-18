@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
+import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 
 const ModalitySchema = z.enum(['in_person', 'virtual']);
@@ -128,11 +129,14 @@ export const AvailableSlotsQuerySchema = z.object({
   from: z.iso.date().optional().meta({ description: 'First day (YYYY-MM-DD); default today' }),
   days: z.coerce.number().int().min(1).max(14).default(7),
 });
-export const ListBookingRequestsQuerySchema = z.object({
+export const BookingRequestPageSchema = pageOf(BookingRequestSchema, 'BookingRequestPageDto');
+
+export const ListBookingRequestsQuerySchema = PageQuerySchema.extend({
   status: BookingRequestStatusSchema.optional(),
 });
 
 export type BookingSettingsDto = z.infer<typeof BookingSettingsSchema>;
+export type BookingRequestPageDto = z.infer<typeof BookingRequestPageSchema>;
 export type UpdateBookingSettingsRequestDto = z.infer<typeof UpdateBookingSettingsRequestSchema>;
 export type PublicBookingPageDto = z.infer<typeof PublicBookingPageSchema>;
 export type AvailableSlotsDto = z.infer<typeof AvailableSlotsSchema>;
@@ -180,7 +184,12 @@ export function registerBookingContracts(registry: ContractRegistry): void {
     tags,
     auth: true,
     request: { query: ListBookingRequestsQuerySchema },
-    responses: { 200: { description: 'Requests', schema: z.array(BookingRequestSchema) } },
+    responses: {
+      200: {
+        description: 'Pending by start; others newest first',
+        schema: BookingRequestPageSchema,
+      },
+    },
   });
   registry.registerRoute({
     method: 'post',

@@ -1,3 +1,5 @@
+import type { Page, PageRequest } from '#core/model/Pagination';
+import { Keyset } from '#infrastructure/database/Keyset';
 import { MongooseRepository } from '#infrastructure/database/MongooseRepository';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { Appointment, AppointmentType } from '../model/Appointment';
@@ -5,6 +7,11 @@ import type { AppointmentRepository } from '../model/AppointmentRepository';
 import type { EarningsRow } from '../model/EarningsReport';
 import { AppointmentMapper } from './AppointmentMapper';
 import { type AppointmentDocument, AppointmentModel } from './AppointmentSchema';
+
+const BY_START = new Keyset([
+  { path: 'startsAt', direction: 1, type: 'date' },
+  { path: '_id', direction: 1 },
+]);
 
 // Repository, Adapter
 export class MongooseAppointmentRepository
@@ -26,13 +33,19 @@ export class MongooseAppointmentRepository
     return record ? this.mapper.toDomain(record) : null;
   }
 
-  async findStartingBetween(professionalId: string, from: Date, to: Date): Promise<Appointment[]> {
+  async findStartingBetween(
+    professionalId: string,
+    from: Date,
+    to: Date,
+    page: PageRequest,
+  ): Promise<Page<Appointment>> {
     const records = await this.model
-      .find({ professionalId, startsAt: { $gte: from, $lt: to } })
-      .sort({ startsAt: 1 })
+      .find(BY_START.where({ professionalId, startsAt: { $gte: from, $lt: to } }, page.after))
+      .sort(BY_START.sort())
+      .limit(page.limit + 1)
       .session(this.session)
       .lean<AppointmentDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+    return BY_START.page(records, page, (record) => this.mapper.toDomain(record));
   }
 
   async findScheduledOverlapping(

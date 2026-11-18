@@ -1,3 +1,4 @@
+import type { Page, PageRequest } from '#core/model/Pagination';
 import { Repository } from '#core/model/Repository';
 import type { BookingRequest, BookingRequestStatus } from './BookingRequest';
 
@@ -13,7 +14,7 @@ export abstract class BookingRequestRepository extends Repository<BookingRequest
   abstract list(
     professionalId: string,
     status: BookingRequestStatus | null,
-    limit: number,
-  ): Promise<BookingRequest[]>;
+    page: PageRequest,
+  ): Promise<Page<BookingRequest>>;
   abstract findExpirable(now: Date, limit: number): Promise<BookingRequest[]>;
 }

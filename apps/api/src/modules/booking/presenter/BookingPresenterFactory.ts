@@ -3,6 +3,7 @@ import type {
   AvailableSlotsDto,
   BookingReceiptDto,
   BookingRequestDto,
+  BookingRequestPageDto,
   BookingSettingsDto,
   PublicBookingPageDto,
 } from '../contracts/booking.contracts';
@@ -19,7 +20,7 @@ import type { UpdateBookingSettingsPresenter } from './UpdateBookingSettingsPres
 export interface BookingPresenterFactory {
   getBookingSettings(view: View<BookingSettingsDto>): GetBookingSettingsPresenter;
   updateBookingSettings(view: View<BookingSettingsDto>): UpdateBookingSettingsPresenter;
-  listBookingRequests(view: View<BookingRequestDto[]>): ListBookingRequestsPresenter;
+  listBookingRequests(view: View<BookingRequestPageDto>): ListBookingRequestsPresenter;
   acceptBookingRequest(view: View<BookingRequestDto>): AcceptBookingRequestPresenter;
   rejectBookingRequest(view: View<BookingRequestDto>): RejectBookingRequestPresenter;
   getPublicBookingPage(view: View<PublicBookingPageDto>): GetPublicBookingPagePresenter;

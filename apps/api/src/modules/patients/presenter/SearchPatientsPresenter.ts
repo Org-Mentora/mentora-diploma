@@ -1,25 +1,29 @@
+import { CursorCodec, type PageInput } from '#core/presenter/CursorCodec';
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
 import type { View } from '#core/view/View';
-import type { PatientSummaryDto } from '../contracts/patients.contracts';
+import type { PatientSummaryPageDto } from '../contracts/patients.contracts';
 import type { PatientService } from '../model/PatientService';
 import { PatientViewModel } from './PatientViewModel';
 
+type SearchPatientsInput = PageInput & { actor: AuthenticatedActor; query: string | undefined };
+
 // Presenter
-export class SearchPatientsPresenter extends Presenter<
-  { actor: AuthenticatedActor; query: string | undefined },
-  PatientSummaryDto[]
-> {
+export class SearchPatientsPresenter extends Presenter<SearchPatientsInput, PatientSummaryPageDto> {
   constructor(
-    view: View<PatientSummaryDto[]>,
+    view: View<PatientSummaryPageDto>,
     private readonly patients: PatientService,
   ) {
     super(view);
   }
 
-  protected async execute(input: { actor: AuthenticatedActor; query: string | undefined }) {
-    const found = await this.patients.search(input.actor.professionalId, input.query);
+  protected async execute(input: SearchPatientsInput) {
+    const page = await this.patients.search(
+      input.actor.professionalId,
+      input.query,
+      CursorCodec.request(input),
+    );
     const now = this.patients.now;
-    return found.map((patient) => PatientViewModel.toSummary(patient, now));
+    return CursorCodec.toDto(page, (patient) => PatientViewModel.toSummary(patient, now));
   }
 }

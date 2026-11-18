@@ -1,10 +1,21 @@
 import type { QueryFilter } from 'mongoose';
+import type { Page, PageRequest } from '#core/model/Pagination';
+import { Keyset } from '#infrastructure/database/Keyset';
 import { MongooseRepository } from '#infrastructure/database/MongooseRepository';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { BookingRequest, BookingRequestStatus } from '../model/BookingRequest';
 import type { BookingRequestRepository } from '../model/BookingRequestRepository';
 import { BookingRequestMapper } from './BookingRequestMapper';
 import { type BookingRequestDocument, BookingRequestModel } from './BookingRequestSchema';
+
+const SOONEST_FIRST = new Keyset([
+  { path: 'startsAt', direction: 1, type: 'date' },
+  { path: '_id', direction: 1 },
+]);
+const NEWEST_FIRST = new Keyset([
+  { path: 'createdAt', direction: -1, type: 'date' },
+  { path: '_id', direction: -1 },
+]);
 
 // Repository, Adapter
 export class MongooseBookingRequestRepository
@@ -45,19 +56,20 @@ export class MongooseBookingRequestRepository
   async list(
     professionalId: string,
     status: BookingRequestStatus | null,
-    limit: number,
-  ): Promise<BookingRequest[]> {
+    page: PageRequest,
+  ): Promise<Page<BookingRequest>> {
     const query: QueryFilter<BookingRequestDocument> = { professionalId };
     if (status) {
       query.status = status;
     }
+    const order = status === 'pending' ? SOONEST_FIRST : NEWEST_FIRST;
     const records = await this.model
-      .find(query)
-      .sort(status === 'pending' ? { startsAt: 1 } : { createdAt: -1 })
-      .limit(limit)
+      .find(order.where(query, page.after))
+      .sort(order.sort())
+      .limit(page.limit + 1)
       .session(this.session)
       .lean<BookingRequestDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+    return order.page(records, page, (record) => this.mapper.toDomain(record));
   }
 
   async findExpirable(now: Date, limit: number): Promise<BookingRequest[]> {
