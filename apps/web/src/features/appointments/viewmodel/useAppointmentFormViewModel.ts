@@ -96,7 +96,7 @@ export function useAppointmentFormViewModel({
   const { data: patients } = useSearchPatientsQuery(term ? { q: term } : {}, { skip: isEdit });
   const patientOptions = useMemo(
     () =>
-      (patients ?? [])
+      (patients?.items ?? [])
         .filter((p) => p.status !== 'discharged')
         .map((p) => ({
           value: p.id,

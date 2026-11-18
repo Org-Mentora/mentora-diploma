@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/shared/ui/dialog';
 import { EmptyState } from '@/shared/ui/empty-state';
+import { LoadMore } from '@/shared/ui/load-more';
 import { useClinicalRecordViewModel } from '../viewmodel/useClinicalRecordViewModel';
 
 export function ClinicalRecordPanel({ patientId }: { patientId: string }) {
@@ -67,6 +68,7 @@ export function ClinicalRecordPanel({ patientId }: { patientId: string }) {
           </li>
         ))}
       </ol>
+      <LoadMore hasMore={vm.hasMore} isLoading={vm.isLoadingMore} onLoadMore={vm.loadMore} />
 
       <Dialog
         open={vm.selectedId !== null}

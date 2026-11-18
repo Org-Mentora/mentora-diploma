@@ -5,25 +5,20 @@ import { ConsultationForm, emptyMedication } from './consultation.form';
 
 describe('ClinicalRecordAdapter (CU-08)', () => {
   it('summarizes consultations for the timeline', () => {
-    const [item] = ClinicalRecordAdapter.toTimeline({
-      patientId: 'p-1',
-      openedAt: '2030-01-01T00:00:00.000Z',
-      updatedAt: '2030-01-01T00:00:00.000Z',
-      consultations: [
-        {
-          id: 'c-1',
-          date: new Date(2030, 0, 5, 15, 0).toISOString(),
-          type: 'virtual',
-          reason: 'Insomnia',
-          diagnosis: {
-            code: 'F51.01',
-            name: 'Insomnia disorder',
-            assignedAt: '2030-01-05T15:00:00.000Z',
-          },
-          medicationCount: 1,
+    const [item] = ClinicalRecordAdapter.toTimeline([
+      {
+        id: 'c-1',
+        date: new Date(2030, 0, 5, 15, 0).toISOString(),
+        type: 'virtual',
+        reason: 'Insomnia',
+        diagnosis: {
+          code: 'F51.01',
+          name: 'Insomnia disorder',
+          assignedAt: '2030-01-05T15:00:00.000Z',
         },
-      ],
-    });
+        medicationCount: 1,
+      },
+    ]);
 
     expect(item).toEqual({
       id: 'c-1',

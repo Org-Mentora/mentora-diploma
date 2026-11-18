@@ -2,11 +2,13 @@ import { ExternalLink, Video } from 'lucide-react';
 import { useTranslation } from '@/shared/i18n';
 import { Card, CardContent } from '@/shared/ui/card';
 import { EmptyState } from '@/shared/ui/empty-state';
+import { LoadMore } from '@/shared/ui/load-more';
 import { useVirtualMeetingHistoryViewModel } from '../viewmodel/useVirtualMeetingHistoryViewModel';
 
 export function VirtualMeetingsPanel({ patientId }: { patientId: string }) {
   const { t } = useTranslation();
-  const { items, isLoading } = useVirtualMeetingHistoryViewModel(patientId);
+  const vm = useVirtualMeetingHistoryViewModel(patientId);
+  const { items, isLoading } = vm;
 
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">{t('meetings.loading')}</p>;
@@ -38,6 +40,7 @@ export function VirtualMeetingsPanel({ patientId }: { patientId: string }) {
             </a>
           </div>
         ))}
+        <LoadMore hasMore={vm.hasMore} isLoading={vm.isLoadingMore} onLoadMore={vm.loadMore} />
       </CardContent>
     </Card>
   );

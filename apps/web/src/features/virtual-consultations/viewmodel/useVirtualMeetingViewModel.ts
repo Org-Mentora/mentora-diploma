@@ -42,7 +42,7 @@ export function useVirtualMeetingViewModel({
   const [startMeeting, { isLoading }] = useStartVirtualMeetingMutation();
   const [started, setStarted] = useState<VirtualMeetingItem | null>(null);
   const existing = useMemo(
-    () => (data?.[0] ? VirtualMeetingAdapter.toItem(data[0]) : null),
+    () => (data?.items[0] ? VirtualMeetingAdapter.toItem(data.items[0]) : null),
     [data],
   );
 

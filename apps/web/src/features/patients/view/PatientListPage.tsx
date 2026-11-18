@@ -5,6 +5,7 @@ import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { Input } from '@/shared/ui/input';
+import { LoadMore } from '@/shared/ui/load-more';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
 import { usePatientListViewModel } from '../viewmodel/usePatientListViewModel';
 import { PatientFormDialog } from './PatientFormDialog';
@@ -80,6 +81,7 @@ export function PatientListPage() {
             </TableBody>
           </Table>
         )}
+        <LoadMore hasMore={vm.hasMore} isLoading={vm.isLoadingMore} onLoadMore={vm.loadMore} />
       </CardContent>
       <PatientFormDialog
         open={vm.isCreateOpen}

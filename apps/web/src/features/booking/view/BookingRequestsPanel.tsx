@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from '@/shared/ui/dialog';
 import { FormField } from '@/shared/ui/form-field';
+import { LoadMore } from '@/shared/ui/load-more';
 import { NativeSelect } from '@/shared/ui/select';
 import { Textarea } from '@/shared/ui/textarea';
 import {
@@ -106,6 +107,11 @@ export function BookingRequestsPanel() {
             ))}
           </ul>
         )}
+        <LoadMore
+          hasMore={vm.pendingMore.hasMore}
+          isLoading={vm.pendingMore.isLoadingMore}
+          onLoadMore={vm.pendingMore.loadMore}
+        />
         {vm.showHistory && (
           <div className="grid gap-2">
             <h3 className="font-medium text-muted-foreground text-sm">
@@ -120,6 +126,11 @@ export function BookingRequestsPanel() {
                 ))}
               </ul>
             )}
+            <LoadMore
+              hasMore={vm.historyMore.hasMore}
+              isLoading={vm.historyMore.isLoadingMore}
+              onLoadMore={vm.historyMore.loadMore}
+            />
           </div>
         )}
       </CardContent>

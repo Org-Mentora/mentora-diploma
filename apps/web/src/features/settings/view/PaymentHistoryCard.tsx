@@ -13,6 +13,7 @@ import {
 import { EmptyState } from '@/shared/ui/empty-state';
 import { FormField } from '@/shared/ui/form-field';
 import { Input } from '@/shared/ui/input';
+import { LoadMore } from '@/shared/ui/load-more';
 import { NativeSelect } from '@/shared/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
 import type { PaymentHistoryViewModel } from '../viewmodel/usePlanSettingsViewModel';
@@ -62,6 +63,11 @@ export function PaymentHistoryCard({ payments }: { payments: PaymentHistoryViewM
             </TableBody>
           </Table>
         )}
+        <LoadMore
+          hasMore={payments.hasMore}
+          isLoading={payments.isLoadingMore}
+          onLoadMore={payments.loadMore}
+        />
       </CardContent>
 
       <Dialog open={payments.isManualOpen} onOpenChange={(open) => !open && payments.closeManual()}>

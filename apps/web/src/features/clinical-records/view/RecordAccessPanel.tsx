@@ -1,11 +1,13 @@
 import { useTranslation } from '@/shared/i18n';
 import { Card, CardContent } from '@/shared/ui/card';
 import { EmptyState } from '@/shared/ui/empty-state';
+import { LoadMore } from '@/shared/ui/load-more';
 import { useRecordAccessLogViewModel } from '../viewmodel/useRecordAccessLogViewModel';
 
 export function RecordAccessPanel({ patientId }: { patientId: string }) {
   const { t } = useTranslation();
-  const { items, isLoading, error } = useRecordAccessLogViewModel(patientId);
+  const vm = useRecordAccessLogViewModel(patientId);
+  const { items, isLoading, error } = vm;
 
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">{t('clinical.access.loading')}</p>;
@@ -37,6 +39,7 @@ export function RecordAccessPanel({ patientId }: { patientId: string }) {
             </li>
           ))}
         </ol>
+        <LoadMore hasMore={vm.hasMore} isLoading={vm.isLoadingMore} onLoadMore={vm.loadMore} />
       </CardContent>
     </Card>
   );

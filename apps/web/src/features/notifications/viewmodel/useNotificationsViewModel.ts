@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useListNotificationsQuery } from '@/model/api/generated/mentoraApi';
+import { usePagedQuery } from '@/model/api/usePagedQuery';
 import {
   NotificationAdapter,
   type NotificationItem,
@@ -10,14 +11,20 @@ export type { NotificationItem };
 export interface NotificationsViewModel {
   items: NotificationItem[];
   isLoading: boolean;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  loadMore: () => void;
 }
 
 // ViewModel
 export function useNotificationsViewModel(patientId: string): NotificationsViewModel {
-  const { data, isLoading } = useListNotificationsQuery(
-    { patientId },
-    { pollingInterval: 60_000, refetchOnMountOrArgChange: true },
-  );
-  const items = useMemo(() => (data ?? []).map(NotificationAdapter.toItem), [data]);
-  return { items, isLoading };
+  const list = usePagedQuery(useListNotificationsQuery, { patientId }, { pollingInterval: 60_000 });
+  const items = useMemo(() => list.items.map(NotificationAdapter.toItem), [list.items]);
+  return {
+    items,
+    isLoading: list.isLoading,
+    hasMore: list.hasMore,
+    isLoadingMore: list.isLoadingMore,
+    loadMore: list.loadMore,
+  };
 }

@@ -3,11 +3,13 @@ import { useTranslation } from '@/shared/i18n';
 import { Badge } from '@/shared/ui/badge';
 import { Card, CardContent } from '@/shared/ui/card';
 import { EmptyState } from '@/shared/ui/empty-state';
+import { LoadMore } from '@/shared/ui/load-more';
 import { useNotificationsViewModel } from '../viewmodel/useNotificationsViewModel';
 
 export function NotificationsPanel({ patientId }: { patientId: string }) {
   const { t } = useTranslation();
-  const { items, isLoading } = useNotificationsViewModel(patientId);
+  const vm = useNotificationsViewModel(patientId);
+  const { items, isLoading } = vm;
 
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">{t('notifications.loading')}</p>;
@@ -38,6 +40,7 @@ export function NotificationsPanel({ patientId }: { patientId: string }) {
             {item.detail && <p className="text-destructive text-xs">{item.detail}</p>}
           </div>
         ))}
+        <LoadMore hasMore={vm.hasMore} isLoading={vm.isLoadingMore} onLoadMore={vm.loadMore} />
       </CardContent>
     </Card>
   );

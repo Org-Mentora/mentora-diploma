@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useListVirtualMeetingsQuery } from '@/model/api/generated/mentoraApi';
+import { usePagedQuery } from '@/model/api/usePagedQuery';
 import {
   VirtualMeetingAdapter,
   type VirtualMeetingItem,
@@ -9,7 +10,13 @@ export type { VirtualMeetingItem };
 
 // ViewModel
 export function useVirtualMeetingHistoryViewModel(patientId: string) {
-  const { data, isLoading } = useListVirtualMeetingsQuery({ patientId });
-  const items = useMemo(() => (data ?? []).map(VirtualMeetingAdapter.toItem), [data]);
-  return { items, isLoading };
+  const list = usePagedQuery(useListVirtualMeetingsQuery, { patientId });
+  const items = useMemo(() => list.items.map(VirtualMeetingAdapter.toItem), [list.items]);
+  return {
+    items,
+    isLoading: list.isLoading,
+    hasMore: list.hasMore,
+    isLoadingMore: list.isLoadingMore,
+    loadMore: list.loadMore,
+  };
 }

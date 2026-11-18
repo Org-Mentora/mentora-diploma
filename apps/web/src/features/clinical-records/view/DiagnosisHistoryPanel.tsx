@@ -1,11 +1,13 @@
 import { useTranslation } from '@/shared/i18n';
 import { Card, CardContent } from '@/shared/ui/card';
 import { EmptyState } from '@/shared/ui/empty-state';
+import { LoadMore } from '@/shared/ui/load-more';
 import { useDiagnosisHistoryViewModel } from '../viewmodel/useDiagnosisHistoryViewModel';
 
 export function DiagnosisHistoryPanel({ patientId }: { patientId: string }) {
   const { t } = useTranslation();
-  const { items, isLoading, error } = useDiagnosisHistoryViewModel(patientId);
+  const vm = useDiagnosisHistoryViewModel(patientId);
+  const { items, isLoading, error } = vm;
 
   if (isLoading) {
     return <p className="text-muted-foreground text-sm">{t('clinical.diagnosis.loading')}</p>;
@@ -32,6 +34,7 @@ export function DiagnosisHistoryPanel({ patientId }: { patientId: string }) {
             </li>
           ))}
         </ol>
+        <LoadMore hasMore={vm.hasMore} isLoading={vm.isLoadingMore} onLoadMore={vm.loadMore} />
       </CardContent>
     </Card>
   );

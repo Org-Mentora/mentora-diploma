@@ -1,6 +1,6 @@
 import type {
-  ClinicalRecordDto,
   ConsultationDto,
+  ConsultationSummaryDto,
   DiagnosisCatalogEntryDto,
   DiagnosisHistoryEntryDto,
 } from '@mentora/contracts';
@@ -47,8 +47,8 @@ const diagnosisLabel = (d: { code: string; name: string }) => `${d.code} · ${d.
 
 // Adapter
 export class ClinicalRecordAdapter {
-  static toTimeline(record: ClinicalRecordDto): TimelineItem[] {
-    return record.consultations.map((c) => ({
+  static toTimeline(consultations: ConsultationSummaryDto[]): TimelineItem[] {
+    return consultations.map((c) => ({
       id: c.id,
       dateLabel: dateTime(c.date),
       typeLabel: typeLabel(c.type),

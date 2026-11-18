@@ -2,6 +2,7 @@ import { addMonths, isSameMonth, startOfDay, startOfMonth } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
 import { useListAppointmentsQuery } from '@/model/api/generated/mentoraApi';
+import { usePagedQuery } from '@/model/api/usePagedQuery';
 import {
   AgendaAdapter,
   type AgendaItem,
@@ -33,6 +34,8 @@ export interface AgendaViewModel {
   closeDialog: () => void;
 }
 
+const MONTH_PAGE_SIZE = 100;
+
 // ViewModel
 export function useAgendaViewModel(today: Date = new Date()): AgendaViewModel {
   const [month, setMonth] = useState(() => startOfMonth(today));
@@ -40,11 +43,12 @@ export function useAgendaViewModel(today: Date = new Date()): AgendaViewModel {
   const [dialog, setDialog] = useState<AppointmentDialogState>(null);
 
   const range = useMemo(() => AgendaAdapter.monthRange(month), [month]);
-  const { data, isLoading, error } = useListAppointmentsQuery({
-    from: range.from.toISOString(),
-    to: range.to.toISOString(),
-  });
-  const appointments = data ?? [];
+  const list = usePagedQuery(
+    useListAppointmentsQuery,
+    { from: range.from.toISOString(), to: range.to.toISOString(), limit: MONTH_PAGE_SIZE },
+    { loadAll: true },
+  );
+  const appointments = list.items;
 
   return {
     monthTitle: AgendaAdapter.monthTitle(month),
@@ -52,8 +56,8 @@ export function useAgendaViewModel(today: Date = new Date()): AgendaViewModel {
     weeks: AgendaAdapter.calendar(month, appointments, selectedDay, today),
     dayTitle: AgendaAdapter.dayTitle(selectedDay),
     dayItems: AgendaAdapter.dayAgenda(appointments, selectedDay),
-    isLoading,
-    error: ApiErrorAdapter.toUiError(error),
+    isLoading: list.isLoading,
+    error: ApiErrorAdapter.toUiError(list.error),
     previousMonth: () => setMonth((current) => addMonths(current, -1)),
     nextMonth: () => setMonth((current) => addMonths(current, 1)),
     goToToday: () => {

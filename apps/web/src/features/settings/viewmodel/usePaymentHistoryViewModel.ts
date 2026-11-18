@@ -6,6 +6,7 @@ import {
   useListPaymentsQuery,
   useRegisterManualPaymentMutation,
 } from '@/model/api/generated/mentoraApi';
+import { usePagedQuery } from '@/model/api/usePagedQuery';
 import {
   type PaymentItem,
   SubscriptionAdapter,
@@ -24,6 +25,9 @@ export type { ManualPaymentFormValues, PaymentItem };
 export interface PaymentHistoryViewModel {
   items: PaymentItem[];
   isLoading: boolean;
+  hasMore: boolean;
+  isLoadingMore: boolean;
+  loadMore: () => void;
   isManualOpen: boolean;
   manualForm: UseFormReturn<ManualPaymentFormValues>;
   methodOptions: { value: string; label: string }[];
@@ -45,18 +49,21 @@ const FIELDS = new Set<keyof ManualPaymentFormValues>(['amount', 'paidAt']);
 export function usePaymentHistoryViewModel(planPrice: number | null): PaymentHistoryViewModel {
   const { t } = useTranslation();
   const feedback = useUserFeedback();
-  const { data, isLoading } = useListPaymentsQuery();
+  const list = usePagedQuery(useListPaymentsQuery, {});
   const [register, registering] = useRegisterManualPaymentMutation();
   const [isManualOpen, setManualOpen] = useState(false);
   const manualForm = useForm<ManualPaymentFormValues>({
     resolver: zodResolver(manualPaymentFormSchema),
     defaultValues: SubscriptionForms.manualDefaults(planPrice, today()),
   });
-  const items = useMemo(() => (data ?? []).map(SubscriptionAdapter.toPayment), [data]);
+  const items = useMemo(() => list.items.map(SubscriptionAdapter.toPayment), [list.items]);
 
   return {
     items,
-    isLoading,
+    isLoading: list.isLoading,
+    hasMore: list.hasMore,
+    isLoadingMore: list.isLoadingMore,
+    loadMore: list.loadMore,
     isManualOpen,
     manualForm,
     methodOptions: Object.entries(MANUAL_METHOD_LABEL).map(([value, label]) => ({
@@ -75,6 +82,7 @@ export function usePaymentHistoryViewModel(planPrice: number | null): PaymentHis
           manualPaymentRequestDto: SubscriptionForms.toManualPayment(values),
         }).unwrap();
         feedback.success(t('settings.payments.registered'));
+        list.refresh();
         setManualOpen(false);
       } catch (caught) {
         const error = ApiErrorAdapter.toUiError(caught);

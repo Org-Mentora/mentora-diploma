@@ -4,6 +4,7 @@ import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
 import { EmptyState } from '@/shared/ui/empty-state';
+import { LoadMore } from '@/shared/ui/load-more';
 import { NativeSelect } from '@/shared/ui/select';
 import { useActivityViewModel } from '../viewmodel/useActivityViewModel';
 
@@ -74,16 +75,7 @@ export function ActivityPage() {
             ))}
           </ol>
         )}
-        {vm.hasMore && (
-          <Button
-            variant="outline"
-            className="justify-self-center"
-            onClick={vm.loadMore}
-            disabled={vm.isLoadingMore}
-          >
-            {vm.isLoadingMore ? t('common.loading') : t('audit.loadMore')}
-          </Button>
-        )}
+        <LoadMore hasMore={vm.hasMore} isLoading={vm.isLoadingMore} onLoadMore={vm.loadMore} />
       </CardContent>
     </Card>
   );

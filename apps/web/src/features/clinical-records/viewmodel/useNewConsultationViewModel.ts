@@ -74,7 +74,7 @@ export function useNewConsultationViewModel(): NewConsultationViewModel {
     { skip: debouncedTerm.length < 2 },
   );
   const options = useMemo(
-    () => (diagnoses.data ?? []).map(ClinicalRecordAdapter.toDiagnosisOption),
+    () => (diagnoses.data?.items ?? []).map(ClinicalRecordAdapter.toDiagnosisOption),
     [diagnoses.data],
   );
   const selected = form.watch('diagnosis');
