@@ -24,6 +24,10 @@ function fieldOf(details: unknown): string | undefined {
 
 // Adapter
 export class ApiErrorAdapter {
+  static messageOf(error: unknown, fallback: string): string {
+    return ApiErrorAdapter.toUiError(error)?.message ?? fallback;
+  }
+
   static toUiError(error: unknown): UiError | null {
     if (!error || typeof error !== 'object') {
       return null;

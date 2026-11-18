@@ -11,7 +11,7 @@ export interface PageQueryOptions {
   refetchOnMountOrArgChange?: boolean;
 }
 
-interface PageQueryResult<P> {
+export interface PageQueryResult<P> {
   currentData?: P | undefined;
   isFetching: boolean;
   isError: boolean;
