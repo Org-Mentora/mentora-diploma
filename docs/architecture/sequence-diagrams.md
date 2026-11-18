@@ -42,7 +42,7 @@ sequenceDiagram
   R->>R: RateLimiter.limit() (auth routes only)
   R->>R: AuthGuard.requireActiveSubscription → res.locals.actor
   R->>R: InputParser.parse(zod contract, body)
-  R->>P: factory.useCase(new XxxHttpView(responder)).present(input)
+  R->>P: presenters.useCase(HttpViews.json(res)).present(input)
   P->>S: execute(input)
   S->>T: run(work)
   T->>T: TransactionContext.runWith(session)

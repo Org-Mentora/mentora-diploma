@@ -25,17 +25,31 @@ export class MentorAdapter {
 ## 2. ViewModel (`src/features/mentors/viewmodel/useMentorListViewModel.ts`)
 
 ```ts
-export interface MentorListViewModel {
-  mentors: MentorUiModel[]; isLoading: boolean; error: UiError | null; refresh: () => void;
-}
+export type MentorListViewModel = UiPagedList<MentorUiModel>;
+
 export function useMentorListViewModel(): MentorListViewModel {
-  const { data, error, isLoading, refetch } = useListMentorsQuery();
-  /* adapt + expose commands */
+  return usePagedList(useListMentorsQuery, {}, (dtos) => dtos.map(MentorAdapter.toUiModel));
 }
 ```
 
-Mutations follow the same pattern. Expose `submit(values)`, `isSubmitting` and `submitError`;
-the View never calls `useXxxMutation` directly.
+Mutations live in the ViewModel too; the View never calls `useXxxMutation` directly.
+
+```ts
+const run = useAction();
+const [remove] = useDeleteMentorMutation();
+// command exposed to the View
+removeMentor: (id: string) =>
+  run(() => remove({ id }).unwrap(), { success: t('mentors.removed'), failure: t('mentors.removeFailed') }),
+
+// form submit: API errors go to the matching field or to the form root
+save: form.handleSubmit(async (values) => {
+  try {
+    await create({ createMentorRequestDto: MentorForm.toRequest(values) }).unwrap();
+  } catch (caught) {
+    FormErrors.apply(form, caught, { fields: ['email'], fallback: t('mentors.saveFailed') });
+  }
+}),
+```
 
 ## 3. View (`src/features/mentors/view/MentorListPage.tsx`)
 

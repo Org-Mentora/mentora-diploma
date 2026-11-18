@@ -30,15 +30,19 @@ src/shared/i18n/            i18next adapter, locales/en.ts + es.ts (es typed as 
 
 ## Forms and session
 
-- Forms (ADR-0021): zod schema + mapper in `model/domain/<f>/*.form.ts`; the ViewModel owns `useForm`
-  and maps API `error.field` to `form.setError`. Re-export form types from the ViewModel for sub-views.
+- Forms (ADR-0021): zod schema + mapper in `model/domain/<f>/*.form.ts`; the ViewModel owns `useForm`.
+  On a failed submit: `FormErrors.apply(form, caught, { fields: ['email'], fallback: t('...') })` (ADR-0049).
+  Re-export form types from the ViewModel for sub-views.
+- Mutations that are not forms: `const run = useAction(); await run(() => mutate(args).unwrap(), { success, failure })`
+  (toasts both ways, returns `undefined` on error). Error text alone: `ApiErrorAdapter.messageOf(caught, fallback)`.
 - Session: `features/session` (`RequireLogin` any session, `RequireSession` with access, `PublicOnly`,
   `AppShell`). Without access only `/settings/*` works (CU-01 step 7, CU-18). Logout resets the RTK cache.
 - `baseApi` refetches `/auth/me` on `403 SUBSCRIPTION_INACTIVE` (refreshes the cookie, ADR-0029).
 - Third-party engines (jsPDF) live in `model/domain` adapters, loaded with `import()` by ViewModels (ADR-0032).
 - Confirmations: `ConfirmDialog` from `@/shared/ui/confirm-dialog`.
-- Lists (ADR-0048): `usePagedQuery(useXxxQuery, filters)` from `@/model/api/usePagedQuery` → `items`, `hasMore`,
-  `loadMore`, `refresh`; Views render `<LoadMore>` from `@/shared/ui/load-more`. Call `refresh()` after a mutation
+- Lists (ADR-0048, ADR-0049): `usePagedList(useXxxQuery, filters, (dtos) => dtos.map(Adapter.toItem))` from
+  `@/model/api/usePagedList` → UI `items`, `hasMore`, `loadMore`, `refresh`, `error: UiError | null`
+  (`usePagedQuery` is the lower-level hook when DTOs are needed); Views render `<LoadMore>` from `@/shared/ui/load-more`. Call `refresh()` after a mutation
   that changes the list. Use `loadAll` only for bounded ranges (agenda month).
 - Toasts, printing and the clipboard (ADR-0042): ViewModels call `useUserFeedback()` / `useBrowserActions()`
   from `@/model/platform/Platform`, never `sonner`, `window` or `navigator`. `AppProviders` provides the

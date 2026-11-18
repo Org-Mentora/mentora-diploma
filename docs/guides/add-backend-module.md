@@ -18,8 +18,9 @@ No `express`, `mongoose`, `zod`, DTOs or `#infrastructure` imports (lint will fa
 - `MentorSchema.ts`: Mongoose schema with `_id: { type: String }`, plus the model.
 - `MentorMapper.ts`: `implements DataMapper<Mentor, MentorDocument>`.
 - `MongooseMentorRepository.ts`: `extends MongooseRepository<Mentor, MentorDocument>`,
-  receives the `TransactionContext` and implements the custom queries, each with
-  `.session(this.session)` (ADR-0025).
+  receives the `TransactionContext` and implements the custom queries with the base helpers
+  `findOneBy`, `findManyBy` and `findPage`, which always join the running transaction (ADR-0025).
+  Write raw Mongoose (`this.model...`) only for counts or aggregations, with `.session(this.session)`.
 
 ## 3. Contracts (`contracts/mentor.contracts.ts`)
 
@@ -30,14 +31,15 @@ export const CreateMentorRequestSchema = z.object({ name: z.string().min(1), ema
   .meta({ id: 'CreateMentorRequestDto' });
 
 export function registerMentorContracts(registry: ContractRegistry): void {
-  registry.registerRoute({
+  const route = moduleRoutes(registry, { tags: ['Mentors'], auth: true });
+  route({
     method: 'post', path: '/mentors', operationId: 'createMentor',
-    summary: 'Register a mentor', tags: ['Mentors'],
+    summary: 'Register a mentor',
     request: { body: CreateMentorRequestSchema },
     responses: {
       201: { description: 'Created', schema: MentorSchema },
-      400: { description: 'Invalid input', schema: ErrorResponseSchema },
-      409: { description: 'Email already registered', schema: ErrorResponseSchema },
+      400: errorResponse('Invalid input'),
+      409: errorResponse('Email already registered'),
     },
   });
 }
@@ -45,20 +47,21 @@ export function registerMentorContracts(registry: ContractRegistry): void {
 
 ## 4. Presenter (`presenter/`)
 
-- `CreateMentorPresenter extends Presenter<CreateMentorRequestDto, MentorDto>`: `execute()` calls
-  the service and maps the entity to the DTO.
-- `MentorPresenterFactory`: an interface with one method per use case, each taking a `View<...>`.
+- `CreateMentorPresenter extends Presenter<CreateMentorRequestDto, MentorDto, MentorService>`: no
+  constructor; `execute()` calls `this.model` and maps the entity to the DTO.
+- `MentorPresenters` (`// Abstract Factory`): a class that receives the service(s) and has one
+  method per use case: `createMentor(view: View<MentorDto>) { return new CreateMentorPresenter(view, this.mentorService); }`.
 
 ## 5. View (`view/`)
 
-- `MentorHttpView extends HttpView<MentorDto>`, and `CreateMentorHttpView` with
-  `protected override readonly successStatus = 201`.
-- `MentorRoutes`: per route, build the view, run `InputParser.parse(...)`, then
-  `factory.xxx(view).present(input)`.
+- `MentorRoutes`: per route, run `InputParser.parse(...)`, then
+  `this.presenters.createMentor(HttpViews.json(res, 201)).present(input)`.
+- Write an `XHttpView extends HttpView<Dto>` only when the view does something special
+  (cookies, a status that depends on the data).
 
 ## 6. Composition root and registration
 
-- `MentorModule implements AppModule, MentorPresenterFactory` takes one
+- `MentorModule implements AppModule` builds `new MentorRoutes(new MentorPresenters(service), guard)` and takes one
   `MentorModuleDependencies` object ([ADR-0024](../adr/0024-injectable-module-adapters.md)):
   shared collaborators (`guard`, `clock`, `transactions`, `context`) are required, Model ports
   are optional (`repository?: MentorRepository`), and it wires

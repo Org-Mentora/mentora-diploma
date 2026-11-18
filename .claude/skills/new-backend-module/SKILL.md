@@ -24,21 +24,23 @@ Read first: `apps/api/CLAUDE.md`, `docs/guides/add-backend-module.md`. Copy patt
    - Mongoose schema (`_id: { type: String, required: true }`, UUID ids).
    - `<X>Mapper implements DataMapper<X, XDocument>`.
    - `Mongoose<X>Repository extends MongooseRepository<X, XDocument>`; its constructor takes the
-     `TransactionContext` and passes it to `super`. Every custom query calls
-     `.session(this.session)` so it joins the running transaction (ADR-0025).
+     `TransactionContext` and passes it to `super`. Custom queries use `findOneBy(filter)`,
+     `findManyBy(filter, { sort, limit })` and `findPage(keyset, filter, page)`, which join the
+     running transaction (ADR-0025). Raw `this.model` calls (counts, aggregations) add `.session(this.session)`.
 4. **Contracts** (`modules/<m>/contracts/<m>.contracts.ts`)
    - zod schemas `.meta({ id: '<Name>Dto' })` for responses and `<Action><Name>RequestDto` for inputs.
-   - `register<M>Contracts(registry)` with one `registerRoute` per endpoint.
-     `operationId` camelCase (`listMentors`). Document error responses with `ErrorResponseSchema`.
+   - `register<M>Contracts(registry)`: `const route = moduleRoutes(registry, { tags, auth: true })`, then one
+     `route({...})` per endpoint. `operationId` camelCase (`listMentors`). Errors: `errorResponse('...')`.
 5. **Presenter** (`modules/<m>/presenter/`)
-   - One `<UseCase>Presenter extends Presenter<InputDto, OutputDto>` per use case.
-     `execute()` calls the Model and maps to the DTO.
-   - `<M>PresenterFactory` interface: one method per use case, taking `View<OutputDto>`.
+   - One `<UseCase>Presenter extends Presenter<InputDto, OutputDto, <X>Service>` per use case, with no
+     constructor. `execute()` calls `this.model` and maps to the DTO (ADR-0049).
+   - `<M>Presenters` class (`// Abstract Factory`): receives the services, one method per use case
+     returning `new <UseCase>Presenter(view, this.<service>)`.
 6. **View** (`modules/<m>/view/`)
-   - `<Name>HttpView extends HttpView<Dto>` (override `successStatus` = 201 for creates).
-   - `<M>Routes`: per route, `new XHttpView(new ExpressResponderAdapter(res))`, then
-     `InputParser.parse(Schema, req.body|params|query)`, then `factory.useCase(view).present(input)`.
-7. **Composition root** `<M>Module implements AppModule, <M>PresenterFactory`, plus `index.ts`
+   - `<M>Routes`: per route, `InputParser.parse(Schema, req.body|params|query)`, then
+     `this.presenters.useCase(HttpViews.json(res, 201)).present(input)` (`HttpViews.noContent(res)` for 204).
+   - A custom `<Name>HttpView extends HttpView<Dto>` only for special rendering (cookies, data-driven status).
+7. **Composition root** `<M>Module implements AppModule` (router: `new <M>Routes(new <M>Presenters(service), guard)`), plus `index.ts`
    exporting the module, its `<M>ModuleDependencies` and DTO types. Model ports are optional
    dependencies defaulting to the Mongoose adapter (`deps.repository ?? new Mongoose<X>Repository(deps.context)`);
    Singletons and the clock come from `src/app/modules.ts` (ADR-0024). Register it there.

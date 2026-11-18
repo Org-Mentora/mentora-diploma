@@ -59,8 +59,8 @@ lists them.
 
 | Pattern | Where |
 | --- | --- |
-| **Template Method** | `Presenter.present()` calls the abstract `execute()`; `HttpView.render()` calls `serialize()` |
-| **Abstract Factory** | `<Name>PresenterFactory` interfaces, implemented by each `<Name>Module` |
+| **Template Method** | `Presenter.present()` calls the abstract `execute()` (ADR-0049: presenters only write `execute`) |
+| **Abstract Factory** | `<Name>Presenters` classes: one method per use case, built by each `<Name>Module` (ADR-0049) |
 | **Presenter / Passive View** | MVP: one `Presenter` per use case, `*HttpView` classes and the `View` interface (ADR-0004) |
 | **ViewModel** | MVVM: every `use<Name>ViewModel` hook in the web (ADR-0011) |
 | **Repository** | `Repository<T>` and the per-aggregate abstract repositories in each `model/` |

@@ -65,14 +65,14 @@ sequenceDiagram
   participant VM as ViewModel (useHealthViewModel)
   participant RTK as Generated hook (useGetHealthQuery)
   participant R as API Routes (HealthRoutes)
-  participant HV as HttpView (HealthHttpView)
+  participant HV as HttpView (JsonHttpView)
   participant P as Presenter (GetHealthPresenter)
   participant M as Model (HealthService)
   V->>VM: render / user intent
   VM->>RTK: subscribe / refetch
   RTK->>R: GET /api/health
-  R->>HV: new HealthHttpView(responder)
-  R->>P: factory.getHealth(view).present()
+  R->>HV: HttpViews.json(res)
+  R->>P: presenters.getHealth(view).present()
   P->>M: getReport()
   M-->>P: HealthReport (domain)
   P->>HV: render(HealthDto)

@@ -48,6 +48,8 @@ export function HealthPage() {
   `model/domain` adapters.
 - Global client state (if ever needed beyond RTK Query cache) goes to a slice in `src/model`
   and is read by ViewModels.
+- Shared ViewModel helpers in `src/model/api` (ADR-0049): `usePagedList` for lists, `useAction` for
+  mutations with toasts, `FormErrors.apply` for API errors in forms, `ApiErrorAdapter.messageOf`.
 - Routes are declared in `src/app/router.tsx`, which imports pages from `@/features/<name>`.
 - The Redux store is the `AppStore` singleton. Tests use `AppStore.create()`.
 

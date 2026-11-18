@@ -109,7 +109,7 @@ to the file or ADR that proves it.
 | **S**: Single Responsibility | One Presenter per use case. Views only serialize. Mappers only translate. Repositories only persist. Adapters wrap one technology. In the web, Views only render, ViewModels hold UI logic and adapters shape data. | `apps/api/src/modules/patients/presenter/CreatePatientPresenter.ts`, `.../patients/infrastructure/PatientMapper.ts`, `apps/web/src/features/patients/view/PatientListPage.tsx` vs `.../viewmodel/usePatientListViewModel.ts` |
 | **O**: Open/Closed | Adding a provider, algorithm or module adds a class and a line in the composition root, without editing consumers. Strategies cover payments, WhatsApp, meeting links and JWT signing. `Presenter.present()` and `HttpView.render()` are fixed templates with extension points. | `src/modules/subscriptions/model/PaymentGateway.ts`, `src/modules/virtual-consultations/model/ports.ts`, `src/infrastructure/security/TokenSigningAlgorithm.ts`, `src/app/modules.ts`, [ADR-0041](docs/adr/0041-pluggable-token-signing-algorithm.md) |
 | **L**: Liskov Substitution | Every abstract port has interchangeable implementations that the same tests exercise: Mongoose vs in-memory repositories, local outbox vs WhatsApp Cloud API, Jitsi vs Google Meet, HS256 vs a test Ed25519 signer. | `apps/api/test/support/inMemory.ts`, `test/integration/in-memory.http.test.ts`, `src/modules/notifications/infrastructure/LocalWhatsAppOutbox.ts` / `WhatsAppCloudApiGateway.ts`, `test/unit/auth-model.test.ts` |
-| **I**: Interface Segregation | Small, consumer-owned ports. Clinical records ask for `PatientLookup` and appointments for `PatientNames`, never the whole patients API. Other examples: `Clock`, `JobLock`, `HttpResponder`, the one-method `View<T>`, and one PresenterFactory interface per module. | `src/modules/clinical-records/model/PatientLookup.ts`, `src/modules/appointments/model/PatientNames.ts`, `src/core/model/Clock.ts`, `src/core/view/View.ts`, `src/modules/patients/presenter/PatientPresenterFactory.ts` |
+| **I**: Interface Segregation | Small, consumer-owned ports. Clinical records ask for `PatientLookup` and appointments for `PatientNames`, never the whole patients API. Other examples: `Clock`, `JobLock`, `HttpResponder`, the one-method `View<T>`, and the small `<Module>Presenters` registry per module. | `src/modules/clinical-records/model/PatientLookup.ts`, `src/modules/appointments/model/PatientNames.ts`, `src/core/model/Clock.ts`, `src/core/view/View.ts`, `src/modules/patients/presenter/PatientPresenters.ts` |
 | **D**: Dependency Inversion | The Model owns its abstractions and infrastructure implements them. Services receive `Repository`, `TransactionManager`, `TokenService`, `PasswordHasher`, `Clock` and `IdGenerator` through the constructor. Notifiers depend on `DateFormatter`, not on `Intl`. ViewModels get `UserFeedback` and `BrowserActions` from `PlatformContext` instead of importing `sonner`, `window` or `navigator`. Singletons are resolved only in composition roots. In the web, Views depend on ViewModels, never on Redux or the API. Biome enforces all of this. | `src/modules/patients/model/PatientRepository.ts` ← `infrastructure/MongoosePatientRepository.ts`, `src/core/model/TransactionManager.ts`, `src/core/security/TokenService.ts` ← `infrastructure/security/JoseTokenService.ts` ← `TokenSigningAlgorithm`, `src/core/model/IdGenerator.ts`, `src/core/format/DateFormatter.ts`, `apps/web/src/model/platform/Platform.ts`, [ADR-0042](docs/adr/0042-dependency-inversion-for-platform-services.md), [ADR-0022](docs/adr/0022-cross-module-collaboration.md), [ADR-0024](docs/adr/0024-injectable-module-adapters.md) |
 
 Paths starting with `src/` or `test/` are relative to `apps/api`.
@@ -123,24 +123,24 @@ Every class that applies a pattern carries a one-line `// <Pattern>` comment
 the Strategy classes, for example. The full catalogue with tables is in
 [docs/architecture/patterns.md](docs/architecture/patterns.md).
 
-### Backend (`apps/api/src`, 196 tags)
+### Backend (`apps/api/src`, 188 tags)
 
 | Pattern | Count | Example references |
 | --- | --- | --- |
 | Adapter | 45 | `infrastructure/logger/PinoLoggerAdapter.ts`, `infrastructure/format/IntlDateFormatter.ts`, `infrastructure/mail/SmtpMailTransport.ts`, `infrastructure/security/JoseTokenService.ts`, `modules/clinical-records/infrastructure/PatientDirectoryLookup.ts` |
 | Presenter | 40 | `modules/patients/presenter/*Presenter.ts` (one per use case) |
 | Repository | 24 | `core/model/Repository.ts`, `infrastructure/database/MongooseRepository.ts`, `modules/*/model/*Repository.ts` |
-| Abstract Factory | 18 | `modules/patients/presenter/PatientPresenterFactory.ts`, implemented by `modules/patients/PatientsModule.ts` |
+| Abstract Factory | 11 | `modules/patients/presenter/PatientPresenters.ts`, built by `modules/patients/PatientsModule.ts` |
 | Composition Root | 12 | `main.ts`, `app/Application.ts`, `app/modules.ts`, every `modules/*/<Name>Module.ts` |
 | Data Mapper | 10 | `core/model/DataMapper.ts`, `modules/*/infrastructure/*Mapper.ts` |
 | Value Object | 9 | `core/model/ValueObject.ts`, `modules/clinical-records/model/Medication.ts`, `modules/subscriptions/model/Plan.ts` |
 | Aggregate Root | 9 | `modules/clinical-records/model/ClinicalRecord.ts`, `modules/patients/model/Patient.ts`, `modules/appointments/model/Appointment.ts` |
-| Passive View | 8 | `core/view/HttpView.ts`, `core/view/JsonHttpView.ts` |
+| Passive View | 7 | `core/view/HttpView.ts`, `core/view/JsonHttpView.ts` |
 | Strategy | 5 | `modules/subscriptions/model/PaymentGateway.ts`, `modules/notifications/model/WhatsAppGateway.ts`, `modules/virtual-consultations/model/ports.ts` (`MeetingLinkProvider`), `infrastructure/security/TokenSigningAlgorithm.ts` + `HmacSha256SigningAlgorithm.ts` |
 | Singleton | 4 | `infrastructure/config/AppConfig.ts`, `infrastructure/logger/Logger.ts`, `infrastructure/database/MongoConnection.ts` (one connection pool per process), `infrastructure/openapi/OpenApiRegistry.ts` |
 | Entity | 4 | `core/model/Entity.ts`, `core/model/Person.ts` |
 | Unit of Work | 2 | `core/model/TransactionManager.ts`, `infrastructure/database/MongoTransactionManager.ts` |
-| Template Method | 2 | `core/presenter/Presenter.ts` (`present` → `execute`), `core/view/HttpView.ts` (`render` → `serialize`) |
+| Template Method | 2 | `core/presenter/Presenter.ts` (`present` → `execute`), `core/view/HttpView.ts` (`renderError` → status mapping) |
 | Command | 2 | `core/scheduling/ScheduledJob.ts`, `core/module/DataMigration.ts` |
 | State | 1 | `modules/subscriptions/model/Subscription.ts` (trial, active, pending payment, suspended, expired) |
 | Facade | 1 | `modules/notifications/model/NotificationCenter.ts` (WhatsApp → email fallback → delivery log) |

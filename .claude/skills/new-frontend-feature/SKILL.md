@@ -20,6 +20,9 @@ Read first: `apps/web/CLAUDE.md`, `docs/guides/add-frontend-feature.md`. Copy pa
    - export an `interface <Name>ViewModel { ...state; ...commands }`;
    - call generated hooks, adapt with the adapter, and return UI models and commands
      (`refresh`, `submit`, `select`...). Never return DTOs or JSX.
+   - lists: `usePagedList(useXxxQuery, args, (dtos) => dtos.map(Adapter.toItem))`; form errors:
+     `FormErrors.apply(form, caught, { fields, fallback })`; other mutations:
+     `useAction()` → `run(() => mutate(...).unwrap(), { success, failure })` (ADR-0049).
 4. **View** `src/features/<feature>/view/<Name>Page.tsx`: call the ViewModel hook once and
    render using `@/shared/ui`. Event handlers call ViewModel commands. Missing shadcn component?
    Run `pnpm dlx shadcn@latest add <component>` from `apps/web`.
