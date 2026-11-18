@@ -101,7 +101,6 @@ classDiagram
     #responder: HttpResponder
     +render(viewModel) void
     +renderError(error) void
-    #serialize(viewModel) unknown
   }
   class IdGenerator {
     <<abstract>>
@@ -158,12 +157,12 @@ classDiagram
     +address: string | null
     +age(at) number | null
   }
-  class Presenter~TInput, TViewModel~ {
+  class Presenter~TInput, TViewModel, TModel~ {
     <<abstract · Template Method>>
     #view: View~TViewModel~
+    #model: TModel
     +present(input) Promise~void~
     #execute(input)* Promise~TViewModel~
-    #toErrorViewModel(error) ErrorViewModel
   }
   class Repository~TEntity, TId~ {
     <<abstract · Repository>>
@@ -246,9 +245,6 @@ classDiagram
     +readSession: RequestHandler
     +requireActiveSubscription: RequestHandler
   }
-  class ErrorHttpView {
-    <<Passive View>>
-  }
   class ExpressResponderAdapter {
     <<Adapter>>
     -response: Response
@@ -273,6 +269,11 @@ classDiagram
     +notFound: RequestHandler
     +handle: ErrorRequestHandler
   }
+  class HttpViews {
+    <<Adapter>>
+    +json(response, status)$ View~TViewModel~
+    +noContent(response)$ View~void~
+  }
   class IntervalJobScheduler {
     -logger: AppLogger
     -lock: JobLock | null
@@ -295,9 +296,9 @@ classDiagram
   class Keyset {
     <<Strategy>>
     -fields: KeysetField[]
+    +newestFirst(path)$ Keyset
     +sort() Record~string, number | boolean~
     +where(base, after) Filter
-    +slice(records, request) object
     +page(records, request, toItem) Page~TItem~
   }
   class Logger {
@@ -339,6 +340,9 @@ classDiagram
     #session: ClientSession | null
     +findById(id) Promise~TEntity | null~
     +save(entity) Promise~void~
+    #findOneBy(filter) Promise~TEntity | null~
+    #findManyBy(filter, options) Promise~TEntity[]~
+    #findPage(keyset, filter, page) Promise~Page~TEntity~~
   }
   class MongoRateLimitStore {
     <<Adapter>>
@@ -418,9 +422,6 @@ classDiagram
   class DateFormatter {
     <<external>>
   }
-  class HttpView {
-    <<external>>
-  }
   class JobLock {
     <<external>>
   }
@@ -439,7 +440,6 @@ classDiagram
   AuthGuard --> Clock
   AuthGuard --> TokenService
   DateFormatter <|-- IntlDateFormatter
-  HttpView <|-- ErrorHttpView
   IntervalJobScheduler --> JobLock
   JobLock <|-- MongoJobLock
   JoseTokenService --> TokenSigningAlgorithm
@@ -479,7 +479,7 @@ classDiagram
 
 ## API module: Appointments (CU-10, CU-11, CU-12, CU-13, CU-14)
 
-32 classes.
+33 classes.
 
 ```mermaid
 classDiagram
@@ -538,6 +538,19 @@ classDiagram
     <<abstract>>
     +notify(event, appointment)* Promise~void~
   }
+  class AppointmentPresenters {
+    <<Abstract Factory>>
+    -appointmentService: AppointmentService
+    -earningsService: EarningsService
+    +listAppointments(view)
+    +getAppointment(view)
+    +scheduleAppointment(view)
+    +rescheduleAppointment(view)
+    +cancelAppointment(view)
+    +getConsultationFees(view)
+    +updateConsultationFees(view)
+    +getEarningsReport(view)
+  }
   class AppointmentRepository {
     <<abstract · Repository>>
     +findOwned(professionalId, id)* Promise~Appointment | null~
@@ -547,7 +560,7 @@ classDiagram
     +earnings(professionalId, from, to, now)* Promise~EarningsRow[]~
   }
   class AppointmentRoutes {
-    -presenters: AppointmentPresenterFactory
+    -presenters: AppointmentPresenters
     -guard: AuthGuard
     +build() Router
   }
@@ -572,7 +585,7 @@ classDiagram
     +sendDueReminders() Promise~number~
   }
   class AppointmentsModule {
-    <<Composition Root, Abstract Factory>>
+    <<Composition Root>>
     +basePath
     +directory: AppointmentDirectory
     +booking: AppointmentBooking
@@ -580,14 +593,6 @@ classDiagram
     +registerContracts(registry) void
     +createRouter() Router
     +scheduledJobs() ScheduledJob[]
-    +listAppointments(view) ListAppointmentsPresenter
-    +getAppointment(view) GetAppointmentPresenter
-    +scheduleAppointment(view) ScheduleAppointmentPresenter
-    +rescheduleAppointment(view) RescheduleAppointmentPresenter
-    +cancelAppointment(view) CancelAppointmentPresenter
-    +getConsultationFees(view) GetConsultationFeesPresenter
-    +updateConsultationFees(view) UpdateConsultationFeesPresenter
-    +getEarningsReport(view) GetEarningsReportPresenter
   }
   class AppointmentViewModel {
     +toDto(appointment,patientName)$ AppointmentDto
@@ -595,7 +600,6 @@ classDiagram
   }
   class CancelAppointmentPresenter {
     <<Presenter>>
-    -agenda: AppointmentService
     #execute(input) Promise~AppointmentDto~
   }
   class ConsultationFees {
@@ -636,22 +640,18 @@ classDiagram
   }
   class GetAppointmentPresenter {
     <<Presenter>>
-    -agenda: AppointmentService
     #execute(input) Promise~AppointmentDto~
   }
   class GetConsultationFeesPresenter {
     <<Presenter>>
-    -earnings: EarningsService
     #execute(actor) Promise~ConsultationFeesDto~
   }
   class GetEarningsReportPresenter {
     <<Presenter>>
-    -earnings: EarningsService
     #execute(actor,from,to) Promise~EarningsReportDto~
   }
   class ListAppointmentsPresenter {
     <<Presenter>>
-    -agenda: AppointmentService
     #execute(input) Promise~AppointmentPageDto~
   }
   class MongooseAgendaLock {
@@ -702,17 +702,14 @@ classDiagram
   }
   class RescheduleAppointmentPresenter {
     <<Presenter>>
-    -agenda: AppointmentService
     #execute(input) Promise~AppointmentDto~
   }
   class ScheduleAppointmentPresenter {
     <<Presenter>>
-    -agenda: AppointmentService
     #execute(actor,data) Promise~AppointmentDto~
   }
   class UpdateConsultationFeesPresenter {
     <<Presenter>>
-    -earnings: EarningsService
     #execute(actor,data,) Promise~ConsultationFeesDto~
   }
   class AuditTrail {
@@ -758,7 +755,10 @@ classDiagram
   AppointmentBooking --> AppointmentService
   AppointmentDirectory --> AppointmentRepository
   AppointmentNotifier <|-- NotificationAppointmentNotifier
+  AppointmentPresenters --> AppointmentService
+  AppointmentPresenters --> EarningsService
   AppointmentRepository <|.. MongooseAppointmentRepository
+  AppointmentRoutes --> AppointmentPresenters
   AppointmentRoutes --> AuthGuard
   AppointmentService --> AgendaLock
   AppointmentService --> AppointmentNotifier
@@ -771,7 +771,6 @@ classDiagram
   AppointmentService --> TransactionManager
   AppointmentsModule --> AppointmentBooking
   AppointmentsModule --> AppointmentDirectory
-  CancelAppointmentPresenter --> AppointmentService
   ConsultationFeesRepository <|.. MongooseConsultationFeesRepository
   EarningsService --> AppointmentRepository
   EarningsService --> AuditTrail
@@ -780,10 +779,6 @@ classDiagram
   EarningsService --> TransactionManager
   Entity <|-- Appointment
   Entity <|-- ConsultationFees
-  GetAppointmentPresenter --> AppointmentService
-  GetConsultationFeesPresenter --> EarningsService
-  GetEarningsReportPresenter --> EarningsService
-  ListAppointmentsPresenter --> AppointmentService
   MongooseAgendaLock --> TransactionContext
   MongooseAppointmentRepository --> TransactionContext
   MongooseConsultationFeesRepository --> TransactionContext
@@ -804,14 +799,11 @@ classDiagram
   Presenter <|-- UpdateConsultationFeesPresenter
   Repository <|-- AppointmentRepository
   Repository <|-- ConsultationFeesRepository
-  RescheduleAppointmentPresenter --> AppointmentService
-  ScheduleAppointmentPresenter --> AppointmentService
-  UpdateConsultationFeesPresenter --> EarningsService
 ```
 
 ## API module: audit
 
-11 classes.
+12 classes.
 
 ```mermaid
 classDiagram
@@ -850,17 +842,21 @@ classDiagram
     +record(entry) Promise~void~
   }
   class AuditModule {
-    <<Composition Root, Abstract Factory>>
+    <<Composition Root>>
     +basePath
     +trail: AuditTrail
     -deps: AuditModuleDependencies
     +registerContracts(registry) void
     +requestHandlers() RequestHandler[]
     +createRouter() Router
-    +listAuditEvents(view) ListAuditEventsPresenter
+  }
+  class AuditPresenters {
+    <<Abstract Factory>>
+    -auditService: AuditService
+    +listAuditEvents(view)
   }
   class AuditRoutes {
-    -presenters: AuditPresenterFactory
+    -presenters: AuditPresenters
     -guard: AuthGuard
     +build() Router
   }
@@ -870,7 +866,6 @@ classDiagram
   }
   class ListAuditEventsPresenter {
     <<Presenter>>
-    -audit: AuditService
     #execute(actor,query) Promise~AuditEventPageDto~
   }
   class MongooseAuditEventRepository {
@@ -923,11 +918,12 @@ classDiagram
   AuditLog --> IdGenerator
   AuditLog --> RequestOriginSource
   AuditModule --> AuditTrail
+  AuditPresenters --> AuditService
+  AuditRoutes --> AuditPresenters
   AuditRoutes --> AuthGuard
   AuditService --> AuditEventRepository
   AuditTrail <|-- AuditLog
   Entity <|-- AuditEvent
-  ListAuditEventsPresenter --> AuditService
   MongooseAuditEventRepository --> TransactionContext
   MongooseRepository <|-- MongooseAuditEventRepository
   Presenter <|-- ListAuditEventsPresenter
@@ -938,34 +934,40 @@ classDiagram
 
 ## API module: Auth and account (CU-01, CU-02, CU-03, CU-16, CU-17)
 
-40 classes.
+41 classes.
 
 ```mermaid
 classDiagram
   direction LR
   class AuthModule {
-    <<Composition Root, Abstract Factory>>
+    <<Composition Root>>
     +basePath
     +directory: ProfessionalDirectory
     -deps: AuthModuleDependencies
     +registerContracts(registry) void
     +createRouter() Router
     +migrations() DataMigration[]
-    +registerProfessional(view) RegisterProfessionalPresenter
-    +login(view) LoginPresenter
-    +logout(view) LogoutPresenter
-    +getCurrentProfessional(view) GetCurrentProfessionalPresenter
-    +requestPasswordRecovery(view) RequestPasswordRecoveryPresenter
-    +verifyRecoveryCode(view) VerifyRecoveryCodePresenter
-    +resetPassword(view) ResetPasswordPresenter
-    +changePassword(view) ChangePasswordPresenter
-    +updateProfile(view) UpdateProfilePresenter
-    +getLogo(view) GetLogoPresenter
-    +uploadLogo(view) UploadLogoPresenter
-    +removeLogo(view) RemoveLogoPresenter
+  }
+  class AuthPresenters {
+    <<Abstract Factory>>
+    -authService: AuthService
+    -passwordRecoveryService: PasswordRecoveryService
+    -profileService: ProfileService
+    +registerProfessional(view)
+    +login(view)
+    +logout(view)
+    +getCurrentProfessional(view)
+    +requestPasswordRecovery(view)
+    +verifyRecoveryCode(view)
+    +resetPassword(view)
+    +changePassword(view)
+    +updateProfile(view)
+    +getLogo(view)
+    +uploadLogo(view)
+    +removeLogo(view)
   }
   class AuthRoutes {
-    -presenters: AuthPresenterFactory
+    -presenters: AuthPresenters
     -guard: AuthGuard
     -cookie: SessionCookie
     -limiter: RateLimiter
@@ -993,7 +995,6 @@ classDiagram
   }
   class ChangePasswordPresenter {
     <<Presenter>>
-    -auth: AuthService
     #execute(input) Promise~SessionResult~
   }
   class CryptoRecoveryCodeGenerator {
@@ -1010,12 +1011,10 @@ classDiagram
   }
   class GetCurrentProfessionalPresenter {
     <<Presenter>>
-    -auth: AuthService
     #execute(actor) Promise~SessionResult~
   }
   class GetLogoPresenter {
     <<Presenter>>
-    -profiles: ProfileService
     #execute(actor) Promise~LogoDto~
   }
   class LegacySubscriptionMigration {
@@ -1025,7 +1024,6 @@ classDiagram
   }
   class LoginPresenter {
     <<Presenter>>
-    -auth: AuthService
     #execute(input) Promise~SessionResult~
   }
   class LogoRepository {
@@ -1041,7 +1039,6 @@ classDiagram
   }
   class LogoutPresenter {
     <<Presenter>>
-    -auth: AuthService
     #execute(actor) Promise~void~
   }
   class MongooseLogoRepository {
@@ -1180,22 +1177,18 @@ classDiagram
   }
   class RegisterProfessionalPresenter {
     <<Presenter>>
-    -auth: AuthService
     #execute(input) Promise~SessionResult~
   }
   class RemoveLogoPresenter {
     <<Presenter>>
-    -profiles: ProfileService
     #execute(input) Promise~void~
   }
   class RequestPasswordRecoveryPresenter {
     <<Presenter>>
-    -recovery: PasswordRecoveryService
     #execute(input) Promise~RecoveryRequestedDto~
   }
   class ResetPasswordPresenter {
     <<Presenter>>
-    -recovery: PasswordRecoveryService
     #execute(input) Promise~void~
   }
   class SessionHttpView {
@@ -1216,17 +1209,14 @@ classDiagram
   }
   class UpdateProfilePresenter {
     <<Presenter>>
-    -profiles: ProfileService
     #execute(actor,data) Promise~SessionDto~
   }
   class UploadLogoPresenter {
     <<Presenter>>
-    -profiles: ProfileService
     #execute(input) Promise~void~
   }
   class VerifyRecoveryCodePresenter {
     <<Presenter>>
-    -recovery: PasswordRecoveryService
     #execute(input) Promise~void~
   }
   class AuditTrail {
@@ -1290,7 +1280,11 @@ classDiagram
     <<external>>
   }
   AuthModule --> ProfessionalDirectory
+  AuthPresenters --> AuthService
+  AuthPresenters --> PasswordRecoveryService
+  AuthPresenters --> ProfileService
   AuthRoutes --> AuthGuard
+  AuthRoutes --> AuthPresenters
   AuthRoutes --> RateLimiter
   AuthRoutes --> SessionCookie
   AuthService --> AuditTrail
@@ -1301,19 +1295,14 @@ classDiagram
   AuthService --> ProfessionalRepository
   AuthService --> TokenService
   AuthService --> TransactionManager
-  ChangePasswordPresenter --> AuthService
   EmailPasswordRecoveryNotifier --> DateFormatter
   EmailPasswordRecoveryNotifier --> MailTransport
   Entity <|-- PasswordRecovery
-  GetCurrentProfessionalPresenter --> AuthService
-  GetLogoPresenter --> ProfileService
   HttpView <|-- LogoutHttpView
   HttpView <|-- SessionHttpView
   LegacySubscriptionMigration --> SubscriptionAccess
-  LoginPresenter --> AuthService
   LogoRepository <|-- MongooseLogoRepository
   LogoutHttpView --> SessionCookie
-  LogoutPresenter --> AuthService
   MongooseLogoRepository --> TransactionContext
   MongoosePasswordRecoveryRepository --> TransactionContext
   MongooseProfessionalRepository --> TransactionContext
@@ -1354,30 +1343,22 @@ classDiagram
   ProfileService --> ProfessionalRepository
   ProfileService --> TransactionManager
   RecoveryCodeGenerator <|-- CryptoRecoveryCodeGenerator
-  RegisterProfessionalPresenter --> AuthService
-  RemoveLogoPresenter --> ProfileService
   Repository <|-- PasswordRecoveryRepository
   Repository <|-- ProfessionalRepository
-  RequestPasswordRecoveryPresenter --> PasswordRecoveryService
-  ResetPasswordPresenter --> PasswordRecoveryService
   SessionHttpView --> SessionCookie
   SubscriptionAccessAdapter --> SubscriptionAccess
-  UpdateProfilePresenter --> ProfileService
-  UploadLogoPresenter --> ProfileService
   ValueObject <|-- ProfessionalLogo
-  VerifyRecoveryCodePresenter --> PasswordRecoveryService
 ```
 
 ## API module: booking
 
-31 classes.
+32 classes.
 
 ```mermaid
 classDiagram
   direction LR
   class AcceptBookingRequestPresenter {
     <<Presenter>>
-    -booking: BookingService
     #execute(actor,requestId,data,) Promise~BookingRequestDto~
   }
   class AgendaBooking {
@@ -1401,20 +1382,12 @@ classDiagram
     +hasAccess(professionalId) Promise~boolean~
   }
   class BookingModule {
-    <<Composition Root, Abstract Factory>>
+    <<Composition Root>>
     +basePath
     -deps: BookingModuleDependencies
     +registerContracts(registry) void
     +createRouter() Router
     +scheduledJobs() ScheduledJob[]
-    +getBookingSettings(view) GetBookingSettingsPresenter
-    +updateBookingSettings(view) UpdateBookingSettingsPresenter
-    +listBookingRequests(view) ListBookingRequestsPresenter
-    +acceptBookingRequest(view) AcceptBookingRequestPresenter
-    +rejectBookingRequest(view) RejectBookingRequestPresenter
-    +getPublicBookingPage(view) GetPublicBookingPagePresenter
-    +getAvailableSlots(view) GetAvailableSlotsPresenter
-    +createBookingRequest(view) CreateBookingRequestPresenter
   }
   class BookingNotifier {
     <<abstract>>
@@ -1448,6 +1421,18 @@ classDiagram
   class BookingPageRepository {
     <<abstract · Repository>>
     +findBySlug(slug)* Promise~BookingPage | null~
+  }
+  class BookingPresenters {
+    <<Abstract Factory>>
+    -bookingService: BookingService
+    +getBookingSettings(view)
+    +updateBookingSettings(view)
+    +listBookingRequests(view)
+    +acceptBookingRequest(view)
+    +rejectBookingRequest(view)
+    +getPublicBookingPage(view)
+    +getAvailableSlots(view)
+    +createBookingRequest(view)
   }
   class BookingRequest {
     <<Aggregate Root>>
@@ -1487,7 +1472,7 @@ classDiagram
     +findExpirable(now, limit)* Promise~BookingRequest[]~
   }
   class BookingRoutes {
-    -presenters: BookingPresenterFactory
+    -presenters: BookingPresenters
     -guard: AuthGuard
     -limiter: RateLimiter
     +build() Router
@@ -1522,7 +1507,6 @@ classDiagram
   }
   class CreateBookingRequestPresenter {
     <<Presenter>>
-    -booking: BookingService
     #execute(slug,data) Promise~BookingReceiptDto~
   }
   class EmailBookingNotifier {
@@ -1534,17 +1518,14 @@ classDiagram
   }
   class GetAvailableSlotsPresenter {
     <<Presenter>>
-    -booking: BookingService
     #execute(slug,from,days,) Promise~AvailableSlotsDto~
   }
   class GetBookingSettingsPresenter {
     <<Presenter>>
-    -booking: BookingService
     #execute(actor) Promise~BookingSettingsDto~
   }
   class GetPublicBookingPagePresenter {
     <<Presenter>>
-    -booking: BookingService
     #execute(slug) Promise~PublicBookingPageDto~
   }
   class IntlLocalCalendar {
@@ -1555,7 +1536,6 @@ classDiagram
   }
   class ListBookingRequestsPresenter {
     <<Presenter>>
-    -booking: BookingService
     #execute(input) Promise~BookingRequestPageDto~
   }
   class LocalCalendar {
@@ -1596,7 +1576,6 @@ classDiagram
   }
   class RejectBookingRequestPresenter {
     <<Presenter>>
-    -booking: BookingService
     #execute(actor,requestId,data,) Promise~BookingRequestDto~
   }
   class SlotPlanner {
@@ -1609,7 +1588,6 @@ classDiagram
   }
   class UpdateBookingSettingsPresenter {
     <<Presenter>>
-    -booking: BookingService
     #execute(actor,data,) Promise~BookingSettingsDto~
   }
   class AppointmentBooking {
@@ -1663,15 +1641,16 @@ classDiagram
   class TransactionManager {
     <<external>>
   }
-  AcceptBookingRequestPresenter --> BookingService
   AgendaBooking <|-- AppointmentAgendaBooking
   AppointmentAgendaBooking --> AppointmentBooking
   AuthPracticeDirectory --> ProfessionalDirectory
   AuthPracticeDirectory --> SubscriptionAccess
   BookingNotifier <|-- EmailBookingNotifier
   BookingPageRepository <|.. MongooseBookingPageRepository
+  BookingPresenters --> BookingService
   BookingRequestRepository <|.. MongooseBookingRequestRepository
   BookingRoutes --> AuthGuard
+  BookingRoutes --> BookingPresenters
   BookingRoutes --> RateLimiter
   BookingService --> AgendaBooking
   BookingService --> AuditTrail
@@ -1684,15 +1663,10 @@ classDiagram
   BookingService --> PatientRegistry
   BookingService --> PracticeDirectory
   BookingService --> TransactionManager
-  CreateBookingRequestPresenter --> BookingService
   EmailBookingNotifier --> DateFormatter
   EmailBookingNotifier --> MailTransport
   Entity <|-- BookingPage
   Entity <|-- BookingRequest
-  GetAvailableSlotsPresenter --> BookingService
-  GetBookingSettingsPresenter --> BookingService
-  GetPublicBookingPagePresenter --> BookingService
-  ListBookingRequestsPresenter --> BookingService
   LocalCalendar <|-- IntlLocalCalendar
   MongooseBookingPageRepository --> TransactionContext
   MongooseBookingRequestRepository --> TransactionContext
@@ -1709,16 +1683,14 @@ classDiagram
   Presenter <|-- ListBookingRequestsPresenter
   Presenter <|-- RejectBookingRequestPresenter
   Presenter <|-- UpdateBookingSettingsPresenter
-  RejectBookingRequestPresenter --> BookingService
   Repository <|-- BookingPageRepository
   Repository <|-- BookingRequestRepository
   SlotPlanner --> LocalCalendar
-  UpdateBookingSettingsPresenter --> BookingService
 ```
 
 ## API module: Clinical records (CU-07, CU-08, CU-09)
 
-25 classes.
+26 classes.
 
 ```mermaid
 classDiagram
@@ -1762,12 +1734,21 @@ classDiagram
     +toDomain(record) ClinicalRecord
     +toPersistence(record) ClinicalRecordDocument
   }
+  class ClinicalRecordPresenters {
+    <<Abstract Factory>>
+    -clinicalRecordService: ClinicalRecordService
+    +getClinicalRecord(view)
+    +registerConsultation(view)
+    +getConsultation(view)
+    +getDiagnosisHistory(view)
+    +listRecordAccess(view)
+  }
   class ClinicalRecordRepository {
     <<abstract · Repository>>
     +findByPatient(professionalId, patientId)* Promise~ClinicalRecord | null~
   }
   class ClinicalRecordRoutes {
-    -presenters: ClinicalRecordPresenterFactory
+    -presenters: ClinicalRecordPresenters
     -guard: AuthGuard
     +build() Router
   }
@@ -1788,17 +1769,12 @@ classDiagram
     +diagnosisHistory(professionalId, patientId, page) Promise~Page~DiagnosisHistoryEntry~~
   }
   class ClinicalRecordsModule {
-    <<Composition Root, Abstract Factory>>
+    <<Composition Root>>
     +basePath
     -deps: ClinicalRecordsModuleDependencies
     +registerContracts(registry) void
     +createRouter() Router
     +migrations() DataMigration[]
-    +getClinicalRecord(view) GetClinicalRecordPresenter
-    +registerConsultation(view) RegisterConsultationPresenter
-    +getConsultation(view) GetConsultationPresenter
-    +getDiagnosisHistory(view) GetDiagnosisHistoryPresenter
-    +listRecordAccess(view) ListRecordAccessPresenter
   }
   class ClinicalRecordViewModel {
     +record(record, consultations)$ ClinicalRecordDto
@@ -1824,22 +1800,18 @@ classDiagram
   }
   class GetClinicalRecordPresenter {
     <<Presenter>>
-    -records: ClinicalRecordService
     #execute(input) Promise~ClinicalRecordDto~
   }
   class GetConsultationPresenter {
     <<Presenter>>
-    -records: ClinicalRecordService
     #execute(input) Promise~ConsultationDto~
   }
   class GetDiagnosisHistoryPresenter {
     <<Presenter>>
-    -records: ClinicalRecordService
     #execute(input) Promise~DiagnosisHistoryPageDto~
   }
   class ListRecordAccessPresenter {
     <<Presenter>>
-    -records: ClinicalRecordService
     #execute(input) Promise~RecordAccessPageDto~
   }
   class Medication {
@@ -1884,7 +1856,6 @@ classDiagram
   }
   class RegisterConsultationPresenter {
     <<Presenter>>
-    -records: ClinicalRecordService
     #execute(input) Promise~ConsultationDto~
   }
   class AuditTrail {
@@ -1932,8 +1903,10 @@ classDiagram
   CatalogDiagnosisResolver --> DiagnosisCatalog
   ClinicalActivityBackfill --> ClinicalActivityRecorder
   ClinicalActivityRecorder <|-- PatientActivityRecorder
+  ClinicalRecordPresenters --> ClinicalRecordService
   ClinicalRecordRepository <|.. MongooseClinicalRecordRepository
   ClinicalRecordRoutes --> AuthGuard
+  ClinicalRecordRoutes --> ClinicalRecordPresenters
   ClinicalRecordService --> AuditTrail
   ClinicalRecordService --> ClinicalActivityRecorder
   ClinicalRecordService --> ClinicalRecordRepository
@@ -1946,10 +1919,6 @@ classDiagram
   DiagnosisResolver <|-- CatalogDiagnosisResolver
   Entity <|-- ClinicalRecord
   Entity <|-- Consultation
-  GetClinicalRecordPresenter --> ClinicalRecordService
-  GetConsultationPresenter --> ClinicalRecordService
-  GetDiagnosisHistoryPresenter --> ClinicalRecordService
-  ListRecordAccessPresenter --> ClinicalRecordService
   MongooseClinicalRecordRepository --> TransactionContext
   MongooseRecordAccessLog --> TransactionContext
   MongooseRepository <|-- MongooseClinicalRecordRepository
@@ -1962,7 +1931,6 @@ classDiagram
   Presenter <|-- ListRecordAccessPresenter
   Presenter <|-- RegisterConsultationPresenter
   RecordAccessLog <|.. MongooseRecordAccessLog
-  RegisterConsultationPresenter --> ClinicalRecordService
   Repository <|-- ClinicalRecordRepository
   ValueObject <|-- AssignedDiagnosis
   ValueObject <|-- Medication
@@ -1970,7 +1938,7 @@ classDiagram
 
 ## API module: Diagnosis catalog
 
-9 classes.
+10 classes.
 
 ```mermaid
 classDiagram
@@ -1989,14 +1957,18 @@ classDiagram
     +active: boolean
   }
   class DiagnosisCatalogModule {
-    <<Composition Root, Abstract Factory>>
+    <<Composition Root>>
     +basePath
     +catalog: DiagnosisCatalog
     -deps: DiagnosisCatalogModuleDependencies
     +registerContracts(registry) void
     +createRouter() Router
     +onBootstrap() Promise~void~
-    +searchDiagnoses(view) SearchDiagnosesPresenter
+  }
+  class DiagnosisCatalogPresenters {
+    <<Abstract Factory>>
+    -diagnosisCatalog: DiagnosisCatalog
+    +searchDiagnoses(view)
   }
   class DiagnosisCatalogRepository {
     <<abstract · Repository>>
@@ -2004,7 +1976,7 @@ classDiagram
     +findByCode(code)* Promise~DiagnosisCatalogEntry | null~
   }
   class DiagnosisCatalogRoutes {
-    -presenters: DiagnosisCatalogPresenterFactory
+    -presenters: DiagnosisCatalogPresenters
     -guard: AuthGuard
     +build() Router
   }
@@ -2024,7 +1996,6 @@ classDiagram
   }
   class SearchDiagnosesPresenter {
     <<Presenter>>
-    -catalog: DiagnosisCatalog
     #execute(input) Promise~DiagnosisCatalogPageDto~
   }
   class AuthGuard {
@@ -2038,12 +2009,13 @@ classDiagram
   }
   DiagnosisCatalog --> DiagnosisCatalogRepository
   DiagnosisCatalogModule --> DiagnosisCatalog
+  DiagnosisCatalogPresenters --> DiagnosisCatalog
   DiagnosisCatalogRepository <|.. MongooseDiagnosisCatalogRepository
   DiagnosisCatalogRoutes --> AuthGuard
+  DiagnosisCatalogRoutes --> DiagnosisCatalogPresenters
   DiagnosisCatalogSeeder <|-- MongooseDiagnosisCatalogSeeder
   Entity <|-- DiagnosisCatalogEntry
   Presenter <|-- SearchDiagnosesPresenter
-  SearchDiagnosesPresenter --> DiagnosisCatalog
 ```
 
 ## API module: Health
@@ -2065,12 +2037,8 @@ classDiagram
   }
   class GetHealthPresenter {
     <<Presenter>>
-    -service: HealthService
     -scope: HealthScope
     #execute() Promise~HealthDto~
-  }
-  class HealthHttpView {
-    <<Passive View>>
   }
   class HealthIndicator {
     <<abstract>>
@@ -2078,11 +2046,15 @@ classDiagram
     +check()* Promise~ComponentHealth~
   }
   class HealthModule {
-    <<Composition Root, Abstract Factory>>
+    <<Composition Root>>
     +basePath
     +registerContracts(registry) void
     +createRouter() Router
-    +getHealth(view, scope) GetHealthPresenter
+  }
+  class HealthPresenters {
+    <<Abstract Factory>>
+    -health: HealthService
+    +getHealth(view, scope)
   }
   class HealthReport {
     <<Value Object>>
@@ -2093,7 +2065,7 @@ classDiagram
     +checkedAt: Date
   }
   class HealthRoutes {
-    -presenters: HealthPresenterFactory
+    -presenters: HealthPresenters
     +build() Router
   }
   class HealthService {
@@ -2133,9 +2105,10 @@ classDiagram
   }
   GetHealthPresenter --> HealthService
   HealthIndicator <|-- MongoHealthIndicator
+  HealthPresenters --> HealthService
+  HealthRoutes --> HealthPresenters
   HealthService --> Clock
   HealthService --> HealthIndicator
-  HttpView <|-- HealthHttpView
   HttpView <|-- ReadinessHttpView
   MongoHealthIndicator --> MongoConnection
   Presenter <|-- GetHealthPresenter
@@ -2145,7 +2118,7 @@ classDiagram
 
 ## API module: Notifications
 
-14 classes.
+15 classes.
 
 ```mermaid
 classDiagram
@@ -2156,7 +2129,6 @@ classDiagram
   }
   class ListNotificationsPresenter {
     <<Presenter>>
-    -center: NotificationCenter
     #execute(input) Promise~NotificationPageDto~
   }
   class LocalWhatsAppOutbox {
@@ -2204,23 +2176,27 @@ classDiagram
     +toDomain(record) Notification
     +toPersistence(notification) NotificationDocument
   }
+  class NotificationPresenters {
+    <<Abstract Factory>>
+    -notificationCenter: NotificationCenter
+    +listNotifications(view)
+  }
   class NotificationRepository {
     <<abstract · Repository>>
     +findByPatient(professionalId, patientId, page)* Promise~Page~Notification~~
   }
   class NotificationRoutes {
-    -presenters: NotificationPresenterFactory
+    -presenters: NotificationPresenters
     -guard: AuthGuard
     +build() Router
   }
   class NotificationsModule {
-    <<Composition Root, Abstract Factory>>
+    <<Composition Root>>
     +basePath
     +center: NotificationCenter
     -deps: NotificationsModuleDependencies
     +registerContracts(registry) void
     +createRouter() Router
-    +listNotifications(view) ListNotificationsPresenter
   }
   class WhatsAppCloudApiGateway {
     <<Adapter>>
@@ -2263,7 +2239,6 @@ classDiagram
   }
   EmailGateway <|-- MailEmailGateway
   Entity <|-- Notification
-  ListNotificationsPresenter --> NotificationCenter
   MailEmailGateway --> MailTransport
   MongooseNotificationRepository --> TransactionContext
   MongooseRepository <|-- MongooseNotificationRepository
@@ -2272,8 +2247,10 @@ classDiagram
   NotificationCenter --> IdGenerator
   NotificationCenter --> NotificationRepository
   NotificationCenter --> WhatsAppGateway
+  NotificationPresenters --> NotificationCenter
   NotificationRepository <|.. MongooseNotificationRepository
   NotificationRoutes --> AuthGuard
+  NotificationRoutes --> NotificationPresenters
   NotificationsModule --> NotificationCenter
   Presenter <|-- ListNotificationsPresenter
   Repository <|-- NotificationRepository
@@ -2283,19 +2260,17 @@ classDiagram
 
 ## API module: Patients (CU-04, CU-05, CU-06)
 
-18 classes.
+19 classes.
 
 ```mermaid
 classDiagram
   direction LR
   class ChangePatientStatusPresenter {
     <<Presenter>>
-    -patients: PatientService
     #execute(input)
   }
   class CreatePatientPresenter {
     <<Presenter>>
-    -patients: PatientService
     #execute(input)
   }
   class FamilyContact {
@@ -2306,7 +2281,6 @@ classDiagram
   }
   class GetPatientPresenter {
     <<Presenter>>
-    -patients: PatientService
     #execute(input)
   }
   class MongoosePatientRepository {
@@ -2365,6 +2339,15 @@ classDiagram
     +toDomain(record) Patient
     +toPersistence(patient) PatientDocument
   }
+  class PatientPresenters {
+    <<Abstract Factory>>
+    -patientService: PatientService
+    +createPatient(view)
+    +searchPatients(view)
+    +getPatient(view)
+    +updatePatient(view)
+    +changePatientStatus(view)
+  }
   class PatientRepository {
     <<abstract · Repository>>
     +findOwned(professionalId, id)* Promise~Patient | null~
@@ -2374,7 +2357,7 @@ classDiagram
     +findDormant(cutoff, limit)* Promise~Patient[]~
   }
   class PatientRoutes {
-    -presenters: PatientPresenterFactory
+    -presenters: PatientPresenters
     -guard: AuthGuard
     +build() Router
   }
@@ -2399,7 +2382,7 @@ classDiagram
     +findByDni(professionalId, dni) Promise~Patient | null~
   }
   class PatientsModule {
-    <<Composition Root, Abstract Factory>>
+    <<Composition Root>>
     +basePath
     +directory: PatientDirectory
     +activity: PatientActivity
@@ -2408,11 +2391,6 @@ classDiagram
     +registerContracts(registry) void
     +createRouter() Router
     +scheduledJobs() ScheduledJob[]
-    +createPatient(view) CreatePatientPresenter
-    +searchPatients(view) SearchPatientsPresenter
-    +getPatient(view) GetPatientPresenter
-    +updatePatient(view) UpdatePatientPresenter
-    +changePatientStatus(view) ChangePatientStatusPresenter
   }
   class PatientViewModel {
     +toDto(patient, now)$ PatientDto
@@ -2421,12 +2399,10 @@ classDiagram
   }
   class SearchPatientsPresenter {
     <<Presenter>>
-    -patients: PatientService
     #execute(input)
   }
   class UpdatePatientPresenter {
     <<Presenter>>
-    -patients: PatientService
     #execute(input)
   }
   class AuditTrail {
@@ -2462,16 +2438,15 @@ classDiagram
   class ValueObject {
     <<external>>
   }
-  ChangePatientStatusPresenter --> PatientService
-  CreatePatientPresenter --> PatientService
-  GetPatientPresenter --> PatientService
   MongoosePatientRepository --> TransactionContext
   MongooseRepository <|-- MongoosePatientRepository
   PatientActivity --> PatientRepository
   PatientDirectory --> PatientRepository
   PatientIntake --> PatientService
+  PatientPresenters --> PatientService
   PatientRepository <|.. MongoosePatientRepository
   PatientRoutes --> AuthGuard
+  PatientRoutes --> PatientPresenters
   PatientService --> AuditTrail
   PatientService --> Clock
   PatientService --> IdGenerator
@@ -2487,21 +2462,18 @@ classDiagram
   Presenter <|-- SearchPatientsPresenter
   Presenter <|-- UpdatePatientPresenter
   Repository <|-- PatientRepository
-  SearchPatientsPresenter --> PatientService
-  UpdatePatientPresenter --> PatientService
   ValueObject <|-- FamilyContact
 ```
 
 ## API module: Subscriptions and payments (CU-18)
 
-29 classes.
+30 classes.
 
 ```mermaid
 classDiagram
   direction LR
   class AddPaymentMethodPresenter {
     <<Presenter>>
-    -service: SubscriptionService
     #execute(actor,data) Promise~SubscriptionDetailDto~
   }
   class BillingNotifier {
@@ -2510,12 +2482,10 @@ classDiagram
   }
   class CancelSubscriptionPresenter {
     <<Presenter>>
-    -service: SubscriptionService
     #execute(actor) Promise~SubscriptionDetailDto~
   }
   class ChoosePlanPresenter {
     <<Presenter>>
-    -service: SubscriptionService
     #execute(actor,data) Promise~SubscriptionDetailDto~
   }
   class EmailBillingNotifier {
@@ -2528,12 +2498,10 @@ classDiagram
   }
   class GetSubscriptionPresenter {
     <<Presenter>>
-    -service: SubscriptionService
     #execute(actor) Promise~SubscriptionDetailDto~
   }
   class ListPaymentsPresenter {
     <<Presenter>>
-    -service: SubscriptionService
     #execute(input) Promise~PaymentPageDto~
   }
   class MongoosePaymentRepository {
@@ -2615,17 +2583,14 @@ classDiagram
   }
   class RegisterManualPaymentPresenter {
     <<Presenter>>
-    -service: SubscriptionService
     #execute(actor,data) Promise~PaymentDto~
   }
   class RemovePaymentMethodPresenter {
     <<Presenter>>
-    -service: SubscriptionService
     #execute(actor,methodId,confirmed,) Promise~SubscriptionDetailDto~
   }
   class SetAutoDebitPresenter {
     <<Presenter>>
-    -service: SubscriptionService
     #execute(actor,data) Promise~SubscriptionDetailDto~
   }
   class SimulatedPaymentGateway {
@@ -2683,12 +2648,25 @@ classDiagram
     +toDomain(record) Subscription
     +toPersistence(subscription) SubscriptionDocument
   }
+  class SubscriptionPresenters {
+    <<Abstract Factory>>
+    -subscriptionService: SubscriptionService
+    +getSubscription(view)
+    +choosePlan(view)
+    +addPaymentMethod(view)
+    +updatePaymentMethod(view)
+    +removePaymentMethod(view)
+    +setAutoDebit(view)
+    +cancelSubscription(view)
+    +listPayments(view)
+    +registerManualPayment(view)
+  }
   class SubscriptionRepository {
     <<abstract · Repository>>
     +findDue(now, limit)* Promise~Subscription[]~
   }
   class SubscriptionRoutes {
-    -presenters: SubscriptionPresenterFactory
+    -presenters: SubscriptionPresenters
     -guard: AuthGuard
     +build() Router
   }
@@ -2717,22 +2695,13 @@ classDiagram
     +processDueRenewals() Promise~RenewalReport~
   }
   class SubscriptionsModule {
-    <<Composition Root, Abstract Factory>>
+    <<Composition Root>>
     +basePath
     +access: SubscriptionAccess
     -deps: SubscriptionsModuleDependencies
     +registerContracts(registry) void
     +createRouter() Router
     +scheduledJobs() ScheduledJob[]
-    +getSubscription(view) GetSubscriptionPresenter
-    +choosePlan(view) ChoosePlanPresenter
-    +addPaymentMethod(view) AddPaymentMethodPresenter
-    +updatePaymentMethod(view) UpdatePaymentMethodPresenter
-    +removePaymentMethod(view) RemovePaymentMethodPresenter
-    +setAutoDebit(view) SetAutoDebitPresenter
-    +cancelSubscription(view) CancelSubscriptionPresenter
-    +listPayments(view) ListPaymentsPresenter
-    +registerManualPayment(view) RegisterManualPaymentPresenter
   }
   class SubscriptionViewModel {
     +toDto(subscription, service)$ SubscriptionDetailDto
@@ -2741,7 +2710,6 @@ classDiagram
   }
   class UpdatePaymentMethodPresenter {
     <<Presenter>>
-    -service: SubscriptionService
     #execute(actor,methodId,data,) Promise~SubscriptionDetailDto~
   }
   class AuditTrail {
@@ -2783,16 +2751,11 @@ classDiagram
   class ValueObject {
     <<external>>
   }
-  AddPaymentMethodPresenter --> SubscriptionService
   BillingNotifier <|-- EmailBillingNotifier
-  CancelSubscriptionPresenter --> SubscriptionService
-  ChoosePlanPresenter --> SubscriptionService
   EmailBillingNotifier --> DateFormatter
   EmailBillingNotifier --> MailTransport
   Entity <|-- Payment
   Entity <|-- Subscription
-  GetSubscriptionPresenter --> SubscriptionService
-  ListPaymentsPresenter --> SubscriptionService
   MongoosePaymentRepository --> TransactionContext
   MongooseRepository <|-- MongoosePaymentRepository
   MongooseRepository <|-- MongooseSubscriptionRepository
@@ -2808,15 +2771,14 @@ classDiagram
   Presenter <|-- RemovePaymentMethodPresenter
   Presenter <|-- SetAutoDebitPresenter
   Presenter <|-- UpdatePaymentMethodPresenter
-  RegisterManualPaymentPresenter --> SubscriptionService
-  RemovePaymentMethodPresenter --> SubscriptionService
   Repository <|-- PaymentRepository
   Repository <|-- SubscriptionRepository
-  SetAutoDebitPresenter --> SubscriptionService
   SubscriptionAccess --> Clock
   SubscriptionAccess --> SubscriptionRepository
+  SubscriptionPresenters --> SubscriptionService
   SubscriptionRepository <|.. MongooseSubscriptionRepository
   SubscriptionRoutes --> AuthGuard
+  SubscriptionRoutes --> SubscriptionPresenters
   SubscriptionService --> AuditTrail
   SubscriptionService --> BillingNotifier
   SubscriptionService --> Clock
@@ -2827,14 +2789,13 @@ classDiagram
   SubscriptionService --> SubscriptionRepository
   SubscriptionService --> TransactionManager
   SubscriptionsModule --> SubscriptionAccess
-  UpdatePaymentMethodPresenter --> SubscriptionService
   ValueObject <|-- PaymentMethod
   ValueObject <|-- Plan
 ```
 
 ## API module: Virtual consultations (CU-15)
 
-20 classes.
+21 classes.
 
 ```mermaid
 classDiagram
@@ -2862,7 +2823,6 @@ classDiagram
   }
   class ListVirtualMeetingsPresenter {
     <<Presenter>>
-    -consultations: VirtualConsultationService
     #execute(actor,query,) Promise~VirtualMeetingPageDto~
   }
   class MeetingInvitations {
@@ -2898,8 +2858,13 @@ classDiagram
   }
   class StartVirtualMeetingPresenter {
     <<Presenter>>
-    -consultations: VirtualConsultationService
     #execute(actor,data) Promise~VirtualMeetingDto~
+  }
+  class VirtualConsultationPresenters {
+    <<Abstract Factory>>
+    -virtualConsultationService: VirtualConsultationService
+    +startVirtualMeeting(view)
+    +listVirtualMeetings(view)
   }
   class VirtualConsultationService {
     -meetings: VirtualMeetingRepository
@@ -2916,13 +2881,11 @@ classDiagram
     +forAppointment(professionalId, appointmentId) Promise~Page~VirtualMeeting~~
   }
   class VirtualConsultationsModule {
-    <<Composition Root, Abstract Factory>>
+    <<Composition Root>>
     +basePath
     -deps: VirtualConsultationsModuleDependencies
     +registerContracts(registry) void
     +createRouter() Router
-    +startVirtualMeeting(view) StartVirtualMeetingPresenter
-    +listVirtualMeetings(view) ListVirtualMeetingsPresenter
   }
   class VirtualMeeting {
     <<Aggregate Root>>
@@ -2950,7 +2913,7 @@ classDiagram
     +insertIfFirstForAppointment(meeting)* Promise~boolean~
   }
   class VirtualMeetingRoutes {
-    -presenters: VirtualConsultationPresenterFactory
+    -presenters: VirtualConsultationPresenters
     -guard: AuthGuard
     +build() Router
   }
@@ -2999,7 +2962,6 @@ classDiagram
   AppointmentDirectoryLookup --> AppointmentDirectory
   AppointmentLookup <|-- AppointmentDirectoryLookup
   Entity <|-- VirtualMeeting
-  ListVirtualMeetingsPresenter --> VirtualConsultationService
   MeetingInvitations <|-- NotificationMeetingInvitations
   MeetingLinkProvider <|-- GoogleMeetLinkProvider
   MeetingLinkProvider <|-- JitsiMeetingLinkProvider
@@ -3011,7 +2973,7 @@ classDiagram
   Presenter <|-- ListVirtualMeetingsPresenter
   Presenter <|-- StartVirtualMeetingPresenter
   Repository <|-- VirtualMeetingRepository
-  StartVirtualMeetingPresenter --> VirtualConsultationService
+  VirtualConsultationPresenters --> VirtualConsultationService
   VirtualConsultationService --> AppointmentLookup
   VirtualConsultationService --> AuditTrail
   VirtualConsultationService --> Clock
@@ -3023,11 +2985,12 @@ classDiagram
   VirtualConsultationService --> VirtualMeetingRepository
   VirtualMeetingRepository <|.. MongooseVirtualMeetingRepository
   VirtualMeetingRoutes --> AuthGuard
+  VirtualMeetingRoutes --> VirtualConsultationPresenters
 ```
 
 ## Web model and store
 
-28 classes.
+29 classes.
 
 ```mermaid
 classDiagram
@@ -3043,6 +3006,7 @@ classDiagram
   }
   class ApiErrorAdapter {
     <<Adapter>>
+    +messageOf(error, fallback)$ string
     +toUiError(error)$ UiError | null
   }
   class AppointmentForm {
@@ -3114,6 +3078,10 @@ classDiagram
     +compactMoney(amount, currency)$ string
     +isoDate(isoDate)$ string
     +money(amount, currency)$ string
+  }
+  class FormErrors {
+    <<Adapter>>
+    +apply(form, caught, fallback,fields=[])$ void
   }
   class HealthAdapter {
     <<Adapter>>
