@@ -152,9 +152,7 @@ export function useBookingRequestsViewModel(): BookingRequestsViewModel {
           historyList.refresh();
         }
       } catch (caught) {
-        setDecisionError(
-          ApiErrorAdapter.toUiError(caught)?.message ?? t('booking.requests.decisionFailed'),
-        );
+        setDecisionError(ApiErrorAdapter.messageOf(caught, t('booking.requests.decisionFailed')));
       }
     },
   };

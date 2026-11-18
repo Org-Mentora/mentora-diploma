@@ -523,6 +523,7 @@ export const es: Messages = {
       cancelFailed: 'No se pudo cancelar',
     },
     cards: {
+      defaultChanged: '{{label}} es ahora la tarjeta predeterminada',
       title: 'Medios de pago',
       description: 'Solo se guardan la marca, los últimos 4 dígitos y el vencimiento.',
       add: 'Agregar tarjeta',

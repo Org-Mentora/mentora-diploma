@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type UseFormReturn, useForm } from 'react-hook-form';
-import { ApiErrorAdapter } from '@/model/api/ApiErrorAdapter';
+import { FormErrors } from '@/model/api/FormErrors';
 import { useChangePasswordMutation } from '@/model/api/generated/mentoraApi';
 import {
   AuthForms,
@@ -44,10 +44,9 @@ export function useChangePasswordViewModel(): ChangePasswordViewModel {
         feedback.success(t('settings.password.changed'));
         form.reset(changePasswordDefaults);
       } catch (caught) {
-        const error = ApiErrorAdapter.toUiError(caught);
-        const field = error?.field === 'currentPassword' ? 'currentPassword' : 'newPassword';
-        form.setError(error?.field ? field : 'root', {
-          message: error?.message ?? t('settings.password.failed'),
+        FormErrors.apply(form, caught, {
+          fields: ['currentPassword', 'newPassword'],
+          fallback: t('settings.password.failed'),
         });
       }
     }),

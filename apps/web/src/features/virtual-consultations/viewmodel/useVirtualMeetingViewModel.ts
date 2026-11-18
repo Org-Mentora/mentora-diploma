@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
-import { ApiErrorAdapter } from '@/model/api/ApiErrorAdapter';
 import {
   useListVirtualMeetingsQuery,
   useStartVirtualMeetingMutation,
 } from '@/model/api/generated/mentoraApi';
+import { useAction } from '@/model/api/useAction';
 import {
   VirtualMeetingAdapter,
   type VirtualMeetingItem,
@@ -34,6 +34,7 @@ export function useVirtualMeetingViewModel({
 }: Options): VirtualMeetingViewModel {
   const { t } = useTranslation();
   const feedback = useUserFeedback();
+  const run = useAction();
   const browser = useBrowserActions();
   const { data } = useListVirtualMeetingsQuery(
     { appointmentId: appointmentId ?? '' },
@@ -51,13 +52,13 @@ export function useVirtualMeetingViewModel({
     started,
     isStarting: isLoading,
     start: async () => {
-      try {
-        const meeting = await startMeeting({
-          startVirtualMeetingRequestDto: { patientId, ...(appointmentId ? { appointmentId } : {}) },
-        }).unwrap();
+      const request = { patientId, ...(appointmentId ? { appointmentId } : {}) };
+      const meeting = await run(
+        () => startMeeting({ startVirtualMeetingRequestDto: request }).unwrap(),
+        { failure: t('meetings.createFailed') },
+      );
+      if (meeting) {
         setStarted(VirtualMeetingAdapter.toItem(meeting));
-      } catch (caught) {
-        feedback.error(ApiErrorAdapter.toUiError(caught)?.message ?? t('meetings.createFailed'));
       }
     },
     close: () => setStarted(null),

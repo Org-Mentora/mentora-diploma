@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
+import type { UiError } from '@/model/api/ApiErrorAdapter';
 import { useSearchPatientsQuery } from '@/model/api/generated/mentoraApi';
-import { usePagedQuery } from '@/model/api/usePagedQuery';
+import { usePagedList } from '@/model/api/usePagedList';
 import { PatientAdapter, type PatientListItem } from '@/model/domain/patients/PatientAdapter';
 import { useTranslation } from '@/shared/i18n';
 import { useDebouncedValue } from '@/shared/lib/useDebouncedValue';
@@ -30,22 +30,23 @@ export function usePatientListViewModel(): PatientListViewModel {
   const [isCreateOpen, setCreateOpen] = useState(false);
   const term = useDebouncedValue(query.trim());
   const navigate = useNavigate();
-  const list = usePagedQuery(useSearchPatientsQuery, term ? { q: term } : {}, {
-    keepPreviousItems: true,
-  });
-
-  const patients = useMemo(() => list.items.map(PatientAdapter.toListItem), [list.items]);
+  const list = usePagedList(
+    useSearchPatientsQuery,
+    term ? { q: term } : {},
+    (dtos) => dtos.map(PatientAdapter.toListItem),
+    { keepPreviousItems: true },
+  );
 
   return {
     query,
     setQuery,
-    patients,
+    patients: list.items,
     isLoading: list.isLoading,
     isSearching: list.isFetching && !list.isLoading && !list.isLoadingMore,
     hasMore: list.hasMore,
     isLoadingMore: list.isLoadingMore,
     loadMore: list.loadMore,
-    error: ApiErrorAdapter.toUiError(list.error),
+    error: list.error,
     emptyMessage: term ? t('patients.list.noMatch', { term }) : t('patients.list.empty'),
     isCreateOpen,
     setCreateOpen,

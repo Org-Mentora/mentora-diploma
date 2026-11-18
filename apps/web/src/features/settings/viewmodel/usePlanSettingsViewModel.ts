@@ -6,6 +6,7 @@ import {
   useGetSubscriptionQuery,
   useSetAutoDebitMutation,
 } from '@/model/api/generated/mentoraApi';
+import { useAction } from '@/model/api/useAction';
 import {
   type PlanOption,
   SubscriptionAdapter,
@@ -55,6 +56,7 @@ export interface PlanSettingsViewModel {
 export function usePlanSettingsViewModel(): PlanSettingsViewModel {
   const { t } = useTranslation();
   const feedback = useUserFeedback();
+  const run = useAction();
   const { data, isLoading, error } = useGetSubscriptionQuery();
   const [choosePlan, choosing] = useChoosePlanMutation();
   const [setAutoDebit, settingDebit] = useSetAutoDebitMutation();
@@ -93,7 +95,7 @@ export function usePlanSettingsViewModel(): PlanSettingsViewModel {
         if (uiError?.code === 'PAYMENT_METHOD_REQUIRED') {
           cards.openAdd(t('settings.plan.addCardForPlan'));
         } else {
-          feedback.error(uiError?.message ?? t('settings.plan.changeFailed'));
+          feedback.error(ApiErrorAdapter.messageOf(caught, t('settings.plan.changeFailed')));
         }
       } finally {
         setPendingPlan(null);
@@ -112,33 +114,26 @@ export function usePlanSettingsViewModel(): PlanSettingsViewModel {
       if (pendingAutoDebit === null) {
         return;
       }
-      try {
-        await setAutoDebit({ autoDebitRequestDto: { enabled: pendingAutoDebit } }).unwrap();
-        feedback.success(
-          pendingAutoDebit ? t('settings.plan.debitEnabled') : t('settings.plan.debitDisabled'),
-        );
-      } catch (caught) {
-        feedback.error(
-          ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.plan.debitFailed'),
-        );
-      } finally {
-        setPendingAutoDebit(null);
-      }
+      await run(
+        () => setAutoDebit({ autoDebitRequestDto: { enabled: pendingAutoDebit } }).unwrap(),
+        {
+          success: pendingAutoDebit
+            ? t('settings.plan.debitEnabled')
+            : t('settings.plan.debitDisabled'),
+          failure: t('settings.plan.debitFailed'),
+        },
+      );
+      setPendingAutoDebit(null);
     },
     isCancelling,
     requestCancel: () => setCancelling(true),
     abortCancel: () => setCancelling(false),
     confirmCancel: async () => {
-      try {
-        await cancel().unwrap();
-        feedback.success(t('settings.plan.cancelled'));
-      } catch (caught) {
-        feedback.error(
-          ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.plan.cancelFailed'),
-        );
-      } finally {
-        setCancelling(false);
-      }
+      await run(() => cancel().unwrap(), {
+        success: t('settings.plan.cancelled'),
+        failure: t('settings.plan.cancelFailed'),
+      });
+      setCancelling(false);
     },
     isSaving: choosing.isLoading || settingDebit.isLoading || cancelling.isLoading,
     cards,

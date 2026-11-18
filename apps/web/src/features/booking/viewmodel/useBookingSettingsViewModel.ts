@@ -7,6 +7,7 @@ import {
   useForm,
 } from 'react-hook-form';
 import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
+import { FormErrors } from '@/model/api/FormErrors';
 import {
   useGetBookingSettingsQuery,
   useUpdateBookingSettingsMutation,
@@ -90,9 +91,7 @@ export function useBookingSettingsViewModel(): BookingSettingsViewModel {
         form.reset(BookingSettingsForm.fromDto(saved));
         feedback.success(t('booking.settings.saved'));
       } catch (caught) {
-        form.setError('root', {
-          message: ApiErrorAdapter.toUiError(caught)?.message ?? t('booking.settings.failed'),
-        });
+        FormErrors.apply(form, caught, { fallback: t('booking.settings.failed') });
       }
     }),
     discard: () => {

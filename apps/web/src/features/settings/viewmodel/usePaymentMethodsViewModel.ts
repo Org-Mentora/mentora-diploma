@@ -7,6 +7,7 @@ import {
   useRemovePaymentMethodMutation,
   useUpdatePaymentMethodMutation,
 } from '@/model/api/generated/mentoraApi';
+import { useAction } from '@/model/api/useAction';
 import type { PaymentMethodItem } from '@/model/domain/subscriptions/SubscriptionAdapter';
 import {
   type CardFormValues,
@@ -53,6 +54,7 @@ const CARD_FIELDS = new Set(['holderName', 'cardNumber', 'cvc']);
 export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentMethodsViewModel {
   const { t } = useTranslation();
   const feedback = useUserFeedback();
+  const run = useAction();
   const [add, adding] = useAddPaymentMethodMutation();
   const [update, updating] = useUpdatePaymentMethodMutation();
   const [remove, removing] = useRemovePaymentMethodMutation();
@@ -125,22 +127,19 @@ export function usePaymentMethodsViewModel(items: PaymentMethodItem[]): PaymentM
         setEditing(null);
       } catch (caught) {
         editForm.setError('expiry', {
-          message: ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.cards.updateFailed'),
+          message: ApiErrorAdapter.messageOf(caught, t('settings.cards.updateFailed')),
         });
       }
     }),
     makeDefault: async (item) => {
-      try {
-        await update({
-          id: item.id,
-          updatePaymentMethodRequestDto: { makeDefault: true },
-        }).unwrap();
-        feedback.success(`${item.label} is now the default card`);
-      } catch (caught) {
-        feedback.error(
-          ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.cards.updateFailed'),
-        );
-      }
+      await run(
+        () =>
+          update({ id: item.id, updatePaymentMethodRequestDto: { makeDefault: true } }).unwrap(),
+        {
+          success: t('settings.cards.defaultChanged', { label: item.label }),
+          failure: t('settings.cards.updateFailed'),
+        },
+      );
     },
     removal,
     requestRemove: (item) => setRemoval({ item, warning: null }),

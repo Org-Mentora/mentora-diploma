@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useState } from 'react';
 import { type UseFormReturn, useForm } from 'react-hook-form';
 import { ApiErrorAdapter } from '@/model/api/ApiErrorAdapter';
+import { FormErrors } from '@/model/api/FormErrors';
 import {
   useGetCurrentProfessionalQuery,
   useGetLogoQuery,
@@ -38,8 +39,6 @@ export interface ProfileSettingsViewModel {
   removeLogo: () => Promise<void>;
 }
 
-const FIELDS = new Set<keyof ProfileFormValues>(['email', 'licenseNumber', 'offices']);
-
 // ViewModel
 export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
   const { t } = useTranslation();
@@ -69,10 +68,9 @@ export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
         await update({ updateProfileRequestDto: AuthForms.toProfileRequest(values) }).unwrap();
         feedback.success(t('settings.profile.updated'));
       } catch (caught) {
-        const error = ApiErrorAdapter.toUiError(caught);
-        const field = error?.field as keyof ProfileFormValues | undefined;
-        form.setError(field && FIELDS.has(field) ? field : 'root', {
-          message: error?.message ?? t('settings.profile.failed'),
+        FormErrors.apply(form, caught, {
+          fields: ['email', 'licenseNumber', 'offices'],
+          fallback: t('settings.profile.failed'),
         });
       }
     }),
@@ -98,9 +96,7 @@ export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
         await upload({ uploadLogoRequestDto: { dataUrl: await readFileAsDataUrl(file) } }).unwrap();
         feedback.success(t('settings.profile.logoUpdated'));
       } catch (caught) {
-        setLogoError(
-          ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.profile.logoFailed'),
-        );
+        setLogoError(ApiErrorAdapter.messageOf(caught, t('settings.profile.logoFailed')));
       }
     },
     removeLogo: async () => {
@@ -109,9 +105,7 @@ export function useProfileSettingsViewModel(): ProfileSettingsViewModel {
         await remove().unwrap();
         feedback.success(t('settings.profile.logoRemoved'));
       } catch (caught) {
-        setLogoError(
-          ApiErrorAdapter.toUiError(caught)?.message ?? t('settings.profile.logoRemoveFailed'),
-        );
+        setLogoError(ApiErrorAdapter.messageOf(caught, t('settings.profile.logoRemoveFailed')));
       }
     },
   };

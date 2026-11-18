@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
 import { type UseFormReturn, useForm } from 'react-hook-form';
 import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
+import { FormErrors } from '@/model/api/FormErrors';
 import {
   useGetConsultationFeesQuery,
   useUpdateConsultationFeesMutation,
@@ -69,9 +70,7 @@ export function useFeesViewModel(): FeesViewModel {
         form.reset(FeesForm.fromDto(saved));
         feedback.success(t('fees.saved'));
       } catch (caught) {
-        form.setError('root', {
-          message: ApiErrorAdapter.toUiError(caught)?.message ?? t('fees.failed'),
-        });
+        FormErrors.apply(form, caught, { fallback: t('fees.failed') });
       }
     }),
     discard: () => form.reset(data ? FeesForm.fromDto(data) : EMPTY),

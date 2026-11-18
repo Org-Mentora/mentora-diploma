@@ -522,6 +522,7 @@ export const en = {
       cancelFailed: 'Could not cancel',
     },
     cards: {
+      defaultChanged: '{{label}} is now the default card',
       title: 'Payment methods',
       description: 'Only the brand, the last 4 digits and the expiry are stored.',
       add: 'Add card',

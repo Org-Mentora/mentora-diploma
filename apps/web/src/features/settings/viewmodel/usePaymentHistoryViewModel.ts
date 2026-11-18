@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { type UseFormReturn, useForm } from 'react-hook-form';
-import { ApiErrorAdapter } from '@/model/api/ApiErrorAdapter';
+import { FormErrors } from '@/model/api/FormErrors';
 import {
   useListPaymentsQuery,
   useRegisterManualPaymentMutation,
 } from '@/model/api/generated/mentoraApi';
-import { usePagedQuery } from '@/model/api/usePagedQuery';
+import { type UiPagedList, usePagedList } from '@/model/api/usePagedList';
 import {
   type PaymentItem,
   SubscriptionAdapter,
@@ -22,12 +22,11 @@ import { useTranslation } from '@/shared/i18n';
 
 export type { ManualPaymentFormValues, PaymentItem };
 
-export interface PaymentHistoryViewModel {
-  items: PaymentItem[];
-  isLoading: boolean;
-  hasMore: boolean;
-  isLoadingMore: boolean;
-  loadMore: () => void;
+export interface PaymentHistoryViewModel
+  extends Pick<
+    UiPagedList<PaymentItem>,
+    'items' | 'isLoading' | 'hasMore' | 'isLoadingMore' | 'loadMore'
+  > {
   isManualOpen: boolean;
   manualForm: UseFormReturn<ManualPaymentFormValues>;
   methodOptions: { value: string; label: string }[];
@@ -43,23 +42,22 @@ function today(): string {
   return new Date(now.getTime() - offset).toISOString().slice(0, 10);
 }
 
-const FIELDS = new Set<keyof ManualPaymentFormValues>(['amount', 'paidAt']);
-
 // ViewModel
 export function usePaymentHistoryViewModel(planPrice: number | null): PaymentHistoryViewModel {
   const { t } = useTranslation();
   const feedback = useUserFeedback();
-  const list = usePagedQuery(useListPaymentsQuery, {});
+  const list = usePagedList(useListPaymentsQuery, {}, (dtos) =>
+    dtos.map(SubscriptionAdapter.toPayment),
+  );
   const [register, registering] = useRegisterManualPaymentMutation();
   const [isManualOpen, setManualOpen] = useState(false);
   const manualForm = useForm<ManualPaymentFormValues>({
     resolver: zodResolver(manualPaymentFormSchema),
     defaultValues: SubscriptionForms.manualDefaults(planPrice, today()),
   });
-  const items = useMemo(() => list.items.map(SubscriptionAdapter.toPayment), [list.items]);
 
   return {
-    items,
+    items: list.items,
     isLoading: list.isLoading,
     hasMore: list.hasMore,
     isLoadingMore: list.isLoadingMore,
@@ -85,10 +83,9 @@ export function usePaymentHistoryViewModel(planPrice: number | null): PaymentHis
         list.refresh();
         setManualOpen(false);
       } catch (caught) {
-        const error = ApiErrorAdapter.toUiError(caught);
-        const field = error?.field as keyof ManualPaymentFormValues | undefined;
-        manualForm.setError(field && FIELDS.has(field) ? field : 'root', {
-          message: error?.message ?? t('settings.payments.failed'),
+        FormErrors.apply(manualForm, caught, {
+          fields: ['amount', 'paidAt'],
+          fallback: t('settings.payments.failed'),
         });
       }
     }),

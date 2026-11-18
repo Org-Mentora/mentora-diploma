@@ -1,23 +1,15 @@
-import { useMemo, useState } from 'react';
-import { ApiErrorAdapter, type UiError } from '@/model/api/ApiErrorAdapter';
+import { useState } from 'react';
 import { useListAuditEventsQuery } from '@/model/api/generated/mentoraApi';
-import { usePagedQuery } from '@/model/api/usePagedQuery';
+import { type UiPagedList, usePagedList } from '@/model/api/usePagedList';
 import { AUDIT_CATEGORIES, AuditAdapter, type AuditItem } from '@/model/domain/audit/AuditAdapter';
 import { useTranslation } from '@/shared/i18n';
 
 export type { AuditItem };
 
-export interface ActivityViewModel {
-  items: AuditItem[];
+export interface ActivityViewModel extends UiPagedList<AuditItem> {
   categories: { value: string; label: string }[];
   category: string;
   setCategory: (category: string) => void;
-  isLoading: boolean;
-  isLoadingMore: boolean;
-  hasMore: boolean;
-  loadMore: () => void;
-  refresh: () => void;
-  error: UiError | null;
 }
 
 const PAGE_SIZE = 20;
@@ -26,25 +18,19 @@ const PAGE_SIZE = 20;
 export function useActivityViewModel(): ActivityViewModel {
   const { t } = useTranslation();
   const [category, setCategory] = useState('');
-  const list = usePagedQuery(
+  const list = usePagedList(
     useListAuditEventsQuery,
     category ? { limit: PAGE_SIZE, category } : { limit: PAGE_SIZE },
+    (dtos) => dtos.map(AuditAdapter.toItem),
   );
-  const items = useMemo(() => list.items.map(AuditAdapter.toItem), [list.items]);
 
   return {
-    items,
+    ...list,
     categories: [
       { value: '', label: t('audit.allCategories') },
       ...AUDIT_CATEGORIES.map((value) => ({ value, label: AuditAdapter.categoryLabel(value) })),
     ],
     category,
     setCategory,
-    isLoading: list.isLoading,
-    isLoadingMore: list.isLoadingMore,
-    hasMore: list.hasMore,
-    loadMore: list.loadMore,
-    refresh: list.refresh,
-    error: ApiErrorAdapter.toUiError(list.error),
   };
 }

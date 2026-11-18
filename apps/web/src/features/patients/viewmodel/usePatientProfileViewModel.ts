@@ -5,12 +5,12 @@ import {
   useChangePatientStatusMutation,
   useGetPatientQuery,
 } from '@/model/api/generated/mentoraApi';
+import { useAction } from '@/model/api/useAction';
 import {
   PatientAdapter,
   type PatientProfile,
   type PatientStatus,
 } from '@/model/domain/patients/PatientAdapter';
-import { useUserFeedback } from '@/model/platform/Platform';
 import { translate as t } from '@/shared/i18n';
 
 type ManualStatus = Exclude<PatientStatus, 'inactive'>;
@@ -52,7 +52,7 @@ function actionFor(status: PatientStatus, fullName: string): StatusAction {
 
 // ViewModel
 export function usePatientProfileViewModel(): PatientProfileViewModel {
-  const feedback = useUserFeedback();
+  const run = useAction();
   const { patientId = '' } = useParams();
   const { data, isLoading, error } = useGetPatientQuery({ id: patientId });
   const [changeStatus, { isLoading: isChangingStatus }] = useChangePatientStatusMutation();
@@ -78,19 +78,16 @@ export function usePatientProfileViewModel(): PatientProfileViewModel {
       if (!pendingStatus) {
         return;
       }
-      try {
-        const updated = await changeStatus({
-          id: patientId,
-          changePatientStatusRequestDto: { status: pendingStatus.status },
-        }).unwrap();
-        feedback.success(
-          t('patients.statusChanged', { status: PatientAdapter.statusLabel(updated.status) }),
-        );
-      } catch (caught) {
-        feedback.error(ApiErrorAdapter.toUiError(caught)?.message ?? t('patients.statusFailed'));
-      } finally {
-        setPendingStatus(null);
-      }
+      const request = { status: pendingStatus.status };
+      await run(
+        () => changeStatus({ id: patientId, changePatientStatusRequestDto: request }).unwrap(),
+        {
+          success: (updated) =>
+            t('patients.statusChanged', { status: PatientAdapter.statusLabel(updated.status) }),
+          failure: t('patients.statusFailed'),
+        },
+      );
+      setPendingStatus(null);
     },
   };
 }

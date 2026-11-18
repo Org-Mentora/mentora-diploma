@@ -1,6 +1,5 @@
-import { useMemo } from 'react';
 import { useListNotificationsQuery } from '@/model/api/generated/mentoraApi';
-import { usePagedQuery } from '@/model/api/usePagedQuery';
+import { type UiPagedList, usePagedList } from '@/model/api/usePagedList';
 import {
   NotificationAdapter,
   type NotificationItem,
@@ -8,23 +7,14 @@ import {
 
 export type { NotificationItem };
 
-export interface NotificationsViewModel {
-  items: NotificationItem[];
-  isLoading: boolean;
-  hasMore: boolean;
-  isLoadingMore: boolean;
-  loadMore: () => void;
-}
+export type NotificationsViewModel = UiPagedList<NotificationItem>;
 
 // ViewModel
 export function useNotificationsViewModel(patientId: string): NotificationsViewModel {
-  const list = usePagedQuery(useListNotificationsQuery, { patientId }, { pollingInterval: 60_000 });
-  const items = useMemo(() => list.items.map(NotificationAdapter.toItem), [list.items]);
-  return {
-    items,
-    isLoading: list.isLoading,
-    hasMore: list.hasMore,
-    isLoadingMore: list.isLoadingMore,
-    loadMore: list.loadMore,
-  };
+  return usePagedList(
+    useListNotificationsQuery,
+    { patientId },
+    (dtos) => dtos.map(NotificationAdapter.toItem),
+    { pollingInterval: 60_000 },
+  );
 }
