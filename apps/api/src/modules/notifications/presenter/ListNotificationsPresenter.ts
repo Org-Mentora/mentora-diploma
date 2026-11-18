@@ -1,10 +1,11 @@
+import { CursorCodec, type PageInput } from '#core/presenter/CursorCodec';
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
 import type { View } from '#core/view/View';
-import type { NotificationDto } from '../contracts/notifications.contracts';
+import type { NotificationPageDto } from '../contracts/notifications.contracts';
 import type { NotificationCenter } from '../model/NotificationCenter';
 
-export interface ListNotificationsInput {
+export interface ListNotificationsInput extends PageInput {
   actor: AuthenticatedActor;
   patientId: string;
 }
@@ -12,21 +13,22 @@ export interface ListNotificationsInput {
 // Presenter
 export class ListNotificationsPresenter extends Presenter<
   ListNotificationsInput,
-  NotificationDto[]
+  NotificationPageDto
 > {
   constructor(
-    view: View<NotificationDto[]>,
+    view: View<NotificationPageDto>,
     private readonly center: NotificationCenter,
   ) {
     super(view);
   }
 
-  protected async execute({
-    actor,
-    patientId,
-  }: ListNotificationsInput): Promise<NotificationDto[]> {
-    const notifications = await this.center.history(actor.professionalId, patientId);
-    return notifications.map((n) => ({
+  protected async execute(input: ListNotificationsInput): Promise<NotificationPageDto> {
+    const page = await this.center.history(
+      input.actor.professionalId,
+      input.patientId,
+      CursorCodec.request(input),
+    );
+    return CursorCodec.toDto(page, (n) => ({
       id: n.id,
       patientId: n.patientId,
       channel: n.channel,

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 
 export const NotificationSchema = z
@@ -22,9 +23,12 @@ export const NotificationSchema = z
   })
   .meta({ id: 'NotificationDto' });
 
-export const ListNotificationsQuerySchema = z.object({ patientId: z.uuid() });
+export const NotificationPageSchema = pageOf(NotificationSchema, 'NotificationPageDto');
+
+export const ListNotificationsQuerySchema = PageQuerySchema.extend({ patientId: z.uuid() });
 
 export type NotificationDto = z.infer<typeof NotificationSchema>;
+export type NotificationPageDto = z.infer<typeof NotificationPageSchema>;
 
 export function registerNotificationContracts(registry: ContractRegistry): void {
   registry.registerRoute({
@@ -36,7 +40,7 @@ export function registerNotificationContracts(registry: ContractRegistry): void 
     auth: true,
     request: { query: ListNotificationsQuerySchema },
     responses: {
-      200: { description: 'Newest first', schema: z.array(NotificationSchema) },
+      200: { description: 'Newest first', schema: NotificationPageSchema },
     },
   });
 }

@@ -1,9 +1,10 @@
+import { CursorCodec } from '#core/presenter/CursorCodec';
 import { Presenter } from '#core/presenter/Presenter';
 import type { AuthenticatedActor } from '#core/security/AuthenticatedActor';
 import type { View } from '#core/view/View';
 import type {
   ListVirtualMeetingsQueryDto,
-  VirtualMeetingDto,
+  VirtualMeetingPageDto,
 } from '../contracts/virtual-consultations.contracts';
 import type { VirtualConsultationService } from '../model/VirtualConsultationService';
 import { VirtualMeetingViewModel } from './VirtualMeetingViewModel';
@@ -16,10 +17,10 @@ export interface ListVirtualMeetingsInput {
 // Presenter
 export class ListVirtualMeetingsPresenter extends Presenter<
   ListVirtualMeetingsInput,
-  VirtualMeetingDto[]
+  VirtualMeetingPageDto
 > {
   constructor(
-    view: View<VirtualMeetingDto[]>,
+    view: View<VirtualMeetingPageDto>,
     private readonly consultations: VirtualConsultationService,
   ) {
     super(view);
@@ -28,10 +29,14 @@ export class ListVirtualMeetingsPresenter extends Presenter<
   protected async execute({
     actor,
     query,
-  }: ListVirtualMeetingsInput): Promise<VirtualMeetingDto[]> {
-    const meetings = query.appointmentId
+  }: ListVirtualMeetingsInput): Promise<VirtualMeetingPageDto> {
+    const page = query.appointmentId
       ? await this.consultations.forAppointment(actor.professionalId, query.appointmentId)
-      : await this.consultations.history(actor.professionalId, query.patientId ?? '');
-    return meetings.map(VirtualMeetingViewModel.toDto);
+      : await this.consultations.history(
+          actor.professionalId,
+          query.patientId ?? '',
+          CursorCodec.request(query),
+        );
+    return CursorCodec.toDto(page, VirtualMeetingViewModel.toDto);
   }
 }

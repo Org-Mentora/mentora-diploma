@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
+import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 
 export const VirtualMeetingSchema = z
@@ -26,16 +27,17 @@ export const StartVirtualMeetingRequestSchema = z
   })
   .meta({ id: 'StartVirtualMeetingRequestDto' });
 
-export const ListVirtualMeetingsQuerySchema = z
-  .object({
-    patientId: z.uuid().optional(),
-    appointmentId: z.uuid().optional(),
-  })
-  .refine((query) => Boolean(query.patientId ?? query.appointmentId), {
-    message: 'patientId or appointmentId is required',
-  });
+export const VirtualMeetingPageSchema = pageOf(VirtualMeetingSchema, 'VirtualMeetingPageDto');
+
+export const ListVirtualMeetingsQuerySchema = PageQuerySchema.extend({
+  patientId: z.uuid().optional(),
+  appointmentId: z.uuid().optional(),
+}).refine((query) => Boolean(query.patientId ?? query.appointmentId), {
+  message: 'patientId or appointmentId is required',
+});
 
 export type VirtualMeetingDto = z.infer<typeof VirtualMeetingSchema>;
+export type VirtualMeetingPageDto = z.infer<typeof VirtualMeetingPageSchema>;
 export type StartVirtualMeetingRequestDto = z.infer<typeof StartVirtualMeetingRequestSchema>;
 export type ListVirtualMeetingsQueryDto = z.infer<typeof ListVirtualMeetingsQuerySchema>;
 
@@ -67,13 +69,13 @@ export function registerVirtualConsultationContracts(registry: ContractRegistry)
     tags,
     auth: true,
     request: {
-      query: z.object({
+      query: PageQuerySchema.extend({
         patientId: z.uuid().optional(),
         appointmentId: z.uuid().optional(),
       }),
     },
     responses: {
-      200: { description: 'Newest first', schema: z.array(VirtualMeetingSchema) },
+      200: { description: 'Newest first', schema: VirtualMeetingPageSchema },
       400: { description: 'Missing filter', schema: ErrorResponseSchema },
     },
   });

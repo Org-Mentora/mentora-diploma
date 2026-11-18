@@ -6,7 +6,7 @@ import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import { ExpressResponderAdapter } from '#infrastructure/http/ExpressResponderAdapter';
 import {
   ListNotificationsQuerySchema,
-  type NotificationDto,
+  type NotificationPageDto,
 } from '../contracts/notifications.contracts';
 import type { NotificationPresenterFactory } from '../presenter/NotificationPresenterFactory';
 
@@ -21,11 +21,11 @@ export class NotificationRoutes {
     router.use(this.guard.requireActiveSubscription);
 
     router.get('/', async (req, res) => {
-      const view = new JsonHttpView<NotificationDto[]>(new ExpressResponderAdapter(res));
-      const { patientId } = InputParser.parse(ListNotificationsQuerySchema, req.query);
+      const view = new JsonHttpView<NotificationPageDto>(new ExpressResponderAdapter(res));
+      const query = InputParser.parse(ListNotificationsQuerySchema, req.query);
       await this.presenters
         .listNotifications(view)
-        .present({ actor: ActorReader.from(res), patientId });
+        .present({ actor: ActorReader.from(res), ...query });
     });
 
     return router;

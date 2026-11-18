@@ -14,6 +14,7 @@ import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { MailTransport } from '#infrastructure/mail/MailTransport';
 import {
   type PaymentDto,
+  type PaymentPageDto,
   registerSubscriptionContracts,
   type SubscriptionDetailDto,
 } from './contracts/subscriptions.contracts';
@@ -136,7 +137,7 @@ export class SubscriptionsModule implements AppModule, SubscriptionPresenterFact
     return new CancelSubscriptionPresenter(view, this.#service);
   }
 
-  listPayments(view: View<PaymentDto[]>): ListPaymentsPresenter {
+  listPayments(view: View<PaymentPageDto>): ListPaymentsPresenter {
     return new ListPaymentsPresenter(view, this.#service);
   }
 

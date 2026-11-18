@@ -8,6 +8,7 @@ import {
   ListVirtualMeetingsQuerySchema,
   StartVirtualMeetingRequestSchema,
   type VirtualMeetingDto,
+  type VirtualMeetingPageDto,
 } from '../contracts/virtual-consultations.contracts';
 import type { VirtualConsultationPresenterFactory } from '../presenter/VirtualConsultationPresenterFactory';
 
@@ -30,7 +31,7 @@ export class VirtualMeetingRoutes {
     });
 
     router.get('/', async (req, res) => {
-      const view = new JsonHttpView<VirtualMeetingDto[]>(new ExpressResponderAdapter(res));
+      const view = new JsonHttpView<VirtualMeetingPageDto>(new ExpressResponderAdapter(res));
       const query = InputParser.parse(ListVirtualMeetingsQuerySchema, req.query);
       await this.presenters
         .listVirtualMeetings(view)

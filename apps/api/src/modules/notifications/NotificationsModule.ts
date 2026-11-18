@@ -8,7 +8,7 @@ import type { TransactionContext } from '#infrastructure/database/TransactionCon
 import type { AuthGuard } from '#infrastructure/http/AuthGuard';
 import type { MailTransport } from '#infrastructure/mail/MailTransport';
 import {
-  type NotificationDto,
+  type NotificationPageDto,
   registerNotificationContracts,
 } from './contracts/notifications.contracts';
 import { MailEmailGateway } from './infrastructure/MailEmailGateway';
@@ -53,7 +53,7 @@ export class NotificationsModule implements AppModule, NotificationPresenterFact
     return new NotificationRoutes(this, this.deps.guard).build();
   }
 
-  listNotifications(view: View<NotificationDto[]>): ListNotificationsPresenter {
+  listNotifications(view: View<NotificationPageDto>): ListNotificationsPresenter {
     return new ListNotificationsPresenter(view, this.center);
   }
 }

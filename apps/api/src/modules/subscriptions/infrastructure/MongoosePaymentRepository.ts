@@ -1,9 +1,16 @@
+import type { Page, PageRequest } from '#core/model/Pagination';
+import { Keyset } from '#infrastructure/database/Keyset';
 import { MongooseRepository } from '#infrastructure/database/MongooseRepository';
 import type { TransactionContext } from '#infrastructure/database/TransactionContext';
 import type { Payment } from '../model/Payment';
 import type { PaymentRepository } from '../model/PaymentRepository';
 import { PaymentMapper } from './PaymentMapper';
 import { type PaymentDocument, PaymentModel } from './PaymentSchema';
+
+const NEWEST_FIRST = new Keyset([
+  { path: 'createdAt', direction: -1, type: 'date' },
+  { path: '_id', direction: -1 },
+]);
 
 // Repository, Adapter
 export class MongoosePaymentRepository
@@ -14,14 +21,14 @@ export class MongoosePaymentRepository
     super(PaymentModel, new PaymentMapper(), context);
   }
 
-  async findByProfessional(professionalId: string, limit: number): Promise<Payment[]> {
+  async findByProfessional(professionalId: string, page: PageRequest): Promise<Page<Payment>> {
     const records = await this.model
-      .find({ professionalId })
-      .sort({ createdAt: -1 })
-      .limit(limit)
+      .find(NEWEST_FIRST.where({ professionalId }, page.after))
+      .sort(NEWEST_FIRST.sort())
+      .limit(page.limit + 1)
       .session(this.session)
       .lean<PaymentDocument[]>();
-    return records.map((record) => this.mapper.toDomain(record));
+    return NEWEST_FIRST.page(records, page, (record) => this.mapper.toDomain(record));
   }
 
   countByProfessional(professionalId: string): Promise<number> {

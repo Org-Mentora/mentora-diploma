@@ -1,9 +1,14 @@
+import type { Page, PageRequest } from '#core/model/Pagination';
 import { Repository } from '#core/model/Repository';
 import type { MeetingProvider, VirtualMeeting } from './VirtualMeeting';
 
 // Repository
 export abstract class VirtualMeetingRepository extends Repository<VirtualMeeting> {
-  abstract findByPatient(professionalId: string, patientId: string): Promise<VirtualMeeting[]>;
+  abstract findByPatient(
+    professionalId: string,
+    patientId: string,
+    page: PageRequest,
+  ): Promise<Page<VirtualMeeting>>;
   abstract findByAppointment(
     professionalId: string,
     appointmentId: string,

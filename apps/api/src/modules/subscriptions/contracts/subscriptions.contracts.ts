@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { ErrorResponseSchema } from '#core/contracts/ErrorResponse';
 import { nullableRef } from '#core/contracts/nullableRef';
+import { PageQuerySchema, pageOf } from '#core/contracts/Pagination';
 import type { ContractRegistry } from '#core/module/ContractRegistry';
 
 export const SubscriptionStatusSchema = z.enum([
@@ -67,6 +68,8 @@ export const PaymentSchema = z
   })
   .meta({ id: 'PaymentDto' });
 
+export const PaymentPageSchema = pageOf(PaymentSchema, 'PaymentPageDto');
+
 export const ChoosePlanRequestSchema = z
   .object({ planId: PlanIdSchema })
   .meta({ id: 'ChoosePlanRequestDto' });
@@ -116,6 +119,7 @@ export type PlanDto = z.infer<typeof PlanSchema>;
 export type PaymentMethodDto = z.infer<typeof PaymentMethodSchema>;
 export type SubscriptionDetailDto = z.infer<typeof SubscriptionSchema>;
 export type PaymentDto = z.infer<typeof PaymentSchema>;
+export type PaymentPageDto = z.infer<typeof PaymentPageSchema>;
 export type ChoosePlanRequestDto = z.infer<typeof ChoosePlanRequestSchema>;
 export type AddPaymentMethodRequestDto = z.infer<typeof AddPaymentMethodRequestSchema>;
 export type UpdatePaymentMethodRequestDto = z.infer<typeof UpdatePaymentMethodRequestSchema>;
@@ -212,10 +216,11 @@ export function registerSubscriptionContracts(registry: ContractRegistry): void 
     method: 'get',
     path: '/subscription/payments',
     operationId: 'listPayments',
-    summary: 'CU-18 Payment history, latest 100, newest first',
+    summary: 'CU-18 Payment history, newest first',
     tags: ['Subscription'],
     auth: true,
-    responses: { 200: { description: 'Payments', schema: z.array(PaymentSchema) } },
+    request: { query: PageQuerySchema },
+    responses: { 200: { description: 'Payments', schema: PaymentPageSchema } },
   });
   registry.registerRoute({
     method: 'post',

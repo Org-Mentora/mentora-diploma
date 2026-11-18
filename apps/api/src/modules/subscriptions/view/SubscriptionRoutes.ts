@@ -1,4 +1,5 @@
 import { type Response, Router } from 'express';
+import { PageQuerySchema } from '#core/contracts/Pagination';
 import { InputParser } from '#core/view/InputParser';
 import { JsonHttpView } from '#core/view/JsonHttpView';
 import { ActorReader } from '#infrastructure/http/ActorReader';
@@ -11,6 +12,7 @@ import {
   ManualPaymentRequestSchema,
   type PaymentDto,
   PaymentMethodIdParamsSchema,
+  type PaymentPageDto,
   RemovePaymentMethodQuerySchema,
   type SubscriptionDetailDto,
   UpdatePaymentMethodRequestSchema,
@@ -74,9 +76,10 @@ export class SubscriptionRoutes {
       await this.presenters.cancelSubscription(detailView(res)).present(ActorReader.from(res));
     });
 
-    router.get('/payments', async (_req, res) => {
-      const view = new JsonHttpView<PaymentDto[]>(new ExpressResponderAdapter(res));
-      await this.presenters.listPayments(view).present(ActorReader.from(res));
+    router.get('/payments', async (req, res) => {
+      const view = new JsonHttpView<PaymentPageDto>(new ExpressResponderAdapter(res));
+      const page = InputParser.parse(PageQuerySchema, req.query);
+      await this.presenters.listPayments(view).present({ actor: ActorReader.from(res), ...page });
     });
 
     router.post('/payments', async (req, res) => {

@@ -1,5 +1,6 @@
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
+import type { Page, PageRequest } from '#core/model/Pagination';
 import type { EmailGateway } from './EmailGateway';
 import {
   Notification,
@@ -77,8 +78,12 @@ export class NotificationCenter {
     });
   }
 
-  history(professionalId: string, patientId: string): Promise<Notification[]> {
-    return this.notifications.findByPatient(professionalId, patientId);
+  history(
+    professionalId: string,
+    patientId: string,
+    page: PageRequest,
+  ): Promise<Page<Notification>> {
+    return this.notifications.findByPatient(professionalId, patientId, page);
   }
 
   private async viaWhatsApp(phone: string, message: PatientMessage): Promise<Attempt> {

@@ -7,6 +7,7 @@ import {
 import type { AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
+import type { Page, PageRequest } from '#core/model/Pagination';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import {
   type AppointmentInfo,
@@ -118,13 +119,20 @@ export class VirtualConsultationService {
     return meeting;
   }
 
-  async history(professionalId: string, patientId: string): Promise<VirtualMeeting[]> {
-    return this.meetings.findByPatient(professionalId, patientId);
+  async history(
+    professionalId: string,
+    patientId: string,
+    page: PageRequest,
+  ): Promise<Page<VirtualMeeting>> {
+    return this.meetings.findByPatient(professionalId, patientId, page);
   }
 
-  async forAppointment(professionalId: string, appointmentId: string): Promise<VirtualMeeting[]> {
+  async forAppointment(
+    professionalId: string,
+    appointmentId: string,
+  ): Promise<Page<VirtualMeeting>> {
     const meeting = await this.meetings.findByAppointment(professionalId, appointmentId);
-    return meeting ? [meeting] : [];
+    return { items: meeting ? [meeting] : [], next: null };
   }
 
   private async virtualAppointment(

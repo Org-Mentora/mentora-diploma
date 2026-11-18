@@ -8,6 +8,7 @@ import {
 import type { AuditDetailValue, AuditTrail } from '#core/model/AuditTrail';
 import type { Clock } from '#core/model/Clock';
 import type { IdGenerator } from '#core/model/IdGenerator';
+import type { Page, PageRequest } from '#core/model/Pagination';
 import type { TransactionManager } from '#core/model/TransactionManager';
 import type { BillingEvent, BillingNotifier } from './BillingNotifier';
 import { type ManualPaymentMethod, Payment, type PaymentKind } from './Payment';
@@ -39,7 +40,6 @@ interface PendingCharge {
 }
 
 const RENEWAL_BATCH = 100;
-const PAYMENT_HISTORY_LIMIT = 100;
 
 export interface RenewalReport {
   processed: number;
@@ -247,8 +247,8 @@ export class SubscriptionService {
     });
   }
 
-  listPayments(professionalId: string): Promise<Payment[]> {
-    return this.payments.findByProfessional(professionalId, PAYMENT_HISTORY_LIMIT);
+  listPayments(professionalId: string, page: PageRequest): Promise<Page<Payment>> {
+    return this.payments.findByProfessional(professionalId, page);
   }
 
   async processDueRenewals(): Promise<RenewalReport> {

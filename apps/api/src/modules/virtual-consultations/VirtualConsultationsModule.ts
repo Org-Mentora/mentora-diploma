@@ -14,6 +14,7 @@ import type { PatientDirectory } from '#modules/patients';
 import {
   registerVirtualConsultationContracts,
   type VirtualMeetingDto,
+  type VirtualMeetingPageDto,
 } from './contracts/virtual-consultations.contracts';
 import {
   AppointmentDirectoryLookup,
@@ -73,7 +74,7 @@ export class VirtualConsultationsModule implements AppModule, VirtualConsultatio
     return new StartVirtualMeetingPresenter(view, this.#service);
   }
 
-  listVirtualMeetings(view: View<VirtualMeetingDto[]>): ListVirtualMeetingsPresenter {
+  listVirtualMeetings(view: View<VirtualMeetingPageDto>): ListVirtualMeetingsPresenter {
     return new ListVirtualMeetingsPresenter(view, this.#service);
   }
 }

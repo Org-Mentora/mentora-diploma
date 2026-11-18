@@ -1,5 +1,9 @@
 import type { View } from '#core/view/View';
-import type { PaymentDto, SubscriptionDetailDto } from '../contracts/subscriptions.contracts';
+import type {
+  PaymentDto,
+  PaymentPageDto,
+  SubscriptionDetailDto,
+} from '../contracts/subscriptions.contracts';
 import type { AddPaymentMethodPresenter } from './AddPaymentMethodPresenter';
 import type { CancelSubscriptionPresenter } from './CancelSubscriptionPresenter';
 import type { ChoosePlanPresenter } from './ChoosePlanPresenter';
@@ -19,6 +23,6 @@ export interface SubscriptionPresenterFactory {
   removePaymentMethod(view: View<SubscriptionDetailDto>): RemovePaymentMethodPresenter;
   setAutoDebit(view: View<SubscriptionDetailDto>): SetAutoDebitPresenter;
   cancelSubscription(view: View<SubscriptionDetailDto>): CancelSubscriptionPresenter;
-  listPayments(view: View<PaymentDto[]>): ListPaymentsPresenter;
+  listPayments(view: View<PaymentPageDto>): ListPaymentsPresenter;
   registerManualPayment(view: View<PaymentDto>): RegisterManualPaymentPresenter;
 }
