@@ -208,8 +208,8 @@ importers:
         specifier: 9.11.4
         version: 9.11.4
       nodemailer:
-        specifier: 10.2.1
-        version: 10.2.1
+        specifier: 10.6.1
+        version: 10.6.1
       pino:
         specifier: 10.4.0
         version: 10.4.0
@@ -3316,8 +3316,8 @@ packages:
   node-readfiles@0.2.0:
     resolution: {integrity: sha512-SU00ZarexNlE4Rjdm83vglt5Y9yiQ+XI1XpflWlb7q7UTN1JUItm69xMeiQCTxtTfnzt+83T8Cx+vI2ED++VDA==}
 
-  nodemailer@10.2.1:
-    resolution: {integrity: sha512-ZrDNsPFoDMwefNs7sJwrYiEJ/CG4ClJWDZv05iNJsEBWa8GRDry1QJHTJxsuTAY9eDDKjX4k+q3SxslXJOao7w==}
+  nodemailer@10.6.1:
+    resolution: {integrity: sha512-d7kfFfS/tR4Aca+SBvRaQ+MXKNv7d2JiRe5TxaRcFT/kYMh4GGPnW9aKksTIEvyEbA7d/7HYWE4YPDEHxzJj/g==}
     engines: {node: '>=20.0.0'}
 
   oas-kit-common@1.0.8:
@@ -6731,7 +6731,7 @@ snapshots:
     dependencies:
       es6-promise: 3.3.1
 
-  nodemailer@10.2.1: {}
+  nodemailer@10.6.1: {}
 
   oas-kit-common@1.0.8:
     dependencies:
