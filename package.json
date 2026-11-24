@@ -28,9 +28,9 @@
     "seed": "node --env-file-if-exists=.env tools/seed/seed-demo.mjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.15",
+    "@biomejs/biome": "2.6.8",
     "lefthook": "2.2.2",
-    "turbo": "2.11.8",
+    "turbo": "2.11.13",
     "typescript": "6.0.3"
   }
 }
